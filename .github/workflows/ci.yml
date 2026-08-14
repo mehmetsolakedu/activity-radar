@@ -23,6 +23,11 @@ jobs:
       - name: Verify exact checked-out revision
         run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
+      - name: Install release verification dependency
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: brew install ripgrep
+
       - name: Show Swift toolchain
         run: swift --version
 
