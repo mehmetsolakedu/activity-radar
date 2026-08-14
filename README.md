@@ -71,6 +71,10 @@ open "$PWD/Activity Radar.app"
 
 Local mode builds a Universal 2 application and applies an ad-hoc signature unless a signing identity is explicitly supplied. That is appropriate for development on the machine that built it, not for public binary distribution.
 
+Activity Radar is an `LSUIElement` menu-bar app, so it does not appear in the
+Dock after launch. Look for its radar icon in the menu bar, or press `⌘⇧K` to
+show the panel.
+
 ## Content-free diagnostics
 
 ```bash
@@ -85,8 +89,10 @@ The public packager has no unsafe fallback:
 
 ```bash
 ./scripts/package-app.sh --mode public \
-  --identity "Developer ID Application: Example Org (TEAMID)" \
+  --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
   --notary-profile "activity-radar-notary" \
+  --release-tag "v1.2.0-beta.2" \
+  --team-id "TEAMID1234" \
   --bundle-id "io.github.mehmetsolakedu.ActivityRadar" \
   --dist-dir ./dist
 ```
@@ -95,8 +101,11 @@ Public mode requires and verifies:
 
 - arm64 and x86_64 slices with the declared macOS deployment target;
 - Developer ID signing, hardened runtime, secure timestamp, and Team ID;
-- accepted Apple notarization and stapled tickets for the app and DMG;
-- Gatekeeper assessment, ZIP/DMG integrity, and SHA-256 checksums.
+- clean exact-tag source provenance and prerelease-aware artifact names;
+- accepted Apple notarization, issue-free downloaded logs, and stapled tickets
+  for the app and DMG;
+- Gatekeeper assessment, a metadata-free ZIP, a single-volume read-only
+  UDZO/GUID/HFS+ DMG, and SHA-256 checksums covering the release manifest.
 
 Credentials are read from a `notarytool` Keychain profile; passwords and API private keys are never accepted on the command line. See [Packaging/DISTRIBUTION.md](Packaging/DISTRIBUTION.md).
 

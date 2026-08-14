@@ -52,6 +52,8 @@ Run the same deterministic gates used by CI:
 ~~~sh
 swift run ActivityRadarSelfTest
 
+swift test
+
 swiftc -parse-as-library \
   Sources/ActivityRadar/RadarContinuityStore.swift \
   scripts/continuity-store-self-test.swift \
