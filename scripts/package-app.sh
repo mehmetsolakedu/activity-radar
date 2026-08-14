@@ -11,6 +11,7 @@ set -euo pipefail
 umask 022
 export SWIFT_DETERMINISTIC_HASHING=1
 export ZERO_AR_DATE=1
+export GIT_NO_REPLACE_OBJECTS=1
 
 SCRIPT_DIR="${0:A:h}"
 PROJECT_DIR="${SCRIPT_DIR:h}"
@@ -19,6 +20,11 @@ DEFAULT_DIST_DIR="$PROJECT_DIR/dist"
 SOURCE_ICON="$PROJECT_DIR/Assets/ActivityRadar-Source.png"
 INFO_PLIST="$PROJECT_DIR/Packaging/Info.plist"
 ENTITLEMENTS="$PROJECT_DIR/Packaging/ActivityRadar.entitlements"
+NOTARY_LOG_CHECKER="$PROJECT_DIR/scripts/notary-log-check.swift"
+BUILD_PROJECT_DIR="$PROJECT_DIR"
+BUILD_SOURCE_ICON="$SOURCE_ICON"
+BUILD_INFO_PLIST="$INFO_PLIST"
+BUILD_ENTITLEMENTS="$ENTITLEMENTS"
 
 MODE="local"
 OUTPUT_APP=""
@@ -27,6 +33,8 @@ SIGNING_IDENTITY="${DEVELOPER_ID_APPLICATION:-}"
 NOTARY_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-}"
 NOTARY_KEYCHAIN="${NOTARY_KEYCHAIN_PATH:-}"
 BUNDLE_IDENTIFIER="${ACTIVITY_RADAR_BUNDLE_ID:-}"
+RELEASE_TAG="${ACTIVITY_RADAR_RELEASE_TAG:-}"
+EXPECTED_TEAM_ID="${DEVELOPER_TEAM_ID:-}"
 BUILD_EPOCH="${SOURCE_DATE_EPOCH:-946684800}"
 OVERWRITE=0
 LEGACY_OUTPUT_SEEN=0
@@ -56,8 +64,13 @@ Options:
   --notary-keychain PATH
                         Optional Keychain file containing the notary profile.
                         May also be supplied via NOTARY_KEYCHAIN_PATH.
-  --bundle-id ID        Override CFBundleIdentifier in the staged bundle. May
-                        also be supplied via ACTIVITY_RADAR_BUNDLE_ID.
+  --release-tag TAG     Exact public Git tag, for example v1.2.0-beta.2. May
+                        also be supplied via ACTIVITY_RADAR_RELEASE_TAG.
+  --team-id TEAMID      Expected 10-character Apple Developer Team ID. May also
+                        be supplied via DEVELOPER_TEAM_ID.
+  --bundle-id ID        Bundle identifier to stage. Public mode requires it to
+                        match Info.plist. May also be supplied via
+                        ACTIVITY_RADAR_BUNDLE_ID.
   --source-date-epoch N Normalize bundle/archive mtimes to this Unix timestamp.
                         Default: 946684800 (2000-01-01T00:00:00Z).
   --overwrite           Replace only the exact local app or versioned public
@@ -66,9 +79,11 @@ Options:
 
 Public example (placeholder values only):
   ./scripts/package-app.sh --mode public \
-    --identity "Developer ID Application: Example Org (TEAMID)" \
+    --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
     --notary-profile "activity-radar-notary" \
-    --bundle-id "com.example.activityradar"
+    --release-tag "v1.2.0-beta.2" \
+    --team-id "TEAMID1234" \
+    --bundle-id "io.github.mehmetsolakedu.ActivityRadar"
 
 The public mode never accepts Apple ID passwords or API private keys on its
 command line. Store notarization credentials with `xcrun notarytool
@@ -87,6 +102,17 @@ note() {
 
 need_tool() {
   command -v "$1" >/dev/null 2>&1 || fail "Required tool not found: $1"
+}
+
+require_exact_release_checkout() {
+  [[ "$MODE" == "public" ]] || return 0
+  local current_revision current_tag_revision
+  current_revision="$(git -C "$PROJECT_DIR" rev-parse HEAD)"
+  current_tag_revision="$(git -C "$PROJECT_DIR" rev-parse -q --verify "refs/tags/${RELEASE_TAG}^{commit}" 2>/dev/null || true)"
+  [[ "$current_revision" == "$SOURCE_REVISION" ]] || fail "Public release checkout changed during packaging"
+  [[ "$current_tag_revision" == "$SOURCE_REVISION" ]] || fail "Public release tag changed during packaging"
+  [[ -z "$(git -C "$PROJECT_DIR" status --porcelain --untracked-files=all)" ]] \
+    || fail "Public release worktree changed during packaging"
 }
 
 while (( $# > 0 )); do
@@ -119,6 +145,16 @@ while (( $# > 0 )); do
     --notary-keychain)
       (( $# >= 2 )) || fail "--notary-keychain requires a path"
       NOTARY_KEYCHAIN="$2"
+      shift 2
+      ;;
+    --release-tag)
+      (( $# >= 2 )) || fail "--release-tag requires a value"
+      RELEASE_TAG="$2"
+      shift 2
+      ;;
+    --team-id)
+      (( $# >= 2 )) || fail "--team-id requires a value"
+      EXPECTED_TEAM_ID="$2"
       shift 2
       ;;
     --bundle-id)
@@ -162,13 +198,14 @@ done
 [[ "$BUILD_EPOCH" == <-> ]] || fail "SOURCE_DATE_EPOCH must contain decimal digits only"
 (( BUILD_EPOCH >= 315532800 )) || fail "SOURCE_DATE_EPOCH must be 1980-01-01 or later for ZIP compatibility"
 
-for tool in swift xcrun lipo vtool codesign ditto plutil sips iconutil find touch date awk grep sed security mkdir mktemp cp chmod rm mv ln basename cat; do
+for tool in swift xcrun lipo vtool codesign ditto plutil sips iconutil find touch date awk grep sed security mkdir mktemp cp chmod rm mv ln basename cat zip xattr stat ls tr; do
   need_tool "$tool"
 done
 
 [[ -f "$INFO_PLIST" ]] || fail "Missing Info.plist: $INFO_PLIST"
 [[ -f "$SOURCE_ICON" ]] || fail "Missing source icon: $SOURCE_ICON"
 [[ -f "$ENTITLEMENTS" ]] || fail "Missing entitlements file: $ENTITLEMENTS"
+[[ -f "$NOTARY_LOG_CHECKER" ]] || fail "Missing notarization-log checker: $NOTARY_LOG_CHECKER"
 plutil -lint "$INFO_PLIST" >/dev/null || fail "Invalid Info.plist"
 plutil -lint "$ENTITLEMENTS" >/dev/null || fail "Invalid entitlements plist"
 
@@ -184,7 +221,18 @@ print -r -- "$MIN_MACOS" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$' || fail "Inval
 print -r -- "$BUNDLE_IDENTIFIER" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9-]*(\.[A-Za-z0-9][A-Za-z0-9-]*)+$' || fail "Invalid bundle identifier: $BUNDLE_IDENTIFIER"
 [[ "$BUNDLE_IDENTIFIER" == *.* ]] || fail "Bundle identifier must use reverse-DNS form: $BUNDLE_IDENTIFIER"
 
-RELEASE_STEM="Activity-Radar-${VERSION}-macOS-universal2"
+RELEASE_LABEL="$VERSION"
+if [[ "$MODE" == "public" ]]; then
+  [[ -n "$RELEASE_TAG" ]] || fail "Public mode requires --release-tag; refusing an unversioned public release"
+  [[ "$RELEASE_TAG" == v* ]] || fail "Public release tag must begin with v"
+  RELEASE_LABEL="${RELEASE_TAG#v}"
+  print -r -- "$RELEASE_LABEL" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' \
+    || fail "Unsafe public release tag: $RELEASE_TAG"
+  [[ "$RELEASE_LABEL" == "$VERSION" || "$RELEASE_LABEL" == "$VERSION"-* ]] \
+    || fail "Release tag $RELEASE_TAG does not match CFBundleShortVersionString $VERSION"
+fi
+
+RELEASE_STEM="Activity-Radar-${RELEASE_LABEL}-macOS-universal2"
 FINAL_RELEASE_DIR="$DIST_DIR/$RELEASE_STEM"
 
 if [[ "$MODE" == "public" ]]; then
@@ -192,24 +240,37 @@ if [[ "$MODE" == "public" ]]; then
   [[ -z "$OUTPUT_APP" ]] || fail "--output-app is local-only; use --dist-dir for public mode"
   [[ -n "$SIGNING_IDENTITY" ]] || fail "Public mode requires --identity (Developer ID Application); refusing ad-hoc public release"
   [[ -n "$NOTARY_PROFILE" ]] || fail "Public mode requires --notary-profile; refusing an unnotarized public release"
-  [[ "$BUNDLE_IDENTIFIER" != local.* ]] || fail "Public mode refuses a local.* bundle identifier; pass --bundle-id"
+  [[ -n "$EXPECTED_TEAM_ID" ]] || fail "Public mode requires --team-id; refusing an unbound signing identity"
+  print -r -- "$EXPECTED_TEAM_ID" | grep -Eq '^[A-Z0-9]{10}$' || fail "Apple Team ID must be 10 uppercase letters or digits"
+  [[ "$BUNDLE_IDENTIFIER" != local.* ]] || fail "Public mode refuses a local.* bundle identifier; update Packaging/Info.plist"
+  [[ "$BUNDLE_IDENTIFIER" == "$PLIST_BUNDLE_IDENTIFIER" ]] || fail "Public mode bundle identifier must match Packaging/Info.plist"
   [[ "$DIST_DIR" != "/" && "$DIST_DIR" != "$HOME" && -n "$DIST_DIR" ]] || fail "Refusing unsafe dist directory: $DIST_DIR"
-  for tool in security hdiutil shasum unzip spctl; do
+  for tool in security hdiutil shasum unzip spctl git uname tar; do
     need_tool "$tool"
   done
   xcrun --find notarytool >/dev/null 2>&1 || fail "notarytool is unavailable"
   xcrun --find stapler >/dev/null 2>&1 || fail "stapler is unavailable"
 
+  REPO_ROOT="$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
+  [[ -n "$REPO_ROOT" && "${REPO_ROOT:A}" == "$PROJECT_DIR" ]] || fail "Public mode must run from the root of a Git checkout"
+  [[ -z "$(git -C "$PROJECT_DIR" for-each-ref --format='%(refname)' refs/replace | sed -n '1p')" ]] \
+    || fail "Public mode refuses a checkout with Git replacement refs"
+  SOURCE_REVISION="$(git -C "$PROJECT_DIR" rev-parse HEAD)"
+  require_exact_release_checkout
+
   IDENTITIES="$(security find-identity -v -p codesigning 2>&1 || true)"
   [[ "$IDENTITIES" == *"$SIGNING_IDENTITY"* ]] || fail "Signing identity is not a valid codesigning identity in the current Keychain"
   MATCHED_IDENTITY_LINE="$(print -r -- "$IDENTITIES" | grep -F "$SIGNING_IDENTITY" | sed -n '1p')"
   [[ "$MATCHED_IDENTITY_LINE" == *"Developer ID Application:"* ]] || fail "Public mode requires a Developer ID Application identity"
+  [[ "$MATCHED_IDENTITY_LINE" == *"($EXPECTED_TEAM_ID)"* ]] || fail "Signing identity does not belong to expected Apple Team ID"
   if [[ -e "$FINAL_RELEASE_DIR" && "$OVERWRITE" == "0" ]]; then
     fail "Release directory exists; pass --overwrite to replace: $FINAL_RELEASE_DIR"
   fi
 else
   [[ -z "$NOTARY_PROFILE" ]] || fail "--notary-profile is valid only in public mode"
   [[ -z "$NOTARY_KEYCHAIN" ]] || fail "--notary-keychain is valid only in public mode"
+  [[ -z "$RELEASE_TAG" ]] || fail "--release-tag is valid only in public mode"
+  [[ -z "$EXPECTED_TEAM_ID" ]] || fail "--team-id is valid only in public mode"
   [[ -n "$OUTPUT_APP" ]] || OUTPUT_APP="$DEFAULT_LOCAL_APP"
   [[ "$OUTPUT_APP" == *.app && "$OUTPUT_APP" != "/" && "$OUTPUT_APP" != "$HOME" ]] || fail "Refusing unsafe output app path: $OUTPUT_APP"
   if [[ -e "$OUTPUT_APP" && "$OVERWRITE" == "0" ]]; then
@@ -222,6 +283,9 @@ SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
 TOUCH_STAMP="$(date -u -r "$BUILD_EPOCH" '+%Y%m%d%H%M.%S')"
 STAGE_DIR="$(mktemp -d /tmp/activity-radar-package.XXXXXX)"
 [[ "$STAGE_DIR" == /tmp/activity-radar-package.* ]] || fail "Unexpected temporary directory: $STAGE_DIR"
+PROVENANCE_SENTINEL="$STAGE_DIR/provenance-sentinel"
+touch "$PROVENANCE_SENTINEL"
+EXPECTED_PROVENANCE_HEX="$(xattr -px com.apple.provenance "$PROVENANCE_SENTINEL" 2>/dev/null | tr -d '[:space:]' || true)"
 
 cleanup() {
   if [[ -n "${STAGE_DIR:-}" && "$STAGE_DIR" == /tmp/activity-radar-package.* && -d "$STAGE_DIR" ]]; then
@@ -231,6 +295,32 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+if [[ "$MODE" == "public" ]]; then
+  note "Materializing an immutable snapshot of the tagged source"
+  UNSAFE_TREE_ENTRY="$(
+    git -C "$PROJECT_DIR" ls-tree -r "$SOURCE_REVISION" \
+      | awk '$1 == "120000" || $1 == "160000" { print "unsafe"; exit }'
+  )"
+  [[ -z "$UNSAFE_TREE_ENTRY" ]] \
+    || fail "Public release source tree contains a symlink or submodule"
+  BUILD_PROJECT_DIR="$STAGE_DIR/tagged-source"
+  mkdir -p "$BUILD_PROJECT_DIR"
+  git -C "$PROJECT_DIR" archive --format=tar "$SOURCE_REVISION" \
+    | tar -xf - -C "$BUILD_PROJECT_DIR"
+  BUILD_SOURCE_ICON="$BUILD_PROJECT_DIR/Assets/ActivityRadar-Source.png"
+  BUILD_INFO_PLIST="$BUILD_PROJECT_DIR/Packaging/Info.plist"
+  BUILD_ENTITLEMENTS="$BUILD_PROJECT_DIR/Packaging/ActivityRadar.entitlements"
+  NOTARY_LOG_CHECKER="$BUILD_PROJECT_DIR/scripts/notary-log-check.swift"
+  [[ -f "$BUILD_SOURCE_ICON" && -f "$BUILD_INFO_PLIST" && -f "$BUILD_ENTITLEMENTS" && -f "$NOTARY_LOG_CHECKER" ]] \
+    || fail "Tagged source snapshot is missing a required packaging input"
+  [[ "$(plutil -extract CFBundleShortVersionString raw -o - "$BUILD_INFO_PLIST")" == "$VERSION" ]] \
+    || fail "Tagged Info.plist version does not match the release metadata"
+  [[ "$(plutil -extract CFBundleVersion raw -o - "$BUILD_INFO_PLIST")" == "$BUILD_NUMBER" ]] \
+    || fail "Tagged Info.plist build does not match the release metadata"
+  [[ "$(plutil -extract CFBundleIdentifier raw -o - "$BUILD_INFO_PLIST")" == "$BUNDLE_IDENTIFIER" ]] \
+    || fail "Tagged Info.plist bundle identifier does not match the release metadata"
+fi
 
 normalize_tree_times() {
   local root="$1"
@@ -244,7 +334,7 @@ swift_build_arch() {
 
   note "Building ActivityRadar for $triple"
   swift build \
-    --package-path "$PROJECT_DIR" \
+    --package-path "$BUILD_PROJECT_DIR" \
     --scratch-path "$scratch" \
     --configuration release \
     --product ActivityRadar \
@@ -253,7 +343,7 @@ swift_build_arch() {
 
   local bin_dir
   bin_dir="$(swift build \
-    --package-path "$PROJECT_DIR" \
+    --package-path "$BUILD_PROJECT_DIR" \
     --scratch-path "$scratch" \
     --configuration release \
     --show-bin-path \
@@ -283,6 +373,39 @@ verify_universal_binary() {
   done
 }
 
+verify_public_metadata_policy() {
+  local root="$1"
+  local node flags acl_entry attrs attr_name
+  while IFS= read -r -d '' node; do
+    flags="$(stat -f %Sf "$node")"
+    [[ "$flags" == "-" ]] || fail "Public bundle metadata contains file flags"
+    acl_entry="$(ls -lde "$node" | sed -n '2p')"
+    [[ -z "$acl_entry" ]] || fail "Public bundle metadata contains an ACL"
+    if [[ -L "$node" ]]; then
+      if ! attrs="$(xattr -s "$node" 2>/dev/null)"; then
+        fail "Public bundle symbolic-link attributes could not be inspected"
+      fi
+    elif ! attrs="$(xattr "$node" 2>/dev/null)"; then
+      fail "Public bundle extended attributes could not be inspected"
+    fi
+    while IFS= read -r attr_name; do
+      [[ -z "$attr_name" ]] && continue
+      [[ "$attr_name" == "com.apple.provenance" ]] \
+        || fail "Public bundle metadata contains an unexpected extended attribute"
+      [[ -n "$EXPECTED_PROVENANCE_HEX" ]] \
+        || fail "Public bundle unexpectedly contains provenance metadata"
+      local actual_provenance_hex
+      if [[ -L "$node" ]]; then
+        actual_provenance_hex="$(xattr -px -s com.apple.provenance "$node" | tr -d '[:space:]')"
+      else
+        actual_provenance_hex="$(xattr -px com.apple.provenance "$node" | tr -d '[:space:]')"
+      fi
+      [[ "$actual_provenance_hex" == "$EXPECTED_PROVENANCE_HEX" ]] \
+        || fail "Public bundle provenance metadata differs from the local system value"
+    done <<< "$attrs"
+  done < <(find "$root" -print0)
+}
+
 sign_app() {
   local app="$1"
   if [[ -n "$SIGNING_IDENTITY" ]]; then
@@ -291,7 +414,7 @@ sign_app() {
       --sign "$SIGNING_IDENTITY" \
       --options runtime \
       --timestamp \
-      --entitlements "$ENTITLEMENTS" \
+      --entitlements "$BUILD_ENTITLEMENTS" \
       "$app"
   else
     note "Applying ad-hoc signature (local mode only)"
@@ -305,17 +428,22 @@ verify_developer_id_app() {
   local details
   details="$(codesign -d --verbose=4 "$app" 2>&1)"
   print -r -- "$details" | grep -F "Authority=Developer ID Application:" >/dev/null || fail "App is not signed by Developer ID Application"
-  print -r -- "$details" | grep -E '^TeamIdentifier=[A-Z0-9]+$' >/dev/null || fail "App signature has no TeamIdentifier"
+  print -r -- "$details" | grep -Fx "TeamIdentifier=$EXPECTED_TEAM_ID" >/dev/null || fail "App signature TeamIdentifier does not match expected Apple Team ID"
+  print -r -- "$details" | grep -Fx "Identifier=$BUNDLE_IDENTIFIER" >/dev/null || fail "App signature identifier does not match the bundle identifier"
   print -r -- "$details" | grep -F 'runtime' >/dev/null || fail "App signature does not enable hardened runtime"
+  print -r -- "$details" | grep -E '^Timestamp=' >/dev/null || fail "App signature has no secure timestamp"
 }
 
 archive_app_zip() {
   local app="$1"
   local archive="$2"
-  # Apple's recommended ditto ZIP form preserves any notarization ticket
-  # metadata attached to the bundle. The source app is assembled in a clean
-  # temporary directory, so no unrelated Finder metadata enters the archive.
-  ditto -c -k --sequesterRsrc --keepParent "$app" "$archive"
+  # The app's stapled ticket is part of the bundle. A metadata-free ZIP avoids
+  # AppleDouble/xattr side channels and can be regenerated byte-for-byte from
+  # the frozen app during publication.
+  (
+    cd "${app:h}"
+    /usr/bin/zip -X -q -r "$archive" "${app:t}"
+  )
   unzip -tq "$archive" >/dev/null || fail "ZIP integrity check failed: $archive"
 }
 
@@ -327,52 +455,81 @@ if [[ -n "$NOTARY_PROFILE" ]]; then
   fi
 fi
 
+if [[ "$MODE" == "public" ]]; then
+  note "Validating notarization credentials before building"
+  if ! xcrun notarytool history \
+    "${notary_auth_args[@]}" \
+    --no-progress \
+    --output-format json >/dev/null 2>&1; then
+    fail "Notarization Keychain profile could not authenticate"
+  fi
+fi
+
 notarize_and_require_accepted() {
   local artifact="$1"
   local result_file="$2"
+  local log_file="$3"
   note "Submitting $(basename "$artifact") to Apple notary service"
   if ! xcrun notarytool submit "$artifact" \
     "${notary_auth_args[@]}" \
     --wait \
+    --timeout 2h \
     --no-progress \
     --output-format json >"$result_file"; then
-    print -u2 -- "notarytool submission failed:"
-    sed -n '1,220p' "$result_file" >&2 || true
-    fail "Notarization command failed"
+    fail "Notarization command failed; private service output was not printed"
   fi
 
   local notary_status
   notary_status="$(plutil -extract status raw -o - "$result_file" 2>/dev/null || true)"
   if [[ "$notary_status" != "Accepted" ]]; then
-    print -u2 -- "Notarization result:"
-    sed -n '1,220p' "$result_file" >&2 || true
     fail "Apple notarization status is ${notary_status:-unknown}, expected Accepted"
+  fi
+
+  local submission_id
+  submission_id="$(plutil -extract id raw -o - "$result_file" 2>/dev/null || true)"
+  print -r -- "$submission_id" | grep -Eqi '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' \
+    || fail "Apple notarization response did not contain a valid submission ID"
+
+  note "Retrieving and checking Apple notarization log"
+  if ! xcrun notarytool log "$submission_id" "$log_file" \
+    "${notary_auth_args[@]}" \
+    --no-progress >/dev/null 2>&1; then
+    fail "Could not retrieve notarization log for submission $submission_id"
+  fi
+
+  if ! swift "$NOTARY_LOG_CHECKER" "$log_file" >/dev/null 2>&1; then
+    fail "Notarization log was not Accepted with an empty or null issues field for submission $submission_id"
   fi
 }
 
 ARM_BINARY="$(swift_build_arch arm64)"
 X86_BINARY="$(swift_build_arch x86_64)"
+require_exact_release_checkout
 
 STAGED_APP="$STAGE_DIR/Activity Radar.app"
 CONTENTS="$STAGED_APP/Contents"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 lipo -create "$ARM_BINARY" "$X86_BINARY" -output "$CONTENTS/MacOS/ActivityRadar"
 chmod 755 "$CONTENTS/MacOS/ActivityRadar"
-cp "$INFO_PLIST" "$CONTENTS/Info.plist"
+cp "$BUILD_INFO_PLIST" "$CONTENTS/Info.plist"
 plutil -replace CFBundleIdentifier -string "$BUNDLE_IDENTIFIER" "$CONTENTS/Info.plist"
+if [[ "$MODE" == "public" ]]; then
+  plutil -insert ActivityRadarSourceRevision -string "$SOURCE_REVISION" "$CONTENTS/Info.plist"
+  plutil -insert ActivityRadarReleaseTag -string "$RELEASE_TAG" "$CONTENTS/Info.plist"
+fi
 
 ICONSET="$STAGE_DIR/ActivityRadar.iconset"
 mkdir -p "$ICONSET"
-sips -z 16 16 "$SOURCE_ICON" --out "$ICONSET/icon_16x16.png" >/dev/null
-sips -z 32 32 "$SOURCE_ICON" --out "$ICONSET/icon_16x16@2x.png" >/dev/null
-sips -z 32 32 "$SOURCE_ICON" --out "$ICONSET/icon_32x32.png" >/dev/null
-sips -z 64 64 "$SOURCE_ICON" --out "$ICONSET/icon_32x32@2x.png" >/dev/null
-sips -z 128 128 "$SOURCE_ICON" --out "$ICONSET/icon_128x128.png" >/dev/null
-sips -z 256 256 "$SOURCE_ICON" --out "$ICONSET/icon_128x128@2x.png" >/dev/null
-sips -z 256 256 "$SOURCE_ICON" --out "$ICONSET/icon_256x256.png" >/dev/null
-sips -z 512 512 "$SOURCE_ICON" --out "$ICONSET/icon_256x256@2x.png" >/dev/null
-sips -z 512 512 "$SOURCE_ICON" --out "$ICONSET/icon_512x512.png" >/dev/null
-sips -z 1024 1024 "$SOURCE_ICON" --out "$ICONSET/icon_512x512@2x.png" >/dev/null
+sips -z 16 16 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_16x16.png" >/dev/null
+sips -z 32 32 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_16x16@2x.png" >/dev/null
+sips -z 32 32 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_32x32.png" >/dev/null
+sips -z 64 64 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_32x32@2x.png" >/dev/null
+sips -z 128 128 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_128x128.png" >/dev/null
+sips -z 256 256 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_128x128@2x.png" >/dev/null
+sips -z 256 256 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_256x256.png" >/dev/null
+sips -z 512 512 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_256x256@2x.png" >/dev/null
+sips -z 512 512 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_512x512.png" >/dev/null
+sips -z 1024 1024 "$BUILD_SOURCE_ICON" --out "$ICONSET/icon_512x512@2x.png" >/dev/null
 iconutil -c icns "$ICONSET" -o "$CONTENTS/Resources/ActivityRadar.icns"
 
 plutil -lint "$CONTENTS/Info.plist" >/dev/null
@@ -408,7 +565,10 @@ verify_developer_id_app "$STAGED_APP"
 # artifact.
 NOTARY_APP_ZIP="$STAGE_DIR/notary-app.zip"
 archive_app_zip "$STAGED_APP" "$NOTARY_APP_ZIP"
-notarize_and_require_accepted "$NOTARY_APP_ZIP" "$STAGE_DIR/notary-app-result.json"
+notarize_and_require_accepted \
+  "$NOTARY_APP_ZIP" \
+  "$STAGE_DIR/notary-app-result.json" \
+  "$STAGE_DIR/notary-app-log.json"
 xcrun stapler staple -v "$STAGED_APP"
 xcrun stapler validate -v "$STAGED_APP"
 codesign --verify --deep --strict --verbose=2 "$STAGED_APP"
@@ -437,12 +597,16 @@ spctl --assess --type execute --verbose=4 "$ZIP_VERIFY_DIR/Activity Radar.app"
 
 DMG_ROOT="$STAGE_DIR/dmg-root"
 mkdir -p "$DMG_ROOT"
-ditto --rsrc --extattr "$STAGED_APP" "$DMG_ROOT/Activity Radar.app"
+ditto --norsrc --noextattr --noacl "$STAGED_APP" "$DMG_ROOT/Activity Radar.app"
+xattr -cr "$DMG_ROOT/Activity Radar.app"
+codesign --verify --deep --strict --verbose=2 "$DMG_ROOT/Activity Radar.app"
+xcrun stapler validate -v "$DMG_ROOT/Activity Radar.app"
 ln -s /Applications "$DMG_ROOT/Applications"
+verify_public_metadata_policy "$DMG_ROOT"
 normalize_tree_times "$DMG_ROOT"
 
 note "Creating compressed DMG"
-hdiutil create \
+COPYFILE_DISABLE=1 hdiutil create \
   -srcfolder "$DMG_ROOT" \
   -volname "Activity Radar" \
   -fs HFS+ \
@@ -455,34 +619,45 @@ hdiutil verify "$RELEASE_STAGE/$DMG_NAME" >/dev/null
 note "Signing DMG with Developer ID"
 codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$RELEASE_STAGE/$DMG_NAME"
 codesign --verify --strict --verbose=2 "$RELEASE_STAGE/$DMG_NAME"
-notarize_and_require_accepted "$RELEASE_STAGE/$DMG_NAME" "$STAGE_DIR/notary-dmg-result.json"
+notarize_and_require_accepted \
+  "$RELEASE_STAGE/$DMG_NAME" \
+  "$STAGE_DIR/notary-dmg-result.json" \
+  "$STAGE_DIR/notary-dmg-log.json"
 xcrun stapler staple -v "$RELEASE_STAGE/$DMG_NAME"
 xcrun stapler validate -v "$RELEASE_STAGE/$DMG_NAME"
 codesign --verify --strict --verbose=2 "$RELEASE_STAGE/$DMG_NAME"
 hdiutil verify "$RELEASE_STAGE/$DMG_NAME" >/dev/null
 spctl --assess --type open --context context:primary-signature --verbose=4 "$RELEASE_STAGE/$DMG_NAME"
 
+require_exact_release_checkout
+
 cat >"$RELEASE_STAGE/RELEASE-MANIFEST.txt" <<MANIFEST
 Product: Activity Radar
 Version: $VERSION
 Build: $BUILD_NUMBER
+Release tag: $RELEASE_TAG
+Source revision: $SOURCE_REVISION
+Source state: clean exact-tag checkout
 Bundle identifier: $BUNDLE_IDENTIFIER
 Architectures: arm64 x86_64
 Minimum macOS: $MIN_MACOS
 SDK: macOS $SDK_VERSION
+Swift toolchain: $(swift --version | sed -n '1p')
+Build host architecture: $(uname -m)
 Build epoch: $BUILD_EPOCH
-Signing: Developer ID Application, hardened runtime, secure timestamp
-Application notarization: Accepted and stapled
-Disk image notarization: Accepted and stapled
+Signing: Developer ID Application, Apple Team $EXPECTED_TEAM_ID, hardened runtime, secure timestamp
+Application notarization: Accepted, zero reported issues, stapled
+Disk image notarization: Accepted, zero reported issues, stapled
 Artifacts: $ZIP_NAME, $DMG_NAME
 MANIFEST
 touch -h -t "$TOUCH_STAMP" "$RELEASE_STAGE/RELEASE-MANIFEST.txt"
 
 (
   cd "$RELEASE_STAGE"
-  shasum -a 256 "$ZIP_NAME" "$DMG_NAME" > SHA256SUMS
+  shasum -a 256 "$ZIP_NAME" "$DMG_NAME" RELEASE-MANIFEST.txt > SHA256SUMS
   shasum -a 256 -c SHA256SUMS
 )
+require_exact_release_checkout
 
 if [[ -e "$FINAL_RELEASE_DIR" ]]; then
   (( OVERWRITE )) || fail "Release directory exists; pass --overwrite to replace: $FINAL_RELEASE_DIR"

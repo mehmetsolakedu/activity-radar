@@ -46,6 +46,10 @@ docs/ARCHITECTURE.md
 docs/CODEX_INTEGRATION.md
 docs/RESEARCH_BOUNDARY.md
 scripts/continuity-store-self-test.swift
+scripts/dmg-topology-check.swift
 scripts/export-public-source.sh
+scripts/notary-log-check.swift
 scripts/package-app.sh
+scripts/publish-github-release.sh
+scripts/public-privacy-scan.sh
 scripts/public-release-check.sh

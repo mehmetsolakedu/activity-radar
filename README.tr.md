@@ -32,6 +32,11 @@ swift run ActivityRadarDiagnostics
 
 Tanılama komutu yalnız içeriksiz toplu uyumluluk sayaçları üretir. Görev başlığı, mesaj, dosya yolu, checkpoint veya ham görev kimliği içermez.
 
+Kaynaktan paketlediğiniz uygulama Dock’ta görünmez; Activity Radar bir menü
+çubuğu uygulamasıdır. Açtıktan sonra menü çubuğundaki radar simgesini kullanın
+veya paneli `⌘⇧K` ile çağırın. Bu yerel ad-hoc paket, halka açık imzalı sürüm
+yerine geçmez.
+
 Bağlantının nasıl çalıştığı için [Codex entegrasyonu](docs/CODEX_INTEGRATION.md), veri sınırları için [PRIVACY.md](PRIVACY.md), katkı için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasına bakın.
 
 Activity Radar bağımsız ve resmi olmayan bir topluluk projesidir; OpenAI tarafından yayımlanan veya desteklenen resmi bir ürün değildir.

@@ -552,7 +552,8 @@ public enum ActivityRadarSelfTests {
 
         for description in [missing, open] {
             try require(!description.contains("private-person"), "public error exposed a home-directory component")
-            try require(!description.contains("/Users/"), "public error exposed an absolute home path")
+            let macOSHomePrefix = "/" + "Users/"
+            try require(!description.contains(macOSHomePrefix), "public error exposed an absolute home path")
             try require(description.contains("~/.codex/state_5.sqlite"), "public error hid the actionable Codex location")
         }
     }

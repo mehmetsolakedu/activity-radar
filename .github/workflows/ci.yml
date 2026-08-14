@@ -13,57 +13,28 @@ permissions:
 jobs:
   verify:
     name: macOS verification
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 25
 
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Verify exact checked-out revision
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Install release verification dependency
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: brew install ripgrep
+
       - name: Show Swift toolchain
         run: swift --version
 
-      - name: Reject obvious private home paths
-        shell: bash
-        run: |
-          home_path_matches="$(git grep -nI -E \
-            '/(Users|home)/[A-Za-z0-9._-]+' -- . \
-            ':!scripts/export-public-source.sh' \
-            ':!scripts/public-release-check.sh' \
-            ':!.github/workflows/ci.yml' || true)"
-          unsafe_home_path_matches="$(printf '%s\n' "$home_path_matches" | grep -Ev \
-            '/(Users|home)/(example|private-person|synthetic-user|test-user)/' || true)"
-          if [[ -n "$unsafe_home_path_matches" ]]; then
-            echo "A public source or community file contains an absolute user-home path."
-            exit 1
-          fi
-
-      - name: Reject network API additions in app source
-        shell: bash
-        run: |
-          if git grep -qI -E \
-            -e 'URLSession' \
-            -e 'URLRequest' \
-            -e 'NWConnection' \
-            -e 'WebSocket' \
-            -e 'wss?://' \
-            -- Sources; then
-            echo "Network-capable source requires an explicit privacy-contract review."
-            exit 1
-          fi
-
-      - name: Run deterministic core self-test
-        run: swift run ActivityRadarSelfTest
-
-      - name: Require and run standard Swift tests
-        shell: bash
-        run: |
-          test_list="$(swift test list)"
-          if ! grep -Fq 'turnLifecycleAndFinalAnswer' <<< "$test_list"; then
-            echo "The full Xcode runner did not discover the known standard tests."
-            exit 1
-          fi
-          swift test
+      - name: Run complete public release verification
+        env:
+          REQUIRE_STANDARD_TESTS: "1"
+        run: ./scripts/public-release-check.sh
 
       - name: Assert diagnostics are content-free
         shell: bash
@@ -73,7 +44,8 @@ jobs:
           diagnostic_rollout="$diagnostic_home/PRIVATE-PATH-SENTINEL.jsonl"
           mkdir -p "$diagnostic_home/.codex"
           printf '%s\n' \
-            '{"timestamp":"2026-01-01T00:00:00Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PRIVATE-CHECKPOINT-SENTINEL"}]}}' \
+            '{"timestamp":"2026-01-01T00:00:00Z","type":"event_msg","payload":{"type":"agent_message","phase":"final_answer","message":"PRIVATE-CHECKPOINT-SENTINEL"}}' \
+            '{"timestamp":"2026-01-01T00:00:01Z","type":"response_item","payload":{"type":"function_call","name":"request_user_input","call_id":"PRIVATE-CALL-ID-SENTINEL"}}' \
             > "$diagnostic_rollout"
           sqlite3 "$diagnostic_state" <<SQL
           CREATE TABLE threads (
@@ -109,6 +81,15 @@ jobs:
           }
           assert set(report) == expected_keys, "diagnostic top-level schema changed"
           assert report["itemCount"] == 1, "synthetic diagnostic fixture was not read"
+          assert report["attentionReasonCounts"] == {"explicitInput": 1}, (
+              "synthetic pending-input event was not reduced"
+          )
+          assert report["completeHistoryCount"] == 1, (
+              "synthetic checkpoint rollout was not read completely"
+          )
+          assert report["partialHistoryCount"] == 0, (
+              "synthetic checkpoint rollout was treated as partial"
+          )
           assert report["privacy"] == {
               "includesTaskIdentifiers": False,
               "includesTitlesOrMessages": False,
@@ -120,26 +101,36 @@ jobs:
           )
           PY
 
-      - name: Run continuity-store privacy harness
+  intel-runtime:
+    name: Intel runtime
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify exact checked-out revision
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Require native Intel runner
         shell: bash
         run: |
-          store_test_binary="$RUNNER_TEMP/activity-radar-continuity-store-self-test"
-          swiftc -parse-as-library \
-            Sources/ActivityRadar/RadarContinuityStore.swift \
-            scripts/continuity-store-self-test.swift \
-            -o "$store_test_binary"
-          "$store_test_binary"
+          test "$(uname -m)" = "x86_64"
+          swift --version
 
-      - name: Build release product
+      - name: Run deterministic core self-test natively
+        run: swift run ActivityRadarSelfTest
+
+      - name: Require and run standard Swift tests natively
+        shell: bash
+        run: |
+          test_list="$(swift test list)"
+          if ! grep -Fq 'turnLifecycleAndFinalAnswer' <<< "$test_list"; then
+            echo "The Intel runner did not discover the known standard tests."
+            exit 1
+          fi
+          swift test
+
+      - name: Build application natively
         run: swift build -c release --product ActivityRadar
-
-      - name: Package and verify app bundle
-        shell: bash
-        run: |
-          packaged_app="$RUNNER_TEMP/Activity Radar.app"
-          ./scripts/package-app.sh "$packaged_app"
-          test -x "$packaged_app/Contents/MacOS/ActivityRadar"
-          plutil -lint "$packaged_app/Contents/Info.plist"
-          lipo "$packaged_app/Contents/MacOS/ActivityRadar" \
-            -verify_arch arm64 x86_64
-          codesign --verify --deep --strict --verbose=2 "$packaged_app"

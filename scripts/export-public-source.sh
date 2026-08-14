@@ -38,12 +38,12 @@ while IFS= read -r relative_path; do
     exit 2
   fi
   SOURCE="$PROJECT_DIR/$relative_path"
-  if [[ ! -e "$SOURCE" ]]; then
-    print -u2 "Missing public manifest entry: $relative_path"
+  if [[ ! -f "$SOURCE" || -L "$SOURCE" ]]; then
+    print -u2 "Public manifest entry is not a regular non-symlink file: $relative_path"
     exit 3
   fi
   mkdir -p "$STAGE/${relative_path:h}"
-  ditto --noqtn "$SOURCE" "$STAGE/$relative_path"
+  ditto --noqtn --noextattr --norsrc "$SOURCE" "$STAGE/$relative_path"
 done < "$MANIFEST"
 
 if find "$STAGE" -type l | grep -q .; then
@@ -74,31 +74,7 @@ if find "$STAGE" -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) 
   exit 4
 fi
 
-PATH_AND_ID_MATCHES="$(
-  rg -n --hidden \
-    --glob '!Assets/ActivityRadar-Source.png' \
-    --glob '!**/scripts/export-public-source.sh' \
-    --glob '!**/scripts/public-release-check.sh' \
-    '(/Users/[^/]+/|codex://threads/[0-9a-fA-F-]{24,})' \
-    "$STAGE" || true
-)"
-UNSAFE_PATH_AND_ID_MATCHES="$(
-  print -r -- "$PATH_AND_ID_MATCHES" | grep -Ev \
-    '(/Users/(example|private-person|synthetic-user|test-user)/|codex://threads/123e4567-e89b-42d3-a456-426614174000)' || true
-)"
-if [[ -n "$UNSAFE_PATH_AND_ID_MATCHES" ]]; then
-  print -u2 "Public-source privacy scan found a non-synthetic home path or task identifier."
-  exit 5
-fi
-
-if rg -q --hidden \
-  --glob '!Assets/ActivityRadar-Source.png' \
-  --glob '!**/scripts/export-public-source.sh' \
-  '(gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY)' \
-  "$STAGE"; then
-  print -u2 "Public-source privacy scan found a credential pattern."
-  exit 5
-fi
+zsh "$STAGE/scripts/public-privacy-scan.sh" "$STAGE"
 
 mkdir -p "${TARGET:h}"
 mv "$STAGE" "$TARGET"
