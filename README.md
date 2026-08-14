@@ -2,12 +2,14 @@
 
 **Local work continuity for parallel Codex tasks on macOS.**
 
+[![CI](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml)
+
 Activity Radar is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It reads local Codex state in read-only mode, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
 
 [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Contributing](CONTRIBUTING.md)
 
 > [!IMPORTANT]
-> The repository is preparing a source-first public beta. A binary is a supported public download only when its GitHub Release explicitly says it is Developer ID–signed and Apple-notarized and includes `SHA256SUMS` plus `RELEASE-MANIFEST.txt`. Local or CI-built ad-hoc apps are not public releases.
+> [`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) is a source-first public beta. It deliberately contains no installable binary because the current publisher machine has no Developer ID identity or notarization profile. A binary is a supported public download only when its GitHub Release explicitly says it is Developer ID–signed and Apple-notarized and includes `SHA256SUMS` plus `RELEASE-MANIFEST.txt`. Local or CI-built ad-hoc apps are not public releases.
 
 ## Why it exists
 
