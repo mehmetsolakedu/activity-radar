@@ -28,6 +28,7 @@ fail() {
 cd "$PROJECT_DIR"
 
 command -v rg >/dev/null 2>&1 || fail "Required tool not found: rg (ripgrep)"
+command -v sqlite3 >/dev/null 2>&1 || fail "Required tool not found: sqlite3"
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -n "$GIT_ROOT" && "${GIT_ROOT:A}" == "$PROJECT_DIR" ]]; then
@@ -285,10 +286,38 @@ swift build -c release --product ActivityRadar
 swift build -c release --product ActivityRadarDiagnostics
 
 note "Verifying content-free diagnostics"
+DIAGNOSTIC_HOME="$TEMP_ROOT/activity-radar-diagnostic-home"
+DIAGNOSTIC_STATE="$DIAGNOSTIC_HOME/.codex/state_5.sqlite"
+DIAGNOSTIC_ROLLOUT="$DIAGNOSTIC_HOME/PRIVATE-PATH-SENTINEL.jsonl"
 DIAGNOSTIC_JSON="$TEMP_ROOT/diagnostics.json"
-swift run ActivityRadarDiagnostics > "$DIAGNOSTIC_JSON"
+mkdir -p "$DIAGNOSTIC_HOME/.codex"
+printf '%s\n' \
+  '{"timestamp":"2026-01-01T00:00:00Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PRIVATE-CHECKPOINT-SENTINEL"}]}}' \
+  > "$DIAGNOSTIC_ROLLOUT"
+sqlite3 "$DIAGNOSTIC_STATE" <<SQL
+CREATE TABLE threads (
+  id TEXT, title TEXT, preview TEXT, cwd TEXT, rollout_path TEXT,
+  created_at INTEGER, updated_at INTEGER,
+  created_at_ms INTEGER, updated_at_ms INTEGER,
+  archived INTEGER, thread_source TEXT, recency_at_ms INTEGER
+);
+CREATE TABLE thread_spawn_edges (child_thread_id TEXT);
+INSERT INTO threads VALUES (
+  'PRIVATE-RAW-ID-SENTINEL',
+  'PRIVATE-TITLE-SENTINEL',
+  'PRIVATE-PREVIEW-SENTINEL',
+  '$DIAGNOSTIC_HOME/PRIVATE-WORKSPACE-SENTINEL',
+  '$DIAGNOSTIC_ROLLOUT',
+  1767225600, 1767225600, 1767225600000, 1767225600000,
+  0, 'user', 1767225600000
+);
+SQL
+CFFIXED_USER_HOME="$DIAGNOSTIC_HOME" swift run ActivityRadarDiagnostics > "$DIAGNOSTIC_JSON"
 plutil -convert xml1 -o "$TEMP_ROOT/diagnostics.plist" "$DIAGNOSTIC_JSON" \
   || fail "Diagnostics did not emit valid JSON"
+DIAGNOSTIC_ITEM_COUNT="$(plutil -extract itemCount raw -o - "$DIAGNOSTIC_JSON")"
+[[ "$DIAGNOSTIC_ITEM_COUNT" == "1" ]] \
+  || fail "Diagnostics did not read the isolated synthetic state fixture"
 for key in \
   includesTaskIdentifiers \
   includesTitlesOrMessages \
@@ -301,6 +330,9 @@ PRIVATE_HOME_PREFIX='/'"Users/"
 TASK_LINK_PREFIX='codex://threads/'
 if rg -q "(${PRIVATE_HOME_PREFIX}|${TASK_LINK_PREFIX}|\"title\"[[:space:]]*:|\"cwd\"[[:space:]]*:|\"checkpoint\"[[:space:]]*:|\"id\"[[:space:]]*:)" "$DIAGNOSTIC_JSON"; then
   fail "Content-free diagnostics exposed a forbidden task-level field"
+fi
+if rg -q 'PRIVATE-' "$DIAGNOSTIC_JSON"; then
+  fail "Content-free diagnostics exposed synthetic private content"
 fi
 
 note "Rejecting network-capable application source"
