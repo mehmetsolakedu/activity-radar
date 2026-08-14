@@ -292,9 +292,10 @@ DIAGNOSTIC_ROLLOUT="$DIAGNOSTIC_HOME/PRIVATE-PATH-SENTINEL.jsonl"
 DIAGNOSTIC_JSON="$TEMP_ROOT/diagnostics.json"
 mkdir -p "$DIAGNOSTIC_HOME/.codex"
 printf '%s\n' \
-  '{"timestamp":"2026-01-01T00:00:00Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PRIVATE-CHECKPOINT-SENTINEL"}]}}' \
+  '{"timestamp":"2026-01-01T00:00:00Z","type":"event_msg","payload":{"type":"agent_message","phase":"final_answer","message":"PRIVATE-CHECKPOINT-SENTINEL"}}' \
+  '{"timestamp":"2026-01-01T00:00:01Z","type":"response_item","payload":{"type":"function_call","name":"request_user_input","call_id":"PRIVATE-CALL-ID-SENTINEL"}}' \
   > "$DIAGNOSTIC_ROLLOUT"
-sqlite3 "$DIAGNOSTIC_STATE" <<SQL
+sqlite3 -batch -bail "$DIAGNOSTIC_STATE" <<SQL
 CREATE TABLE threads (
   id TEXT, title TEXT, preview TEXT, cwd TEXT, rollout_path TEXT,
   created_at INTEGER, updated_at INTEGER,
@@ -302,7 +303,11 @@ CREATE TABLE threads (
   archived INTEGER, thread_source TEXT, recency_at_ms INTEGER
 );
 CREATE TABLE thread_spawn_edges (child_thread_id TEXT);
-INSERT INTO threads VALUES (
+INSERT INTO threads (
+  id, title, preview, cwd, rollout_path,
+  created_at, updated_at, created_at_ms, updated_at_ms,
+  archived, thread_source, recency_at_ms
+) VALUES (
   'PRIVATE-RAW-ID-SENTINEL',
   'PRIVATE-TITLE-SENTINEL',
   'PRIVATE-PREVIEW-SENTINEL',
@@ -312,27 +317,54 @@ INSERT INTO threads VALUES (
   0, 'user', 1767225600000
 );
 SQL
+DIAGNOSTIC_FIXTURE_COUNT="$(
+  sqlite3 -batch -bail -noheader "$DIAGNOSTIC_STATE" \
+    "SELECT COUNT(*) FROM threads WHERE id = 'PRIVATE-RAW-ID-SENTINEL' AND title = 'PRIVATE-TITLE-SENTINEL' AND cwd = '$DIAGNOSTIC_HOME/PRIVATE-WORKSPACE-SENTINEL';"
+)"
+[[ "$DIAGNOSTIC_FIXTURE_COUNT" == "1" ]] \
+  || fail "Synthetic diagnostic database fixture was not created exactly"
+rg -Fq 'PRIVATE-CHECKPOINT-SENTINEL' "$DIAGNOSTIC_ROLLOUT" \
+  || fail "Synthetic diagnostic checkpoint fixture is missing"
+rg -Fq 'PRIVATE-CALL-ID-SENTINEL' "$DIAGNOSTIC_ROLLOUT" \
+  || fail "Synthetic diagnostic input fixture is missing"
 CFFIXED_USER_HOME="$DIAGNOSTIC_HOME" swift run ActivityRadarDiagnostics > "$DIAGNOSTIC_JSON"
 plutil -convert xml1 -o "$TEMP_ROOT/diagnostics.plist" "$DIAGNOSTIC_JSON" \
   || fail "Diagnostics did not emit valid JSON"
 DIAGNOSTIC_ITEM_COUNT="$(plutil -extract itemCount raw -o - "$DIAGNOSTIC_JSON")"
 [[ "$DIAGNOSTIC_ITEM_COUNT" == "1" ]] \
   || fail "Diagnostics did not read the isolated synthetic state fixture"
+DIAGNOSTIC_INPUT_COUNT="$(
+  plutil -extract attentionReasonCounts.explicitInput raw -o - "$DIAGNOSTIC_JSON"
+)"
+[[ "$DIAGNOSTIC_INPUT_COUNT" == "1" ]] \
+  || fail "Diagnostics did not reduce the synthetic pending-input event"
+DIAGNOSTIC_COMPLETE_COUNT="$(plutil -extract completeHistoryCount raw -o - "$DIAGNOSTIC_JSON")"
+DIAGNOSTIC_PARTIAL_COUNT="$(plutil -extract partialHistoryCount raw -o - "$DIAGNOSTIC_JSON")"
+[[ "$DIAGNOSTIC_COMPLETE_COUNT" == "1" && "$DIAGNOSTIC_PARTIAL_COUNT" == "0" ]] \
+  || fail "Diagnostics did not consume the complete synthetic rollout"
 for key in \
   includesTaskIdentifiers \
   includesTitlesOrMessages \
   includesFilePaths \
   includesCheckpoints; do
-  VALUE="$(plutil -extract "privacy.$key" raw -o - "$DIAGNOSTIC_JSON")"
+  VALUE="$(plutil -extract "privacy.$key" raw -expect bool -o - "$DIAGNOSTIC_JSON")"
   [[ "$VALUE" == "false" ]] || fail "Diagnostic privacy flag $key is not false"
 done
 PRIVATE_HOME_PREFIX='/'"Users/"
 TASK_LINK_PREFIX='codex://threads/'
 if rg -q "(${PRIVATE_HOME_PREFIX}|${TASK_LINK_PREFIX}|\"title\"[[:space:]]*:|\"cwd\"[[:space:]]*:|\"checkpoint\"[[:space:]]*:|\"id\"[[:space:]]*:)" "$DIAGNOSTIC_JSON"; then
   fail "Content-free diagnostics exposed a forbidden task-level field"
+else
+  DIAGNOSTIC_FIELD_SCAN_STATUS=$?
+  [[ "$DIAGNOSTIC_FIELD_SCAN_STATUS" == "1" ]] \
+    || fail "Content-free diagnostic field scan did not complete"
 fi
 if rg -q 'PRIVATE-' "$DIAGNOSTIC_JSON"; then
   fail "Content-free diagnostics exposed synthetic private content"
+else
+  DIAGNOSTIC_SENTINEL_SCAN_STATUS=$?
+  [[ "$DIAGNOSTIC_SENTINEL_SCAN_STATUS" == "1" ]] \
+    || fail "Content-free diagnostic sentinel scan did not complete"
 fi
 
 note "Rejecting network-capable application source"
