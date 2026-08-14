@@ -1,0 +1,94 @@
+name: Bug report
+description: Report a reproducible Activity Radar defect with synthetic or redacted evidence.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Never attach real task transcripts,
+        rollout files, databases, identifiers, or private screenshots. The
+        aggregate ActivityRadarDiagnostics output may be attached only after
+        reviewing it. Follow SECURITY.md for vulnerabilities or any diagnostic
+        privacy-contract violation.
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I replaced all task content, identifiers, account data, and local paths with synthetic values.
+          required: true
+        - label: This report does not disclose an unpatched security or privacy vulnerability.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Task reading and reduction
+        - Work continuity and parking
+        - Triage and abstention
+        - Lifecycle labels
+        - Research ledger
+        - Search and navigation
+        - Packaging and launch
+        - Accessibility or visual behavior
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: Version number or commit identifier
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Include macOS version and CPU architecture only.
+      placeholder: macOS version; Apple silicon or Intel
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Synthetic reproduction
+      description: Provide the smallest deterministic reproduction using synthetic data.
+      placeholder: |
+        1. Start with...
+        2. Perform...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification results
+      description: List the project verification commands run and whether each passed.
+      placeholder: |
+        swift run ActivityRadarSelfTest — PASS or FAIL
+        continuity-store privacy harness — PASS or FAIL
+        release build — PASS or FAIL
+    validations:
+      required: true

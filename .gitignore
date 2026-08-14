@@ -1,0 +1,53 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager and Xcode
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.dSYM/
+*.xcarchive/
+*.profraw
+*.profdata
+.coverage
+
+# Editors and local environment
+.idea/
+.vscode/
+.env
+.env.*
+*.swp
+*~
+
+# Built distribution artifacts
+*.app/
+*.zip
+*.dmg
+*.tar.gz
+dist/
+SHA256SUMS
+RELEASE-MANIFEST.txt
+
+# Activity Radar local state and privacy-sensitive fixtures
+continuity-v1.json
+research-ledger-v1.json
+pseudonym-salt-v1.bin
+local-data/
+private-fixtures/
+**/state_*.sqlite
+**/goals_*.sqlite
+**/session_index.jsonl
+**/*.sqlite-wal
+**/*.sqlite-shm
+
+# Local verification captures; publish only reviewed synthetic media
+/audit-*/
+/native-*.png
+/native-*.jpg
+/native-*.jpeg
+/design-qa.md
+/VERIFICATION.md

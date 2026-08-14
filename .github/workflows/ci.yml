@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: macOS verification
+    runs-on: macos-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show Swift toolchain
+        run: swift --version
+
+      - name: Reject obvious private home paths
+        shell: bash
+        run: |
+          home_path_matches="$(git grep -nI -E \
+            '/(Users|home)/[A-Za-z0-9._-]+' -- . \
+            ':!scripts/export-public-source.sh' \
+            ':!scripts/public-release-check.sh' \
+            ':!.github/workflows/ci.yml' || true)"
+          unsafe_home_path_matches="$(printf '%s\n' "$home_path_matches" | grep -Ev \
+            '/(Users|home)/(example|private-person|synthetic-user|test-user)/' || true)"
+          if [[ -n "$unsafe_home_path_matches" ]]; then
+            echo "A public source or community file contains an absolute user-home path."
+            exit 1
+          fi
+
+      - name: Reject network API additions in app source
+        shell: bash
+        run: |
+          if git grep -qI -E \
+            -e 'URLSession' \
+            -e 'URLRequest' \
+            -e 'NWConnection' \
+            -e 'WebSocket' \
+            -e 'wss?://' \
+            -- Sources; then
+            echo "Network-capable source requires an explicit privacy-contract review."
+            exit 1
+          fi
+
+      - name: Run deterministic core self-test
+        run: swift run ActivityRadarSelfTest
+
+      - name: Require and run standard Swift tests
+        shell: bash
+        run: |
+          test_list="$(swift test list)"
+          if ! grep -Fq 'turnLifecycleAndFinalAnswer' <<< "$test_list"; then
+            echo "The full Xcode runner did not discover the known standard tests."
+            exit 1
+          fi
+          swift test
+
+      - name: Assert diagnostics are content-free
+        shell: bash
+        run: |
+          diagnostic_home="$RUNNER_TEMP/activity-radar-diagnostic-home"
+          diagnostic_state="$diagnostic_home/.codex/state_5.sqlite"
+          diagnostic_rollout="$diagnostic_home/PRIVATE-PATH-SENTINEL.jsonl"
+          mkdir -p "$diagnostic_home/.codex"
+          printf '%s\n' \
+            '{"timestamp":"2026-01-01T00:00:00Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PRIVATE-CHECKPOINT-SENTINEL"}]}}' \
+            > "$diagnostic_rollout"
+          sqlite3 "$diagnostic_state" <<SQL
+          CREATE TABLE threads (
+            id TEXT, title TEXT, preview TEXT, cwd TEXT, rollout_path TEXT,
+            created_at INTEGER, updated_at INTEGER,
+            created_at_ms INTEGER, updated_at_ms INTEGER,
+            archived INTEGER, thread_source TEXT, recency_at_ms INTEGER
+          );
+          CREATE TABLE thread_spawn_edges (child_thread_id TEXT);
+          INSERT INTO threads VALUES (
+            'PRIVATE-RAW-ID-SENTINEL',
+            'PRIVATE-TITLE-SENTINEL',
+            'PRIVATE-PREVIEW-SENTINEL',
+            '$diagnostic_home/PRIVATE-WORKSPACE-SENTINEL',
+            '$diagnostic_rollout',
+            1767225600, 1767225600, 1767225600000, 1767225600000,
+            0, 'user', 1767225600000
+          );
+          SQL
+          diagnostic_output="$(
+            CFFIXED_USER_HOME="$diagnostic_home" swift run ActivityRadarDiagnostics
+          )"
+          DIAGNOSTIC_OUTPUT="$diagnostic_output" python3 - <<'PY'
+          import json
+          import os
+
+          report = json.loads(os.environ["DIAGNOSTIC_OUTPUT"])
+          expected_keys = {
+              "schemaVersion", "generatedAt", "itemCount", "hasMore",
+              "executionStateCounts", "attentionReasonCounts",
+              "goalStatusCounts", "completeHistoryCount",
+              "partialHistoryCount", "privacy",
+          }
+          assert set(report) == expected_keys, "diagnostic top-level schema changed"
+          assert report["itemCount"] == 1, "synthetic diagnostic fixture was not read"
+          assert report["privacy"] == {
+              "includesTaskIdentifiers": False,
+              "includesTitlesOrMessages": False,
+              "includesFilePaths": False,
+              "includesCheckpoints": False,
+          }, "diagnostic privacy boundary changed"
+          assert "PRIVATE-" not in os.environ["DIAGNOSTIC_OUTPUT"], (
+              "diagnostic output exposed synthetic private content"
+          )
+          PY
+
+      - name: Run continuity-store privacy harness
+        shell: bash
+        run: |
+          store_test_binary="$RUNNER_TEMP/activity-radar-continuity-store-self-test"
+          swiftc -parse-as-library \
+            Sources/ActivityRadar/RadarContinuityStore.swift \
+            scripts/continuity-store-self-test.swift \
+            -o "$store_test_binary"
+          "$store_test_binary"
+
+      - name: Build release product
+        run: swift build -c release --product ActivityRadar
+
+      - name: Package and verify app bundle
+        shell: bash
+        run: |
+          packaged_app="$RUNNER_TEMP/Activity Radar.app"
+          ./scripts/package-app.sh "$packaged_app"
+          test -x "$packaged_app/Contents/MacOS/ActivityRadar"
+          plutil -lint "$packaged_app/Contents/Info.plist"
+          lipo "$packaged_app/Contents/MacOS/ActivityRadar" \
+            -verify_arch arm64 x86_64
+          codesign --verify --deep --strict --verbose=2 "$packaged_app"

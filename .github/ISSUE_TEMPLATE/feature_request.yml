@@ -1,0 +1,63 @@
+name: Feature request
+description: Propose a bounded, privacy-preserving improvement.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem before the proposed interface. Activity Radar
+        prioritizes local processing, explicit user intent, explainable signals,
+        and honest claim boundaries.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What recurring problem does this solve, and for whom?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Smallest useful change
+      description: Describe the minimum feature that would address the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Observable acceptance evidence
+      description: How could the behavior be verified without claiming user effectiveness?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data
+    attributes:
+      label: New data access
+      options:
+        - None
+        - New local Activity Radar metadata
+        - Additional read-only Codex state
+        - Exported user-controlled data
+        - Network or third-party service
+    validations:
+      required: true
+
+  - type: textarea
+    id: safety
+    attributes:
+      label: Privacy, safety, and abstention impact
+      description: Explain storage, transmission, user-control, lifecycle, and uncertainty effects.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and non-goals
+      description: What simpler approach was considered, and what remains out of scope?
+    validations:
+      required: true
