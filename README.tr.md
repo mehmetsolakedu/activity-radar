@@ -2,6 +2,8 @@
 
 Activity Radar, paralel Codex görevleri arasında doğru işe geri dönmeyi kolaylaştıran yerel ve native bir macOS menü çubuğu uygulamasıdır. Codex’in `~/.codex` altındaki yerel kayıtlarını salt okunur inceler; OpenAI API anahtarı, Activity Radar hesabı veya bulut servisi kullanmaz.
 
+[`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) kaynak-öncelikli public betadır. Mevcut yayıncı Mac’te Developer ID kimliği ve noter profili bulunmadığı için bu sürüm bilinçli olarak kurulabilir binary içermez; kaynak kod indirilebilir, incelenebilir ve derlenebilir.
+
 ## Temel özellikler
 
 - Kullanıcıya ait üst seviye Codex görevlerini tek yerde gösterir.
