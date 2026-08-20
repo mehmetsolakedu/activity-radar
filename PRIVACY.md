@@ -41,6 +41,18 @@ The ledger is limited to 90 days or 10,000 events. Export is manual and requires
 
 `swift run ActivityRadarDiagnostics` emits aggregate compatibility counts only. It excludes task identifiers, titles, messages, paths, and checkpoints. Do not attach files from `~/.codex` to a public issue.
 
+The status menu's **Destek Bilgisini Kopyala** action is also content-free. It
+contains only the app version/build, an allowlisted release tag, the first 12
+hex characters of the packaged source revision, the running architecture, and
+the macOS version/build. Unexpected or content-bearing bundle metadata is
+replaced with a neutral “atanmamış” or “bilinmiyor” value. It never includes a
+task identifier, title, prompt, message, path, checkpoint, or next action.
+
+Clean-machine release acceptance is a separate public JSON asset with a closed
+schema. It contains the public repository, tag, release ID, DMG name/digest,
+architecture, macOS version/build, UTC test time, and fixed boolean outcomes.
+There is no tester, device, user, path, note, or free-text field.
+
 ## Permissions and sandboxing
 
 The direct-download build is intentionally not App Sandbox–restricted because it must read the hidden `~/.codex` directory. This access is read-only. The app does not request Full Disk Access, Contacts, Calendar, Photos, microphone, camera, or location.

@@ -2,7 +2,9 @@
 
 Activity Radar, paralel Codex görevleri arasında doğru işe geri dönmeyi kolaylaştıran yerel ve native bir macOS menü çubuğu uygulamasıdır. Codex’in `~/.codex` altındaki yerel kayıtlarını salt okunur inceler; OpenAI API anahtarı, Activity Radar hesabı veya bulut servisi kullanmaz.
 
-[`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) kaynak-öncelikli public betadır. Mevcut yayıncı Mac’te Developer ID kimliği ve noter profili bulunmadığı için bu sürüm bilinçli olarak kurulabilir binary içermez; kaynak kod indirilebilir, incelenebilir ve derlenebilir.
+[Kurulum](INSTALL.tr.md) · [English installation](INSTALL.md) · [Gizlilik](PRIVACY.md) · [Katkı](CONTRIBUTING.md)
+
+[`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) kaynak-öncelikli public betadır. Mevcut yayıncı Mac’te Developer ID kimliği ve noter profili bulunmadığı için bu sürüm bilinçli olarak kurulabilir binary içermez; kaynak kod indirilebilir, incelenebilir ve derlenebilir. Desteklenen bir binary ancak release sayfası Developer ID imzasını ve Apple noterini açıkça belirtiyor ve DMG, ZIP, `SHA256SUMS`, `RELEASE-MANIFEST.txt` ile sürüme bağlı temiz-makine kabul kaydını birlikte taşıyorsa kurulabilir sürümdür.
 
 ## Temel özellikler
 
@@ -22,6 +24,8 @@ Activity Radar, paralel Codex görevleri arasında doğru işe geri dönmeyi kol
 - Kaynaktan derleme için güncel Xcode ya da uyumlu Swift araç zinciri.
 
 İmzalı ve Apple tarafından noterlenmiş bir binary yayımlanmadan önce GitHub’daki kaynak paketini “çift tıkla kurulum” sürümü olarak değerlendirmeyin. Güncel dağıtım durumu ana [README](README.md) ve release notlarında açıkça belirtilir.
+
+İmzalı bir sürüm yayımlandığında checksum, Gatekeeper, ilk açılış, güncelleme ve kaldırma adımlarını [Türkçe kurulum kılavuzundan](INSTALL.tr.md) izleyin.
 
 ## Yerel doğrulama
 

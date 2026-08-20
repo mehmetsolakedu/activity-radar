@@ -47,6 +47,9 @@ public enum ActivityRadarSelfTests {
         try checkPublicErrorsHideHomeDirectory()
         passed.append("public errors hide local home paths")
 
+        try checkSupportInformationPrivacy()
+        passed.append("content-free support information")
+
         return passed
     }
 
@@ -555,6 +558,61 @@ public enum ActivityRadarSelfTests {
             let macOSHomePrefix = "/" + "Users/"
             try require(!description.contains(macOSHomePrefix), "public error exposed an absolute home path")
             try require(description.contains("~/.codex/state_5.sqlite"), "public error hid the actionable Codex location")
+        }
+    }
+
+    private static func checkSupportInformationPrivacy() throws {
+        let revision = "3454b66ec5758dd334aef4167397a49a5aa56eea"
+        let release = ActivityRadarSupportInformation(
+            applicationVersion: "1.2.0",
+            buildNumber: "4",
+            releaseTag: "v1.2.0-beta.2",
+            sourceRevision: revision,
+            architecture: "arm64",
+            operatingSystemVersion: "Version 13.7.8 (Build 22H730)"
+        )
+        try require(
+            release.formattedText.contains("Kaynak revizyonu: 3454b66ec575"),
+            "support information did not expose the short source revision"
+        )
+        try require(
+            !release.formattedText.contains(revision),
+            "support information exposed the full source revision"
+        )
+        try require(
+            release.aboutText.contains("Bağımsız bir topluluk projesidir.")
+                && release.aboutText.contains("Resmi bir OpenAI ürünü değildir.")
+                && release.aboutText.contains("PRIVACY.md")
+                && release.aboutText.contains("SUPPORT.md"),
+            "About text omitted the fixed product-identity or document boundary"
+        )
+        try require(
+            !release.formattedText.contains("OpenAI")
+                && !release.formattedText.contains("PRIVACY.md")
+                && !release.formattedText.contains("SUPPORT.md"),
+            "copied support information unexpectedly included About-only text"
+        )
+
+        let unexpected = ActivityRadarSupportInformation(
+            applicationVersion: "1.2.0\nprivate-task-title",
+            buildNumber: "4 /Users/private-person/private",
+            releaseTag: "private-task-title",
+            sourceRevision: "thread-id-checkpoint",
+            architecture: "arm64; /Users/private-person/private",
+            operatingSystemVersion: "private task title"
+        )
+        for output in [unexpected.formattedText, unexpected.aboutText] {
+            for forbidden in [
+                "private-task-title",
+                "/Users/private-person/private",
+                "thread-id-checkpoint",
+                "private task title"
+            ] {
+                try require(
+                    !output.contains(forbidden),
+                    "support or About information accepted content-bearing metadata"
+                )
+            }
         }
     }
 

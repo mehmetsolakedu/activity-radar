@@ -2,9 +2,10 @@
 set -euo pipefail
 
 # Verify an already signed/notarized release directory and upload its exact
-# public files to a new draft GitHub Release. With two explicit finalization
-# flags it can re-run every gate and publish that exact draft after clean-machine
-# acceptance. This script never receives or exports signing credentials.
+# public files to a new draft GitHub Release. In explicit finalization mode it
+# requires a release-bound, content-free clean-machine acceptance record, then
+# re-runs every gate and publishes that exact draft. This script never receives
+# or exports signing credentials.
 
 umask 022
 export GIT_NO_REPLACE_OBJECTS=1
@@ -14,11 +15,11 @@ PROJECT_DIR="${SCRIPT_DIR:h}"
 TAG=""
 RELEASE_DIR=""
 NOTES_FILE=""
+ACCEPTANCE_FILE=""
 REPOSITORY=""
 TITLE=""
 EXPECTED_TEAM_ID="${DEVELOPER_TEAM_ID:-}"
 FINALIZE_EXISTING=0
-CLEAN_MACHINE_CONFIRMED=0
 
 usage() {
   cat <<'USAGE'
@@ -29,12 +30,15 @@ Usage:
     --release-dir ./dist/Activity-Radar-1.2.0-beta.2-macOS-universal2 \
     --notes-file /absolute/path/to/release-notes.md \
     [--repo owner/repository] [--title "Release title"] \
-    [--finalize-existing-draft --confirm-clean-machine-tests]
+    [--finalize-existing-draft \
+      --acceptance-file /absolute/path/to/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json]
 
 The command re-verifies the exact tag, source commit, successful CI, app/DMG
 signatures, stapled tickets, Gatekeeper assessments, ZIP/DMG integrity, and
 SHA256SUMS before creating a draft release. Finalization is a separate explicit
-mode that re-verifies the same local snapshot and remote draft before publish.
+mode that requires a content-free clean-machine acceptance record, re-verifies
+the same local snapshot and remote draft, uploads that record as the fifth
+asset, and only then publishes.
 USAGE
 }
 
@@ -99,6 +103,85 @@ release_id_for_tag() {
     --repo "$REPOSITORY" \
     --json databaseId \
     --jq .databaseId
+}
+
+require_remote_asset_names() {
+  local include_acceptance="$1"
+  local expected_names actual_names
+  expected_names="$(
+    print -r -- "$ZIP_NAME"
+    print -r -- "$DMG_NAME"
+    print -r -- "SHA256SUMS"
+    print -r -- "RELEASE-MANIFEST.txt"
+    if (( include_acceptance )); then
+      print -r -- "$ACCEPTANCE_NAME"
+    fi
+  )"
+  expected_names="$(print -r -- "$expected_names" | LC_ALL=C sort)"
+  actual_names="$(
+    gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
+      --jq '.assets[].name' \
+      | LC_ALL=C sort
+  )"
+  [[ "$actual_names" == "$expected_names" ]] \
+    || fail "GitHub Release asset names do not match the exact public set"
+}
+
+require_remote_asset_digest() {
+  local asset_name="$1"
+  local expected_digest="$2"
+  local remote_digest
+  remote_digest="$(
+    gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
+      --jq ".assets[] | select(.name == \"$asset_name\") | .digest"
+  )"
+  [[ "$remote_digest" == "$expected_digest" ]] \
+    || fail "GitHub asset digest mismatch: $asset_name"
+}
+
+require_remote_core_asset_digests() {
+  require_remote_asset_digest "$ZIP_NAME" "$VERIFIED_ZIP_DIGEST"
+  require_remote_asset_digest "$DMG_NAME" "$VERIFIED_DMG_DIGEST"
+  require_remote_asset_digest "SHA256SUMS" "$VERIFIED_CHECKSUMS_DIGEST"
+  require_remote_asset_digest "RELEASE-MANIFEST.txt" "$VERIFIED_MANIFEST_DIGEST"
+}
+
+fail_acceptance_asset_recovery() {
+  local reason="$1"
+  print -u2 -- "ERROR: $reason"
+  if (( ${ALREADY_PUBLISHED:-0} )); then
+    print -u2 -- "The release is already immutable; do not try to replace or delete an asset. Publish a corrected new tag."
+  else
+    print -u2 -- "The draft was not published. First rerun the same finalization command; it accepts only the exact verified digest."
+    print -u2 -- "If the retry reports the same incomplete or mismatched asset, inspect draft release ID $REMOTE_RELEASE_ID,"
+    print -u2 -- "confirm that it is still a draft for $TAG, then manually delete only $ACCEPTANCE_NAME and rerun."
+    print -u2 -- "Never use --clobber. This publisher does not delete release assets automatically."
+  fi
+  exit 1
+}
+
+require_remote_acceptance_asset() {
+  local asset_gate asset_state asset_size asset_digest
+  asset_gate="$(
+    gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
+      --jq ".assets[] | select(.name == \"$ACCEPTANCE_NAME\") | [.state, (.size | tostring), (.digest // \"\")] | @tsv"
+  )"
+  asset_state="$(print -r -- "$asset_gate" | awk -F '\t' '{print $1}')"
+  asset_size="$(print -r -- "$asset_gate" | awk -F '\t' '{print $2}')"
+  asset_digest="$(print -r -- "$asset_gate" | awk -F '\t' '{print $3}')"
+  [[ "$asset_state" == "uploaded" ]] \
+    || fail_acceptance_asset_recovery "Clean-machine acceptance asset is missing or incomplete (state: ${asset_state:-unavailable})"
+  [[ "$asset_size" == "$VERIFIED_ACCEPTANCE_SIZE" ]] \
+    || fail_acceptance_asset_recovery "Clean-machine acceptance asset size does not match the frozen local record"
+  [[ "$asset_digest" == "$VERIFIED_ACCEPTANCE_DIGEST" ]] \
+    || fail_acceptance_asset_recovery "Clean-machine acceptance asset digest does not match the frozen local record"
+}
+
+require_frozen_release_notes() {
+  [[ "sha256:$(shasum -a 256 "$NOTES_FILE" | awk '{print $1}')" == "$VERIFIED_NOTES_DIGEST" ]] \
+    || fail "Frozen release notes changed during verification"
+  [[ "$(<"$NOTES_FILE")" == "$EXPECTED_RELEASE_BODY" ]] \
+    || fail "Frozen release-notes body changed during verification"
 }
 
 verify_public_metadata_policy() {
@@ -241,6 +324,11 @@ while (( $# > 0 )); do
       NOTES_FILE="$2"
       shift 2
       ;;
+    --acceptance-file)
+      (( $# >= 2 )) || fail "--acceptance-file requires a path"
+      ACCEPTANCE_FILE="$2"
+      shift 2
+      ;;
     --repo)
       (( $# >= 2 )) || fail "--repo requires owner/repository"
       REPOSITORY="$2"
@@ -253,10 +341,6 @@ while (( $# > 0 )); do
       ;;
     --finalize-existing-draft)
       FINALIZE_EXISTING=1
-      shift
-      ;;
-    --confirm-clean-machine-tests)
-      CLEAN_MACHINE_CONFIRMED=1
       shift
       ;;
     -h|--help)
@@ -274,10 +358,10 @@ done
 [[ -n "$RELEASE_DIR" ]] || fail "--release-dir is required"
 [[ -n "$NOTES_FILE" ]] || fail "--notes-file is required"
 if (( FINALIZE_EXISTING )); then
-  (( CLEAN_MACHINE_CONFIRMED )) \
-    || fail "Finalization requires --confirm-clean-machine-tests"
-elif (( CLEAN_MACHINE_CONFIRMED )); then
-  fail "--confirm-clean-machine-tests is valid only with --finalize-existing-draft"
+  [[ -n "$ACCEPTANCE_FILE" ]] \
+    || fail "Finalization requires --acceptance-file"
+elif [[ -n "$ACCEPTANCE_FILE" ]]; then
+  fail "--acceptance-file is valid only with --finalize-existing-draft"
 fi
 [[ "$TAG" == v* ]] || fail "Release tag must begin with v"
 print -r -- "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' \
@@ -289,7 +373,7 @@ if [[ -n "$REPOSITORY" ]]; then
     || fail "Unsafe GitHub repository name: $REPOSITORY"
 fi
 
-for tool in git gh rg plutil shasum unzip ditto codesign lipo vtool hdiutil diskutil spctl xcrun mktemp grep sed awk wc tr rm find diff readlink stat sort uniq swift zip cmp xattr ls; do
+for tool in git gh rg plutil shasum unzip ditto codesign lipo vtool hdiutil diskutil spctl xcrun mktemp grep sed awk wc tr rm find diff readlink stat sort uniq swift zip cmp xattr ls date; do
   need_tool "$tool"
 done
 xcrun --find stapler >/dev/null 2>&1 || fail "stapler is unavailable"
@@ -462,6 +546,16 @@ NOTES_FILE="${NOTES_FILE:A}"
 
 ZIP_NAME="$EXPECTED_DIR_NAME.zip"
 DMG_NAME="$EXPECTED_DIR_NAME.dmg"
+ACCEPTANCE_NAME="Activity-Radar-${RELEASE_LABEL}-CLEAN-MACHINE-ACCEPTANCE.json"
+if (( FINALIZE_EXISTING )); then
+  ACCEPTANCE_FILE="${ACCEPTANCE_FILE:A}"
+  [[ -f "$ACCEPTANCE_FILE" && -s "$ACCEPTANCE_FILE" && ! -L "$ACCEPTANCE_FILE" ]] \
+    || fail "Clean-machine acceptance file is missing, empty, or is a symlink"
+  [[ "${ACCEPTANCE_FILE:t}" == "$ACCEPTANCE_NAME" ]] \
+    || fail "Clean-machine acceptance file must be named $ACCEPTANCE_NAME"
+  (( $(stat -f %z "$ACCEPTANCE_FILE") <= 65536 )) \
+    || fail "Clean-machine acceptance file exceeds 64 KiB"
+fi
 ORIGINAL_APP="$RELEASE_DIR/Activity Radar.app"
 ORIGINAL_ZIP="$RELEASE_DIR/$ZIP_NAME"
 ORIGINAL_DMG="$RELEASE_DIR/$DMG_NAME"
@@ -503,6 +597,9 @@ ditto --noqtn --noextattr --norsrc "$ORIGINAL_DMG" "$SNAPSHOT_DIR/$DMG_NAME"
 ditto --noqtn --noextattr --norsrc "$ORIGINAL_CHECKSUMS" "$SNAPSHOT_DIR/SHA256SUMS"
 ditto --noqtn --noextattr --norsrc "$ORIGINAL_MANIFEST" "$SNAPSHOT_DIR/RELEASE-MANIFEST.txt"
 ditto --noqtn --noextattr --norsrc "$NOTES_FILE" "$SNAPSHOT_DIR/release-notes.md"
+if (( FINALIZE_EXISTING )); then
+  ditto --noqtn --noextattr --norsrc "$ACCEPTANCE_FILE" "$SNAPSHOT_DIR/$ACCEPTANCE_NAME"
+fi
 print -rn -- "$TITLE" > "$SNAPSHOT_DIR/release-title.txt"
 CANONICAL_ZIP="$VERIFY_ROOT/canonical-$ZIP_NAME"
 (
@@ -519,6 +616,22 @@ DMG="$SNAPSHOT_DIR/$DMG_NAME"
 CHECKSUMS="$SNAPSHOT_DIR/SHA256SUMS"
 MANIFEST="$SNAPSHOT_DIR/RELEASE-MANIFEST.txt"
 NOTES_FILE="$SNAPSHOT_DIR/release-notes.md"
+ACCEPTANCE=""
+if (( FINALIZE_EXISTING )); then
+  ACCEPTANCE="$SNAPSHOT_DIR/$ACCEPTANCE_NAME"
+fi
+swift scripts/release-notes-check.swift \
+  "$NOTES_FILE" \
+  "$REPOSITORY" \
+  "$TAG" \
+  "$ZIP_NAME" \
+  "$DMG_NAME" \
+  "$ACCEPTANCE_NAME" \
+  || fail "Frozen release notes do not satisfy the installable-public-beta contract"
+EXPECTED_RELEASE_BODY="$(<"$NOTES_FILE")"
+VERIFIED_NOTES_DIGEST="sha256:$(shasum -a 256 "$NOTES_FILE" | awk '{print $1}')"
+chmod a-w "$NOTES_FILE"
+require_frozen_release_notes
 
 EXPECTED_INFO_PLIST="$VERIFY_ROOT/expected-info.plist"
 EXPECTED_ENTITLEMENTS="$VERIFY_ROOT/expected-entitlements.plist"
@@ -673,8 +786,16 @@ VERIFIED_ZIP_DIGEST="sha256:$(shasum -a 256 "$ZIP" | awk '{print $1}')"
 VERIFIED_DMG_DIGEST="sha256:$(shasum -a 256 "$DMG" | awk '{print $1}')"
 VERIFIED_CHECKSUMS_DIGEST="sha256:$(shasum -a 256 "$CHECKSUMS" | awk '{print $1}')"
 VERIFIED_MANIFEST_DIGEST="sha256:$(shasum -a 256 "$MANIFEST" | awk '{print $1}')"
-EXPECTED_RELEASE_BODY="$(<"$NOTES_FILE")"
-chmod a-w "$ZIP" "$DMG" "$CHECKSUMS" "$MANIFEST" "$NOTES_FILE" "$SNAPSHOT_DIR/release-title.txt"
+VERIFIED_ACCEPTANCE_DIGEST=""
+VERIFIED_ACCEPTANCE_SIZE=""
+if (( FINALIZE_EXISTING )); then
+  VERIFIED_ACCEPTANCE_DIGEST="sha256:$(shasum -a 256 "$ACCEPTANCE" | awk '{print $1}')"
+  VERIFIED_ACCEPTANCE_SIZE="$(stat -f %z "$ACCEPTANCE")"
+fi
+chmod a-w "$ZIP" "$DMG" "$CHECKSUMS" "$MANIFEST" "$SNAPSHOT_DIR/release-title.txt"
+if (( FINALIZE_EXISTING )); then
+  chmod a-w "$ACCEPTANCE"
+fi
 
 RELEASE_EXISTS=0
 if gh release view "$TAG" --repo "$REPOSITORY" >/dev/null 2>&1; then
@@ -692,6 +813,7 @@ if [[ "$RELEASE_LABEL" == *-* ]]; then
 fi
 
 require_exact_source_checkout
+require_frozen_release_notes
 [[ "$(remote_tag_revision)" == "$SOURCE_REVISION" ]] \
   || fail "Remote release tag changed before the release operation"
 
@@ -718,48 +840,115 @@ fi
 REMOTE_RELEASE_ID="$(release_id_for_tag)"
 print -r -- "$REMOTE_RELEASE_ID" | grep -Eq '^[0-9]+$' \
   || fail "GitHub did not return a stable numeric release ID"
-[[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq .tag_name)" == "$TAG" ]] \
-  || fail "GitHub release ID does not belong to the verified tag"
-RELEASE_URL="$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq .html_url)"
+REMOTE_RELEASE_RECORD="$(
+  gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
+    --jq '[(.id | tostring), .tag_name, .created_at, .html_url] | @tsv'
+)"
+REMOTE_RECORD_ID="$(print -r -- "$REMOTE_RELEASE_RECORD" | awk -F '\t' '{print $1}')"
+REMOTE_RECORD_TAG="$(print -r -- "$REMOTE_RELEASE_RECORD" | awk -F '\t' '{print $2}')"
+RELEASE_CREATED_AT="$(print -r -- "$REMOTE_RELEASE_RECORD" | awk -F '\t' '{print $3}')"
+RELEASE_URL="$(print -r -- "$REMOTE_RELEASE_RECORD" | awk -F '\t' '{print $4}')"
+[[ "$REMOTE_RECORD_ID" == "$REMOTE_RELEASE_ID" && "$REMOTE_RECORD_TAG" == "$TAG" ]] \
+  || fail "GitHub numeric release record does not belong to the verified tag"
+print -r -- "$RELEASE_CREATED_AT" | grep -Eq \
+  '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$' \
+  || fail "GitHub release created_at is not canonical UTC with whole seconds"
+[[ "$(
+  LC_ALL=C date -j -u \
+    -f '%Y-%m-%dT%H:%M:%SZ' \
+    "$RELEASE_CREATED_AT" \
+    '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || true
+)" == "$RELEASE_CREATED_AT" ]] \
+  || fail "GitHub release created_at is not a valid canonical UTC timestamp"
 [[ -n "$RELEASE_URL" ]] || fail "GitHub did not return a release URL"
 
 EXPECTED_PRERELEASE=false
 [[ "$RELEASE_LABEL" == *-* ]] && EXPECTED_PRERELEASE=true
 REMOTE_RELEASE_GATE="$(
   gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
-    --jq '[.tag_name, .name, (.draft | tostring), (.prerelease | tostring)] | @tsv'
+    --jq '[.tag_name, .name, (.draft | tostring), (.prerelease | tostring), (.immutable | tostring)] | @tsv'
 )"
-EXPECTED_REMOTE_RELEASE_GATE="${TAG}"$'\t'"${TITLE}"$'\t'"true"$'\t'"${EXPECTED_PRERELEASE}"
-[[ "$REMOTE_RELEASE_GATE" == "$EXPECTED_REMOTE_RELEASE_GATE" ]] \
-  || fail "GitHub Release does not match the expected draft metadata"
+EXPECTED_DRAFT_GATE="${TAG}"$'\t'"${TITLE}"$'\t'"true"$'\t'"${EXPECTED_PRERELEASE}"$'\t'"false"
+EXPECTED_PUBLISHED_GATE="${TAG}"$'\t'"${TITLE}"$'\t'"false"$'\t'"${EXPECTED_PRERELEASE}"$'\t'"true"
+ALREADY_PUBLISHED=0
+if [[ "$REMOTE_RELEASE_GATE" == "$EXPECTED_PUBLISHED_GATE" ]]; then
+  (( FINALIZE_EXISTING )) \
+    || fail "An immutable release already exists for this tag"
+  ALREADY_PUBLISHED=1
+elif [[ "$REMOTE_RELEASE_GATE" != "$EXPECTED_DRAFT_GATE" ]]; then
+  fail "GitHub Release is neither the exact draft nor the exact immutable release"
+fi
 REMOTE_RELEASE_BODY="$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.body // ""')"
 [[ "$REMOTE_RELEASE_BODY" == "$EXPECTED_RELEASE_BODY" ]] \
-  || fail "GitHub draft body does not match the verified release notes"
-[[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.assets | length')" == "4" ]] \
-  || fail "GitHub draft does not contain exactly four release assets"
-for uploaded_file in "$ZIP" "$DMG" "$CHECKSUMS" "$MANIFEST"; do
-  uploaded_name="${uploaded_file:t}"
-  case "$uploaded_name" in
-    "$ZIP_NAME") verified_digest="$VERIFIED_ZIP_DIGEST" ;;
-    "$DMG_NAME") verified_digest="$VERIFIED_DMG_DIGEST" ;;
-    SHA256SUMS) verified_digest="$VERIFIED_CHECKSUMS_DIGEST" ;;
-    RELEASE-MANIFEST.txt) verified_digest="$VERIFIED_MANIFEST_DIGEST" ;;
-    *) fail "Unexpected upload in remote-digest verification" ;;
-  esac
-  remote_digest="$(
-    gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
-      --jq ".assets[] | select(.name == \"$uploaded_name\") | .digest"
-  )"
-  [[ "$remote_digest" == "$verified_digest" ]] \
-    || fail "GitHub asset digest mismatch: $uploaded_name"
-done
+  || fail "GitHub Release body does not match the verified release notes"
 
 if (( FINALIZE_EXISTING )); then
+  swift scripts/clean-machine-acceptance-check.swift \
+    "$ACCEPTANCE" \
+    "$REPOSITORY" \
+    "$TAG" \
+    "$REMOTE_RELEASE_ID" \
+    "$RELEASE_CREATED_AT" \
+    "$DMG_NAME" \
+    "${VERIFIED_DMG_DIGEST#sha256:}" \
+    || fail "Clean-machine acceptance does not match the verified release"
+
+  REMOTE_ASSET_COUNT="$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.assets | length')"
+  if (( ALREADY_PUBLISHED )); then
+    [[ "$REMOTE_ASSET_COUNT" == "5" ]] \
+      || fail "Immutable release does not contain exactly five assets"
+    require_remote_asset_names 1
+    require_remote_core_asset_digests
+    require_remote_acceptance_asset
+    [[ "$(remote_tag_revision)" == "$SOURCE_REVISION" ]] \
+      || fail "Immutable release tag does not resolve to the verified source revision"
+    [[ "$(release_id_for_tag)" == "$REMOTE_RELEASE_ID" ]] \
+      || fail "Immutable tag does not resolve to the verified release ID"
+    print -- "IMMUTABLE RELEASE ALREADY PUBLISHED AND RE-VERIFIED:"
+    print -- "$RELEASE_URL"
+    exit 0
+  fi
+
+  case "$REMOTE_ASSET_COUNT" in
+    4)
+      require_remote_asset_names 0
+      require_remote_core_asset_digests
+      require_exact_source_checkout
+      [[ "$(remote_tag_revision)" == "$SOURCE_REVISION" ]] \
+        || fail "Remote release tag changed before acceptance upload"
+      [[ "$(release_id_for_tag)" == "$REMOTE_RELEASE_ID" ]] \
+        || fail "GitHub tag no longer resolves to the verified draft release ID"
+      note "Uploading the verified content-free clean-machine acceptance record"
+      if ! gh release upload "$TAG" "$ACCEPTANCE" --repo "$REPOSITORY"; then
+        fail_acceptance_asset_recovery "GitHub did not confirm a complete clean-machine acceptance upload"
+      fi
+      ;;
+    5)
+      require_remote_asset_names 1
+      require_remote_core_asset_digests
+      require_remote_acceptance_asset
+      ;;
+    *)
+      fail "GitHub draft must contain the four base assets and at most one acceptance asset"
+      ;;
+  esac
+
   require_exact_source_checkout
   [[ "$(remote_tag_revision)" == "$SOURCE_REVISION" ]] \
     || fail "Remote release tag changed before publication"
   [[ "$(release_id_for_tag)" == "$REMOTE_RELEASE_ID" ]] \
     || fail "GitHub tag no longer resolves to the verified draft release ID"
+  [[ "$(
+    gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
+      --jq '[.tag_name, .name, (.draft | tostring), (.prerelease | tostring), (.immutable | tostring)] | @tsv'
+  )" == "$EXPECTED_DRAFT_GATE" ]] \
+    || fail "GitHub draft metadata changed before publication"
+  [[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.body // ""')" == "$EXPECTED_RELEASE_BODY" ]] \
+    || fail "GitHub draft body changed before publication"
+  require_remote_asset_names 1
+  require_remote_core_asset_digests
+  require_remote_acceptance_asset
+  require_frozen_release_notes
   note "Publishing the fully re-verified draft"
   gh api --method PATCH "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
     -f name="$TITLE" \
@@ -770,7 +959,6 @@ if (( FINALIZE_EXISTING )); then
     gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
       --jq '[.tag_name, .name, (.draft | tostring), (.prerelease | tostring), (.immutable | tostring)] | @tsv'
   )"
-  EXPECTED_PUBLISHED_GATE="${TAG}"$'\t'"${TITLE}"$'\t'"false"$'\t'"${EXPECTED_PRERELEASE}"$'\t'"true"
   [[ "$PUBLISHED_GATE" == "$EXPECTED_PUBLISHED_GATE" ]] \
     || fail "Published release did not become immutable with the expected metadata"
   [[ "$(remote_tag_revision)" == "$SOURCE_REVISION" ]] \
@@ -779,29 +967,19 @@ if (( FINALIZE_EXISTING )); then
     || fail "Immutable tag does not resolve to the published release ID"
   [[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.body // ""')" == "$EXPECTED_RELEASE_BODY" ]] \
     || fail "Immutable release body differs from the verified release notes"
-  [[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.assets | length')" == "4" ]] \
-    || fail "Immutable release does not contain exactly four assets"
-  for uploaded_file in "$ZIP" "$DMG" "$CHECKSUMS" "$MANIFEST"; do
-    uploaded_name="${uploaded_file:t}"
-    case "$uploaded_name" in
-      "$ZIP_NAME") verified_digest="$VERIFIED_ZIP_DIGEST" ;;
-      "$DMG_NAME") verified_digest="$VERIFIED_DMG_DIGEST" ;;
-      SHA256SUMS) verified_digest="$VERIFIED_CHECKSUMS_DIGEST" ;;
-      RELEASE-MANIFEST.txt) verified_digest="$VERIFIED_MANIFEST_DIGEST" ;;
-    esac
-    remote_digest="$(
-      gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" \
-        --jq ".assets[] | select(.name == \"$uploaded_name\") | .digest"
-    )"
-    [[ "$remote_digest" == "$verified_digest" ]] \
-      || fail "Immutable GitHub asset digest mismatch: $uploaded_name"
-  done
+  [[ "$(gh api "repos/$REPOSITORY/releases/$REMOTE_RELEASE_ID" --jq '.assets | length')" == "5" ]] \
+    || fail "Immutable release does not contain exactly five assets"
+  require_remote_asset_names 1
+  require_remote_core_asset_digests
+  require_remote_acceptance_asset
   print -- "IMMUTABLE RELEASE PUBLISHED:"
   print -- "$RELEASE_URL"
 else
+  require_remote_asset_names 0
+  require_remote_core_asset_digests
   print -- "DRAFT RELEASE CREATED (not published):"
   print -- "$RELEASE_URL"
   print -- "Download this draft's DMG on clean Apple Silicon and Intel Macs,"
-  print -- "complete the quarantine/install checklist, then rerun with"
-  print -- "--finalize-existing-draft --confirm-clean-machine-tests."
+  print -- "complete the quarantine/install checklist, fill the canonical acceptance"
+  print -- "JSON, then rerun with --finalize-existing-draft --acceptance-file PATH."
 fi

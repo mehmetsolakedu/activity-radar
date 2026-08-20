@@ -9,13 +9,18 @@ Assets/ActivityRadar-Source.png
 CHANGELOG.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
+INSTALL.md
+INSTALL.tr.md
 LICENSE
 PRIVACY.md
 PUBLIC_SOURCE_MANIFEST.txt
 Package.swift
 Packaging/ActivityRadar.entitlements
+Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json
+Packaging/CLEAN_MACHINE_ACCEPTANCE.template.json
 Packaging/DISTRIBUTION.md
 Packaging/Info.plist
+Packaging/RELEASE_NOTES_TEMPLATE.md
 README.md
 README.tr.md
 SECURITY.md
@@ -32,6 +37,7 @@ Sources/ActivityRadar/VisualEffectView.swift
 Sources/ActivityRadar/main.swift
 Sources/ActivityRadarCore/ActivityAttentionPolicy.swift
 Sources/ActivityRadarCore/ActivityLifecyclePolicy.swift
+Sources/ActivityRadarCore/ActivityRadarSupportInformation.swift
 Sources/ActivityRadarCore/CodexActivityReader.swift
 Sources/ActivityRadarCore/Models.swift
 Sources/ActivityRadarCore/RolloutReducer.swift
@@ -41,10 +47,12 @@ Sources/ActivityRadarCore/WorkContinuity.swift
 Sources/ActivityRadarDiagnostics/main.swift
 Sources/ActivityRadarSelfTest/main.swift
 Tests/ActivityRadarCoreTests/RolloutReducerTests.swift
+Tests/ActivityRadarCoreTests/ActivityRadarSupportInformationTests.swift
 Tests/ActivityRadarCoreTests/WorkContinuityTests.swift
 docs/ARCHITECTURE.md
 docs/CODEX_INTEGRATION.md
 docs/RESEARCH_BOUNDARY.md
+scripts/clean-machine-acceptance-check.swift
 scripts/continuity-store-self-test.swift
 scripts/dmg-topology-check.swift
 scripts/export-public-source.sh
@@ -53,3 +61,4 @@ scripts/package-app.sh
 scripts/publish-github-release.sh
 scripts/public-privacy-scan.sh
 scripts/public-release-check.sh
+scripts/release-notes-check.swift
