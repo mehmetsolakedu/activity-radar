@@ -6,10 +6,10 @@
 
 Activity Radar is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It reads local Codex state in read-only mode, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
 
-[Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Contributing](CONTRIBUTING.md)
+[Install](INSTALL.md) · [Türkçe kurulum](INSTALL.tr.md) · [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Contributing](CONTRIBUTING.md)
 
 > [!IMPORTANT]
-> [`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) is a source-first public beta. It deliberately contains no installable binary because the current publisher machine has no Developer ID identity or notarization profile. A binary is a supported public download only when its GitHub Release explicitly says it is Developer ID–signed and Apple-notarized and includes `SHA256SUMS` plus `RELEASE-MANIFEST.txt`. Local or CI-built ad-hoc apps are not public releases.
+> [`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) is a source-first public beta. It deliberately contains no installable binary because the current publisher machine has no Developer ID identity or notarization profile. A binary is a supported public download only when its GitHub Release explicitly says it is Developer ID–signed and Apple-notarized and includes `SHA256SUMS`, `RELEASE-MANIFEST.txt`, and the versioned clean-machine acceptance record. Local or CI-built ad-hoc apps are not public releases.
 
 ## Why it exists
 
@@ -52,9 +52,14 @@ Activity Radar is an unofficial local integration. Codex may change its local sc
 
 A current Xcode installation or compatible Swift toolchain with the macOS SDK is required.
 
+For a published source release, replace the example tag below with the exact tag shown on that release page. Do not build a release binary from a moving branch.
+
 ```bash
 git clone https://github.com/mehmetsolakedu/activity-radar.git
 cd activity-radar
+RELEASE_TAG=v1.2.0-beta.1
+git switch --detach "$RELEASE_TAG"
+test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
 
 swift run ActivityRadarSelfTest
 
@@ -70,6 +75,8 @@ open "$PWD/Activity Radar.app"
 ```
 
 Local mode builds a Universal 2 application and applies an ad-hoc signature unless a signing identity is explicitly supplied. That is appropriate for development on the machine that built it, not for public binary distribution.
+
+For a supported signed download, follow [INSTALL.md](INSTALL.md). GitHub's automatic source archives and a locally ad-hoc-signed app are not installers.
 
 Activity Radar is an `LSUIElement` menu-bar app, so it does not appear in the
 Dock after launch. Look for its radar icon in the menu bar, or press `⌘⇧K` to
@@ -106,6 +113,8 @@ Public mode requires and verifies:
   for the app and DMG;
 - Gatekeeper assessment, a metadata-free ZIP, a single-volume read-only
   UDZO/GUID/HFS+ DMG, and SHA-256 checksums covering the release manifest.
+- a release-bound, content-free acceptance record for clean arm64 and x86_64
+  installs, including a real macOS 13.x runtime result, before publication.
 
 Credentials are read from a `notarytool` Keychain profile; passwords and API private keys are never accepted on the command line. See [Packaging/DISTRIBUTION.md](Packaging/DISTRIBUTION.md).
 

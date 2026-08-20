@@ -22,6 +22,17 @@ Earlier pre-public development history has not been reconstructed.
   UDZO/GUID/HFS+ DMG topology to the signed app before a draft can be created.
 - CI uses an explicit Apple Silicon image and runs the core contracts and
   standard tests natively on an Intel macOS runner as a separate gate.
+- Installable release notes now have a fail-closed end-user contract, with
+  English and Turkish installation, update, removal, and safe troubleshooting
+  guidance.
+- Final publication now requires a canonical content-free acceptance record
+  bound to the GitHub release ID, creation time, and DMG digest, with clean
+  arm64 and x86_64 results and at least one real macOS 13.x runtime check. The
+  immutable release carries that record as its fifth verified asset.
+- The status menu now shows content-free version/provenance information and can
+  copy a constrained support summary without task identifiers, titles, paths,
+  or authored text. Its About view states that Activity Radar is an independent
+  community project and not an official OpenAI product.
 
 ## [1.2.0-beta.1] - 2026-08-14
 

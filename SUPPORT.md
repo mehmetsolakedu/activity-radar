@@ -34,6 +34,9 @@ Include the macOS version, CPU architecture, Activity Radar version or commit,
 the smallest synthetic reproduction, expected behavior, actual behavior, and
 which checks passed or failed.
 
+For an installed app, **Destek Bilgisini Kopyala** in the status menu provides
+the same safe version/provenance context without task data.
+
 ## Protect private data
 
 `ActivityRadarDiagnostics` emits aggregate compatibility counts and explicit

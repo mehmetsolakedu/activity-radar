@@ -76,9 +76,11 @@ and checkpoints. Review the generated output before attaching it to an issue
 or pull request; if that contract appears to be violated, stop and use the
 private process in [SECURITY.md](SECURITY.md).
 
-The conditional Swift test target may not discover tests on every minimal
-Command Line Tools installation. A successful empty swift test invocation is
-therefore not accepted as a substitute for the executable self-test and store
+The release check first uses normal Swift test discovery. On Apple's minimal
+Command Line Tools installation, it can retry with that installation's bundled
+Testing framework in a temporary scratch directory without changing system
+settings. A successful empty `swift test` invocation is not test evidence and
+is never accepted as a substitute for the executable self-test and store
 harness above.
 
 ## Tests and evidence
