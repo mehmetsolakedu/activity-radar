@@ -91,8 +91,10 @@ func wingmanPipeReaderCancellationJoinsWhileWriterRemainsOpen() throws {
     let collector = BoundedPipeCollector(limit: 1_024)
     let reader = WingmanPipeReader(pipe: pipe, collector: collector)
     reader.start()
-    try pipe.fileHandleForWriting.write(contentsOf: Data("partial output".utf8))
+    let expectedOutput = Data("partial output".utf8)
+    try pipe.fileHandleForWriting.write(contentsOf: expectedOutput)
 
+    #expect(waitForCollectedData(collector, expected: expectedOutput, timeout: 1))
     #expect(!reader.wait(timeout: .milliseconds(50)))
     let startedAt = DispatchTime.now().uptimeNanoseconds
     reader.cancel()
@@ -344,6 +346,18 @@ private func waitForGroupToDisappear(
         Thread.sleep(forTimeInterval: 0.01)
     }
     return !process.groupExists
+}
+
+private func waitForCollectedData(
+    _ collector: BoundedPipeCollector,
+    expected: Data,
+    timeout: TimeInterval
+) -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while collector.data() != expected, Date() < deadline {
+        Thread.sleep(forTimeInterval: 0.005)
+    }
+    return collector.data() == expected
 }
 
 private func elapsedSeconds(since startedAt: UInt64) -> Double {

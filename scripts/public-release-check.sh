@@ -85,14 +85,11 @@ plutil -convert xml1 -o /dev/null Packaging/CLEAN_MACHINE_ACCEPTANCE.template.js
   && "$(plutil -extract 'properties.records.maxItems' raw -o - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json)" == "2" ]] \
   || fail "Clean-machine acceptance schema does not require exactly two records"
 
-ACCEPTANCE_SCHEMA_REQUIRED="$TEMP_ROOT/acceptance-schema-required.txt"
-if ! python3 - \
-  Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json \
-  "$ACCEPTANCE_SCHEMA_REQUIRED" <<'PY'; then
+if ! python3 - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json <<'PY'; then
 import json
 import sys
 
-schema_path, output_path = sys.argv[1:]
+schema_path = sys.argv[1]
 with open(schema_path, encoding="utf-8") as schema_file:
     schema = json.load(schema_file)
 
@@ -100,6 +97,37 @@ base_record = schema.get("$defs", {}).get("baseRecord", {})
 required = base_record.get("required")
 if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
     raise SystemExit("baseRecord.required must be an array of strings")
+
+expected_required = (
+    "aboutReleaseIdentityVerified",
+    "applicationCopiedToApplications",
+    "applicationReplacementSucceeded",
+    "architecture",
+    "browserDownloadQuarantineObserved",
+    "checksumVerified",
+    "dmgEjected",
+    "dmgMountedReadOnly",
+    "downloadedFromGitHubRelease",
+    "gatekeeperLaunchSucceeded",
+    "interfaceLanguageSwitchPersisted",
+    "macOSBuild",
+    "macOSVersion",
+    "machineDidNotBuildRelease",
+    "menuBarItemVisible",
+    "supportInformationContentFree",
+    "syntheticCodexDeepLinkSucceeded",
+    "testedAt",
+    "uninstallSucceeded",
+    "wingmanCLIUnavailableFallbackVerified",
+    "wingmanConsentPreviewVerified",
+    "wingmanRemoteReviewSucceeded",
+)
+if len(required) != len(expected_required) or set(required) != set(expected_required):
+    missing = sorted(set(expected_required) - set(required))
+    unexpected = sorted(set(required) - set(expected_required))
+    raise SystemExit(
+        f"baseRecord.required mismatch; missing={missing}, unexpected={unexpected}"
+    )
 
 boolean_keys = (
     "aboutReleaseIdentityVerified",
@@ -125,40 +153,9 @@ properties = base_record.get("properties", {})
 for key in boolean_keys:
     if properties.get(key, {}).get("const") is not True:
         raise SystemExit(f"baseRecord.properties.{key}.const must be true")
-
-with open(output_path, "w", encoding="utf-8") as output_file:
-    for item in sorted(required):
-        output_file.write(f"{item}\n")
 PY
   fail "Clean-machine acceptance schema record contract is invalid"
 fi
-ACCEPTANCE_EXPECTED_REQUIRED="$TEMP_ROOT/acceptance-expected-required.txt"
-printf '%s\n' \
-  aboutReleaseIdentityVerified \
-  applicationCopiedToApplications \
-  applicationReplacementSucceeded \
-  architecture \
-  browserDownloadQuarantineObserved \
-  checksumVerified \
-  dmgEjected \
-  dmgMountedReadOnly \
-  downloadedFromGitHubRelease \
-  gatekeeperLaunchSucceeded \
-  interfaceLanguageSwitchPersisted \
-  macOSBuild \
-  macOSVersion \
-  machineDidNotBuildRelease \
-  menuBarItemVisible \
-  supportInformationContentFree \
-  syntheticCodexDeepLinkSucceeded \
-  testedAt \
-  uninstallSucceeded \
-  wingmanCLIUnavailableFallbackVerified \
-  wingmanConsentPreviewVerified \
-  wingmanRemoteReviewSucceeded \
-  | sort > "$ACCEPTANCE_EXPECTED_REQUIRED"
-cmp -s "$ACCEPTANCE_SCHEMA_REQUIRED" "$ACCEPTANCE_EXPECTED_REQUIRED" \
-  || fail "Clean-machine acceptance schema record keys drifted from the runtime contract"
 
 RELEASE_NOTES_VALID="$TEMP_ROOT/release-notes-valid.md"
 sed \
