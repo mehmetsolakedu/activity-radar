@@ -31,7 +31,7 @@ public struct ActivityRadarSupportInformation: Equatable, Sendable {
         let displayedReleaseTag = releaseTag ?? "atanmamış (yerel derleme)"
         let displayedSourceRevision = shortSourceRevision ?? "atanmamış (yerel derleme)"
         return [
-            "Activity Radar destek bilgisi",
+            "AiWingman destek bilgisi",
             "Uygulama sürümü: \(applicationVersion) (\(buildNumber))",
             "Yayın etiketi: \(displayedReleaseTag)",
             "Kaynak revizyonu: \(displayedSourceRevision)",

@@ -1,6 +1,6 @@
 # Security Policy
 
-Activity Radar reads sensitive local development activity. Privacy failures
+AiWingman reads sensitive local development activity. Privacy failures
 are treated as security issues.
 
 ## Supported versions
@@ -38,8 +38,22 @@ Changes should preserve these constraints:
 
 - The Codex state directory remains read-only.
 - SQLite uses read-only open flags and query-only mode.
-- Activity Radar-owned state is stored outside the Codex directory.
-- Codex message text and user-authored continuity text are not transmitted.
+- AiWingman-owned state is stored outside the Codex directory.
+- Dashboard, diagnostics, and research-ledger paths transmit no Codex content
+  and never start a background agent call.
+- The sole optional Wingman transmission remains user-triggered, bounded,
+  redacted, schema-validated, preceded by the exact intended JSON packet preview,
+  and protected by one-shot consent. Prompt excerpts, prompt-derived themes, and
+  local text signals remain separately opt-in; with that option off the packet
+  contains task titles and numeric measurements only. User-authored continuity
+  text is never included.
+- Wingman packets exclude raw task identifiers, full paths, working and rollout
+  paths, git and account metadata, system and developer instructions, tool
+  outputs, and credentials. Unknown or tool events fail closed.
+- The CLI authentication file is copied opaquely into a private temporary Codex
+  home and removed after the attempt; user rules and configuration files are not
+  copied. The read-only child sandbox prevents
+  writes but is not treated as proof that other local files cannot be read.
 - Research logging is disabled by default and its export excludes task content
   and raw task identifiers.
 - High-impact lifecycle decisions require an explicit, reversible user action.

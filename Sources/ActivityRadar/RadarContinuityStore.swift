@@ -208,11 +208,11 @@ enum RadarContinuityStoreError: LocalizedError {
         case .emptyTaskID:
             return "Boş görev kimliği yerel süreklilik kaydında kullanılamaz."
         case .unsafeStorageLocation(let path):
-            return "Activity Radar yerel verileri ~/.codex dışında tutulmalıdır: \(path)"
+            return "AiWingman yerel verileri ~/.codex dışında tutulmalıdır: \(path)"
         case .unsupportedSchema(let file, let version):
-            return "Desteklenmeyen Activity Radar veri şeması (\(file), sürüm \(version))."
+            return "Desteklenmeyen AiWingman veri şeması (\(file), sürüm \(version))."
         case .corruptStore(let file, let underlying):
-            return "Activity Radar yerel veri dosyası okunamadı (\(file)): \(underlying.localizedDescription)"
+            return "AiWingman yerel veri dosyası okunamadı (\(file)): \(underlying.localizedDescription)"
         }
     }
 }
@@ -503,7 +503,7 @@ actor RadarContinuityStore {
         try write(document, to: researchURL)
     }
 
-    // Clears all Activity Radar-owned local state and rotates the pseudonym
+    // Clears all AiWingman-owned local state and rotates the pseudonym
     // salt. It never touches ~/.codex or Codex-owned files.
     func clearAllLocalData() throws {
         try validateStorageLocation()

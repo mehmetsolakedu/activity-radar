@@ -4,6 +4,7 @@ import SwiftUI
 struct RadarContinuityEditor: View {
     let itemTitle: String
     let checkpoint: String
+    let language: RadarLanguage
     let hasStoredPlan: Bool
     let onSave: (WorkImportance, Date?, String, String, Date?) -> Void
     let onClear: () -> Void
@@ -21,6 +22,7 @@ struct RadarContinuityEditor: View {
     init(
         itemTitle: String,
         checkpoint: String,
+        language: RadarLanguage,
         initialMetadata: WorkContinuityMetadata,
         hasStoredPlan: Bool,
         onSave: @escaping (WorkImportance, Date?, String, String, Date?) -> Void,
@@ -28,6 +30,7 @@ struct RadarContinuityEditor: View {
     ) {
         self.itemTitle = itemTitle
         self.checkpoint = checkpoint
+        self.language = language
         self.hasStoredPlan = hasStoredPlan
         self.onSave = onSave
         self.onClear = onClear
@@ -72,6 +75,7 @@ struct RadarContinuityEditor: View {
         }
         .frame(width: 560, height: 650)
         .background(Color(nsColor: .windowBackgroundColor))
+        .environment(\.locale, l10n.locale)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
                 nextActionFocused = true
@@ -88,7 +92,7 @@ struct RadarContinuityEditor: View {
                 .background(Color.accentColor.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("İşi park et")
+                Text(l10n.text("İşi park et", "Park this work"))
                     .font(.system(size: 20, weight: .bold))
                 Text(itemTitle)
                     .font(.system(size: 13))
@@ -104,7 +108,7 @@ struct RadarContinuityEditor: View {
                     .foregroundStyle(.tertiary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Park et penceresini kapat")
+            .accessibilityLabel(l10n.text("Park et penceresini kapat", "Close the park-work window"))
         }
         .padding(.horizontal, 24)
         .frame(height: 76)
@@ -114,7 +118,7 @@ struct RadarContinuityEditor: View {
 
     private var checkpointBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Otomatik kaldığın yer")
+            sectionTitle(l10n.text("Otomatik kaldığın yer", "Automatic checkpoint"))
             Text(checkpoint)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
@@ -122,7 +126,10 @@ struct RadarContinuityEditor: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
                 .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
-            Text("Codex kaydından salt okunur alındı; düzenlenmeden yerel kapsüle eklenir.")
+            Text(l10n.text(
+                "Codex kaydından salt okunur alındı; düzenlenmeden yerel kapsüle eklenir.",
+                "Read from the Codex record without modification and added to the local capsule."
+            ))
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
         }
@@ -130,13 +137,28 @@ struct RadarContinuityEditor: View {
 
     private var nextActionBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Döndüğümde yapacağım ilk somut şey")
-            TextField("Örn. Sonuç tablosunu kaynak verilerle karşılaştır", text: $nextAction)
+            sectionTitle(l10n.text(
+                "Döndüğümde yapacağım ilk somut şey",
+                "The first concrete thing I will do when I return"
+            ))
+            TextField(
+                l10n.text(
+                    "Örn. Sonuç tablosunu kaynak verilerle karşılaştır",
+                    "E.g. Compare the results table with the source data"
+                ),
+                text: $nextAction
+            )
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 14))
                 .focused($nextActionFocused)
-                .accessibilityLabel("Döndüğünde yapacağın ilk somut şey")
-            Text("Tek cümle yeterli. Amaç yeni bir görev tanımı yazmak değil, yeniden başlama eşiğini düşürmek.")
+                .accessibilityLabel(l10n.text(
+                    "Döndüğünde yapacağın ilk somut şey",
+                    "The first concrete thing you will do when you return"
+                ))
+            Text(l10n.text(
+                "Tek cümle yeterli. Amaç yeni bir görev tanımı yazmak değil, yeniden başlama eşiğini düşürmek.",
+                "One sentence is enough. The goal is to lower the restart threshold, not define a new task."
+            ))
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
         }
@@ -144,10 +166,10 @@ struct RadarContinuityEditor: View {
 
     private var importanceBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Önem")
-            Picker("Önem", selection: $importance) {
+            sectionTitle(l10n.text("Önem", "Importance"))
+            Picker(l10n.text("Önem", "Importance"), selection: $importance) {
                 ForEach(WorkImportance.allCases, id: \.self) { value in
-                    Text(importanceTitle(value)).tag(value)
+                    Text(l10n.importanceTitle(value)).tag(value)
                 }
             }
             .pickerStyle(.segmented)
@@ -157,11 +179,11 @@ struct RadarContinuityEditor: View {
 
     private var deadlineBlock: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Toggle("Son tarih var", isOn: $hasDeadline)
+            Toggle(l10n.text("Son tarih var", "Has a deadline"), isOn: $hasDeadline)
                 .font(.system(size: 13, weight: .medium))
             if hasDeadline {
                 DatePicker(
-                    "Son tarih",
+                    l10n.text("Son tarih", "Deadline"),
                     selection: $deadline,
                     displayedComponents: [.date, .hourAndMinute]
                 )
@@ -172,20 +194,26 @@ struct RadarContinuityEditor: View {
 
     private var waitingBlock: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Beklediğim kişi veya olay · isteğe bağlı")
-            TextField("Örn. ortak yazar geri bildirimi", text: $waitingOn)
+            sectionTitle(l10n.text(
+                "Beklediğim kişi veya olay · isteğe bağlı",
+                "Person or event I am waiting for · optional"
+            ))
+            TextField(
+                l10n.text("Örn. ortak yazar geri bildirimi", "E.g. co-author feedback"),
+                text: $waitingOn
+            )
                 .textFieldStyle(.roundedBorder)
-                .accessibilityLabel("Beklenen kişi veya olay")
+                .accessibilityLabel(l10n.text("Beklenen kişi veya olay", "Person or event being awaited"))
         }
     }
 
     private var snoozeBlock: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Toggle("Bu zamana kadar sessize al", isOn: $hasSnooze)
+            Toggle(l10n.text("Bu zamana kadar sessize al", "Snooze until this time"), isOn: $hasSnooze)
                 .font(.system(size: 13, weight: .medium))
             if hasSnooze {
                 DatePicker(
-                    "Yeniden göster",
+                    l10n.text("Yeniden göster", "Show again"),
                     selection: $snoozeUntil,
                     in: Date()...,
                     displayedComponents: [.date, .hourAndMinute]
@@ -197,7 +225,10 @@ struct RadarContinuityEditor: View {
 
     private var privacyNote: some View {
         Label(
-            "Bu plan yalnızca Mac’indeki Activity Radar verilerinde saklanır; Codex dosyalarına yazılmaz ve ağ üzerinden gönderilmez.",
+            l10n.text(
+                "Bu plan yalnızca Mac’indeki AiWingman verilerinde saklanır; Codex dosyalarına yazılmaz ve ağ üzerinden gönderilmez.",
+                "This plan is stored only in AiWingman data on your Mac; it is not written to Codex files or sent over the network."
+            ),
             systemImage: "lock.shield"
         )
         .font(.system(size: 11))
@@ -209,17 +240,17 @@ struct RadarContinuityEditor: View {
     private var actions: some View {
         HStack(spacing: 10) {
             if hasStoredPlan {
-                Button("Planı temizle", role: .destructive) {
+                Button(l10n.text("Planı temizle", "Clear plan"), role: .destructive) {
                     onClear()
                     dismiss()
                 }
             }
             Spacer()
-            Button("Vazgeç") {
+            Button(l10n.text("Vazgeç", "Cancel")) {
                 dismiss()
             }
             .keyboardShortcut(.cancelAction)
-            Button("Park et") {
+            Button(l10n.text("Park et", "Park")) {
                 onSave(
                     importance,
                     hasDeadline ? deadline : nil,
@@ -250,12 +281,7 @@ struct RadarContinuityEditor: View {
             .foregroundStyle(.secondary)
     }
 
-    private func importanceTitle(_ value: WorkImportance) -> String {
-        switch value {
-        case .low: return "Düşük"
-        case .normal: return "Normal"
-        case .high: return "Yüksek"
-        case .critical: return "Kritik"
-        }
+    private var l10n: RadarL10n {
+        RadarL10n(language: language)
     }
 }

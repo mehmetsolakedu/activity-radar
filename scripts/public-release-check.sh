@@ -29,6 +29,7 @@ cd "$PROJECT_DIR"
 
 command -v rg >/dev/null 2>&1 || fail "Required tool not found: rg (ripgrep)"
 command -v sqlite3 >/dev/null 2>&1 || fail "Required tool not found: sqlite3"
+command -v python3 >/dev/null 2>&1 || fail "Required tool not found: python3"
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -n "$GIT_ROOT" && "${GIT_ROOT:A}" == "$PROJECT_DIR" ]]; then
@@ -84,77 +85,102 @@ plutil -convert xml1 -o /dev/null Packaging/CLEAN_MACHINE_ACCEPTANCE.template.js
   && "$(plutil -extract 'properties.records.maxItems' raw -o - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json)" == "2" ]] \
   || fail "Clean-machine acceptance schema does not require exactly two records"
 
-ACCEPTANCE_SCHEMA_REQUIRED="$TEMP_ROOT/acceptance-schema-required.txt"
-for schema_required_index in {0..17}; do
-  plutil -extract "\$defs.baseRecord.required.$schema_required_index" raw -o - \
-    Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json
-done | sort > "$ACCEPTANCE_SCHEMA_REQUIRED"
-ACCEPTANCE_EXPECTED_REQUIRED="$TEMP_ROOT/acceptance-expected-required.txt"
-printf '%s\n' \
-  aboutReleaseIdentityVerified \
-  applicationCopiedToApplications \
-  applicationReplacementSucceeded \
-  architecture \
-  browserDownloadQuarantineObserved \
-  checksumVerified \
-  dmgEjected \
-  dmgMountedReadOnly \
-  downloadedFromGitHubRelease \
-  gatekeeperLaunchSucceeded \
-  macOSBuild \
-  macOSVersion \
-  machineDidNotBuildRelease \
-  menuBarItemVisible \
-  supportInformationContentFree \
-  syntheticCodexDeepLinkSucceeded \
-  testedAt \
-  uninstallSucceeded \
-  | sort > "$ACCEPTANCE_EXPECTED_REQUIRED"
-cmp -s "$ACCEPTANCE_SCHEMA_REQUIRED" "$ACCEPTANCE_EXPECTED_REQUIRED" \
-  || fail "Clean-machine acceptance schema record keys drifted from the runtime contract"
-for acceptance_boolean_schema_key in \
-  aboutReleaseIdentityVerified \
-  applicationCopiedToApplications \
-  applicationReplacementSucceeded \
-  browserDownloadQuarantineObserved \
-  checksumVerified \
-  dmgEjected \
-  dmgMountedReadOnly \
-  downloadedFromGitHubRelease \
-  gatekeeperLaunchSucceeded \
-  machineDidNotBuildRelease \
-  menuBarItemVisible \
-  supportInformationContentFree \
-  syntheticCodexDeepLinkSucceeded \
-  uninstallSucceeded; do
-  [[ "$(plutil -extract "\$defs.baseRecord.properties.$acceptance_boolean_schema_key.const" raw -o - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json)" == "true" ]] \
-    || fail "Clean-machine acceptance schema does not require true for $acceptance_boolean_schema_key"
-done
+if ! python3 - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json <<'PY'; then
+import json
+import sys
+
+schema_path = sys.argv[1]
+with open(schema_path, encoding="utf-8") as schema_file:
+    schema = json.load(schema_file)
+
+base_record = schema.get("$defs", {}).get("baseRecord", {})
+required = base_record.get("required")
+if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
+    raise SystemExit("baseRecord.required must be an array of strings")
+
+expected_required = (
+    "aboutReleaseIdentityVerified",
+    "applicationCopiedToApplications",
+    "applicationReplacementSucceeded",
+    "architecture",
+    "browserDownloadQuarantineObserved",
+    "checksumVerified",
+    "dmgEjected",
+    "dmgMountedReadOnly",
+    "downloadedFromGitHubRelease",
+    "gatekeeperLaunchSucceeded",
+    "interfaceLanguageSwitchPersisted",
+    "macOSBuild",
+    "macOSVersion",
+    "machineDidNotBuildRelease",
+    "menuBarItemVisible",
+    "supportInformationContentFree",
+    "syntheticCodexDeepLinkSucceeded",
+    "testedAt",
+    "uninstallSucceeded",
+    "wingmanCLIUnavailableFallbackVerified",
+    "wingmanConsentPreviewVerified",
+    "wingmanRemoteReviewSucceeded",
+)
+if len(required) != len(expected_required) or set(required) != set(expected_required):
+    missing = sorted(set(expected_required) - set(required))
+    unexpected = sorted(set(required) - set(expected_required))
+    raise SystemExit(
+        f"baseRecord.required mismatch; missing={missing}, unexpected={unexpected}"
+    )
+
+boolean_keys = (
+    "aboutReleaseIdentityVerified",
+    "applicationCopiedToApplications",
+    "applicationReplacementSucceeded",
+    "browserDownloadQuarantineObserved",
+    "checksumVerified",
+    "dmgEjected",
+    "dmgMountedReadOnly",
+    "downloadedFromGitHubRelease",
+    "gatekeeperLaunchSucceeded",
+    "interfaceLanguageSwitchPersisted",
+    "machineDidNotBuildRelease",
+    "menuBarItemVisible",
+    "supportInformationContentFree",
+    "syntheticCodexDeepLinkSucceeded",
+    "uninstallSucceeded",
+    "wingmanCLIUnavailableFallbackVerified",
+    "wingmanConsentPreviewVerified",
+    "wingmanRemoteReviewSucceeded",
+)
+properties = base_record.get("properties", {})
+for key in boolean_keys:
+    if properties.get(key, {}).get("const") is not True:
+        raise SystemExit(f"baseRecord.properties.{key}.const must be true")
+PY
+  fail "Clean-machine acceptance schema record contract is invalid"
+fi
 
 RELEASE_NOTES_VALID="$TEMP_ROOT/release-notes-valid.md"
 sed \
-  -e 's/REPLACE_WITH_RELEASE_TAG/v1.2.0-beta.2/g' \
+  -e 's/REPLACE_WITH_RELEASE_TAG/v1.2.0-beta.3/g' \
   -e 's/REPLACE_WITH_CONCISE_USER_VISIBLE_CHANGE/Content-free acceptance evidence is now required./g' \
-  -e 's/REPLACE_WITH_RELEASE_SPECIFIC_LIMITATION/The interface language remains Turkish in this beta./g' \
-  -e 's/REPLACE_WITH_DMG_ASSET_NAME/Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg/g' \
-  -e 's/REPLACE_WITH_ZIP_ASSET_NAME/Activity-Radar-1.2.0-beta.2-macOS-universal2.zip/g' \
-  -e 's/REPLACE_WITH_ACCEPTANCE_ASSET_NAME/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json/g' \
+  -e 's/REPLACE_WITH_RELEASE_SPECIFIC_LIMITATION/Native macOS file-panel chrome follows the system language./g' \
+  -e 's/REPLACE_WITH_DMG_ASSET_NAME/Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg/g' \
+  -e 's/REPLACE_WITH_ZIP_ASSET_NAME/Activity-Radar-1.2.0-beta.3-macOS-universal2.zip/g' \
+  -e 's/REPLACE_WITH_ACCEPTANCE_ASSET_NAME/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json/g' \
   Packaging/RELEASE_NOTES_TEMPLATE.md > "$RELEASE_NOTES_VALID"
 swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_VALID" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json \
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json \
   || fail "Canonical release-notes fixture was rejected"
 if swift scripts/release-notes-check.swift \
   Packaging/RELEASE_NOTES_TEMPLATE.md \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted unresolved placeholders"
 fi
 RELEASE_NOTES_MISSING_HEADING="$TEMP_ROOT/release-notes-missing-heading.md"
@@ -162,36 +188,38 @@ grep -v '^## Verify$' "$RELEASE_NOTES_VALID" > "$RELEASE_NOTES_MISSING_HEADING"
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_MISSING_HEADING" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted a missing required heading"
 fi
 
 RELEASE_NOTES_EMPTY_CHANGES="$TEMP_ROOT/release-notes-empty-changes.md"
-sed '/^- Content-free acceptance evidence is now required\.$/d' \
+sed \
+  -e '/^- Content-free acceptance evidence is now required\.$/d' \
+  -e '/^- The dashboard and status menu can switch instantly between Turkish and English, and the selection persists across launches\.$/d' \
   "$RELEASE_NOTES_VALID" > "$RELEASE_NOTES_EMPTY_CHANGES"
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_EMPTY_CHANGES" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted an empty Changes section"
 fi
 
 RELEASE_NOTES_EMPTY_LIMITATIONS="$TEMP_ROOT/release-notes-empty-limitations.md"
-sed '/^- The interface language remains Turkish in this beta\.$/d' \
+sed '/^- Native macOS file-panel chrome follows the system language\.$/d' \
   "$RELEASE_NOTES_VALID" > "$RELEASE_NOTES_EMPTY_LIMITATIONS"
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_EMPTY_LIMITATIONS" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted an empty Known limitations section"
 fi
 
@@ -201,26 +229,26 @@ sed 's/Content-free acceptance evidence is now required\./FIXME/g' \
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_FIXME" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  v1.2.0-beta.3 \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted a FIXME placeholder"
 fi
 
 ACCEPTANCE_WORKING="$TEMP_ROOT/acceptance-working.json"
-ACCEPTANCE_VALID="$TEMP_ROOT/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json"
+ACCEPTANCE_VALID="$TEMP_ROOT/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ditto --noqtn --noextattr --norsrc \
   Packaging/CLEAN_MACHINE_ACCEPTANCE.template.json \
   "$ACCEPTANCE_WORKING"
 plutil -replace dmgAssetName \
-  -string Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  -string Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   "$ACCEPTANCE_WORKING"
 plutil -replace dmgSHA256 \
   -string 0000000000000000000000000000000000000000000000000000000000000000 \
   "$ACCEPTANCE_WORKING"
 plutil -replace releaseID -integer 123456789 "$ACCEPTANCE_WORKING"
-plutil -replace releaseTag -string v1.2.0-beta.2 "$ACCEPTANCE_WORKING"
+plutil -replace releaseTag -string v1.2.0-beta.3 "$ACCEPTANCE_WORKING"
 plutil -replace releaseCreatedAt \
   -string 2026-08-19T23:59:00Z "$ACCEPTANCE_WORKING"
 for acceptance_index in 0 1; do
@@ -249,11 +277,15 @@ for acceptance_index in 0 1; do
     dmgMountedReadOnly \
     downloadedFromGitHubRelease \
     gatekeeperLaunchSucceeded \
+    interfaceLanguageSwitchPersisted \
     machineDidNotBuildRelease \
     menuBarItemVisible \
     supportInformationContentFree \
     syntheticCodexDeepLinkSucceeded \
-    uninstallSucceeded; do
+    uninstallSucceeded \
+    wingmanCLIUnavailableFallbackVerified \
+    wingmanConsentPreviewVerified \
+    wingmanRemoteReviewSucceeded; do
     plutil -replace "records.$acceptance_index.$acceptance_boolean" \
       -bool true "$ACCEPTANCE_WORKING"
   done
@@ -262,19 +294,19 @@ swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_WORKING" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 \
   > "$ACCEPTANCE_VALID"
 swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_VALID" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 \
   || fail "Canonical clean-machine acceptance fixture was rejected"
 ACCEPTANCE_PRIVACY_ROOT="$TEMP_ROOT/acceptance-privacy"
@@ -286,20 +318,20 @@ zsh scripts/public-privacy-scan.sh "$ACCEPTANCE_PRIVACY_ROOT" \
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_VALID" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   987654321 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted the wrong release ID"
 fi
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_VALID" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:58:59Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted the wrong release creation time"
 fi
@@ -310,10 +342,10 @@ plutil -replace records.0.gatekeeperLaunchSucceeded -bool false "$ACCEPTANCE_FAL
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_FALSE" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a failed Gatekeeper test"
 fi
@@ -324,10 +356,10 @@ plutil -replace records.0.macOSVersion -string 14.7.8 "$ACCEPTANCE_NO_VENTURA"
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_NO_VENTURA" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted no macOS 13.x runtime result"
 fi
@@ -338,10 +370,10 @@ plutil -insert records.0.tester -string private-person "$ACCEPTANCE_UNKNOWN_FIEL
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_UNKNOWN_FIELD" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a free-text tester field"
 fi
@@ -353,10 +385,10 @@ if swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_BEFORE_DRAFT" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a test before draft creation"
 fi
@@ -368,10 +400,10 @@ if swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_INVALID_HOUR" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer normalized an invalid 24:00 timestamp"
 fi
@@ -385,10 +417,10 @@ if swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_INVALID_DATE" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-02-28T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer normalized an invalid calendar date"
 fi
@@ -404,10 +436,10 @@ awk '
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_DUPLICATE_KEY" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a duplicate JSON key"
 fi
@@ -415,10 +447,10 @@ if swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_DUPLICATE_KEY" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer accepted conflicting duplicate keys"
 fi
@@ -435,10 +467,10 @@ if swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "$ACCEPTANCE_ESCAPED_DUPLICATE_KEY" \
   mehmetsolakedu/activity-radar \
-  v1.2.0-beta.2 \
+  v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg \
+  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer accepted an escaped duplicate key"
 fi
@@ -811,12 +843,13 @@ swift package --package-path "$PUBLIC_SOURCE" dump-package >/dev/null
 
 note "Building and verifying a local Universal 2 bundle from the public source"
 LOCAL_APP="$TEMP_ROOT/Activity Radar.app"
-"$PUBLIC_SOURCE/scripts/package-app.sh" \
+ACTIVITY_RADAR_BUNDLE_ID=io.github.mehmetsolakedu.ActivityRadar \
+  "$PUBLIC_SOURCE/scripts/package-app.sh" \
   --mode local \
   --output-app "$LOCAL_APP"
 lipo "$LOCAL_APP/Contents/MacOS/ActivityRadar" -verify_arch arm64 x86_64
-[[ "$(plutil -extract CFBundleIdentifier raw -o - "$LOCAL_APP/Contents/Info.plist")" == "io.github.mehmetsolakedu.ActivityRadar" ]] \
-  || fail "Packaged bundle identifier changed"
+[[ "$(plutil -extract CFBundleIdentifier raw -o - "$LOCAL_APP/Contents/Info.plist")" == "local.mehmet.activityradar" ]] \
+  || fail "Local package did not retain the legacy bundle identifier"
 codesign --verify --deep --strict --verbose=2 "$LOCAL_APP"
 
 note "Rejecting newline-confusable bundle payloads"

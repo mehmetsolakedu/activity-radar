@@ -26,7 +26,7 @@ final class RadarPanelController: NSObject, NSWindowDelegate {
         super.init()
 
         panel.delegate = self
-        panel.title = "Activity Radar"
+        panel.title = "AiWingman"
         panel.isMovableByWindowBackground = true
         panel.isReleasedWhenClosed = false
         panel.isFloatingPanel = true

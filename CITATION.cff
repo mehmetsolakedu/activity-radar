@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use AiWingman in research, please cite this software release."
+title: "AiWingman"
+type: software
+version: "1.2.0-beta.2"
+date-released: 2026-08-23
+authors:
+  - family-names: "Solak"
+    given-names: "Mehmet"
+repository-code: "https://github.com/mehmetsolakedu/activity-radar"
+url: "https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2"
+license: MIT
+abstract: >-
+  A local-first macOS menu-bar application for evidence-aware work continuity
+  across parallel Codex tasks, with optional consent-gated Wingman review.

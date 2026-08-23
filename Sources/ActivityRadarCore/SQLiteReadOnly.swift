@@ -40,6 +40,18 @@ final class SQLiteReadOnly {
         }
     }
 
+    func withReadTransaction<T>(_ body: () throws -> T) throws -> T {
+        try execute("BEGIN DEFERRED TRANSACTION;")
+        do {
+            let value = try body()
+            try execute("COMMIT;")
+            return value
+        } catch {
+            try? execute("ROLLBACK;")
+            throw error
+        }
+    }
+
     func rows(
         sql: String,
         bind: ((OpaquePointer) -> Void)? = nil,
@@ -76,6 +88,15 @@ final class SQLiteReadOnly {
             result.insert(Self.text(statement, index: 1))
         }
         return result
+    }
+
+    private func execute(_ sql: String) throws {
+        guard let database else {
+            throw ActivityReaderError.sqliteOpen(path: path, message: "Bağlantı kapalı")
+        }
+        guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
+            throw ActivityReaderError.sqliteQuery(message: String(cString: sqlite3_errmsg(database)))
+        }
     }
 
     static func text(_ statement: OpaquePointer, index: Int32) -> String {

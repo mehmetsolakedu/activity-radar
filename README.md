@@ -1,19 +1,19 @@
-# Activity Radar
+# AiWingman
 
 **Local work continuity for parallel Codex tasks on macOS.**
 
 [![CI](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml)
 
-Activity Radar is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It reads local Codex state in read-only mode, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
+AiWingman is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It reads local Codex state in read-only mode, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
 
-[Install](INSTALL.md) · [Türkçe kurulum](INSTALL.tr.md) · [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Contributing](CONTRIBUTING.md)
+[Install](INSTALL.md) · [Türkçe kurulum](INSTALL.tr.md) · [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Publication blueprint](docs/PUBLICATION_BLUEPRINT.md) · [Contributing](CONTRIBUTING.md)
 
 > [!IMPORTANT]
-> [`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1) is a source-first public beta. It deliberately contains no installable binary because the current publisher machine has no Developer ID identity or notarization profile. A binary is a supported public download only when its GitHub Release explicitly says it is Developer ID–signed and Apple-notarized and includes `SHA256SUMS`, `RELEASE-MANIFEST.txt`, and the versioned clean-machine acceptance record. Local or CI-built ad-hoc apps are not public releases.
+> [`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) is the current free, source-first community beta. It contains no prebuilt app: inspect the exact tag and build it locally with the commands below. GitHub's automatic source archives are source code, not macOS installers.
 
 ## Why it exists
 
-Parallel agent work creates a prospective-memory problem: results arrive in different tasks, quiet work becomes easy to forget, and a timestamp alone cannot tell you what deserves attention. Activity Radar separates observed signals from user decisions and abstains when the evidence is insufficient.
+Parallel agent work creates a prospective-memory problem: results arrive in different tasks, quiet work becomes easy to forget, and a timestamp alone cannot tell you what deserves attention. AiWingman separates observed signals from user decisions and abstains when the evidence is insufficient.
 
 ## What it does
 
@@ -26,14 +26,33 @@ Parallel agent work creates a prospective-memory problem: results arrive in diff
 - Treats long silence as neutral; obsolete and abandoned are explicit, reversible user decisions.
 - Searches the locally retained task corpus across 24 hours, 7 days, 30 days, 90 days, or all time.
 - Opens the exact task through `codex://threads/<thread-id>`.
+- Switches the dashboard, editor, status menu, and Wingman interface instantly
+  between Turkish and English, and remembers the local choice.
+- Can optionally start a separate Codex CLI Wingman turn to critique prompting,
+  harness scope, unfinished work, and token-review candidates.
 - Offers an optional, content-free local research ledger that is off by default.
 
 ## Privacy by construction
 
-- No Activity Radar account, OpenAI API key, OAuth flow, telemetry, or network client.
+- No AiWingman account, separate API-key request or storage, OAuth flow,
+  telemetry, background agent call, or background upload. The dashboard makes
+  no network request. Optional review reuses the signed-in CLI's saved
+  authentication mechanism opaquely.
+- The optional remote Wingman critique requires a separately installed and
+  signed-in Codex CLI. AiWingman shows the exact user-derived JSON packet it
+  intends to supply on stdin and requires one-shot consent before every call.
+  That packet is processed with a fixed review instruction and output schema
+  that contain no task data; prompt
+  excerpts, prompt-derived themes, and local text signals share one separate,
+  off-by-default choice. With it off, the packet contains task titles and
+  numeric measurements only.
+- The child CLI uses a read-only sandbox, but this is not a guarantee that it
+  cannot read other local files. The previewed packet must not be treated as the
+  only context technically accessible to that process. See [PRIVACY.md](PRIVACY.md).
 - Codex SQLite files are opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`.
-- Activity Radar never writes to `~/.codex`.
-- Continuity data stays under `~/Library/Application Support/Activity Radar`.
+- AiWingman never writes to `~/.codex`.
+- Continuity data stays under the legacy compatibility path
+  `~/Library/Application Support/Activity Radar`.
 - Research export excludes task identifiers, titles, prompts, messages, paths, checkpoints, next actions, and waiting-on text.
 - The diagnostic command emits aggregate, content-free compatibility counts.
 
@@ -45,8 +64,10 @@ See [PRIVACY.md](PRIVACY.md) for the complete storage and export boundary.
 - Codex Desktop or Codex CLI previously used by the same macOS account.
 - `~/.codex/state_5.sqlite` in a schema supported by this version.
 - The Codex desktop application for return-to-task deep links.
+- A compatible, signed-in Codex CLI only for the optional remote Wingman
+  critique; the dashboard does not require it.
 
-Activity Radar is an unofficial local integration. Codex may change its local schema or deep-link contract; incompatible versions fail neutrally instead of attempting to repair Codex data.
+AiWingman is an unofficial local integration. Codex may change its local schema or deep-link contract; incompatible versions fail neutrally instead of attempting to repair Codex data. The optional remote critique uses the user's existing Codex CLI account and may consume that account's plan or quota; AiWingman itself is free and does not sell a subscription.
 
 ## Build from source
 
@@ -57,7 +78,7 @@ For a published source release, replace the example tag below with the exact tag
 ```bash
 git clone https://github.com/mehmetsolakedu/activity-radar.git
 cd activity-radar
-RELEASE_TAG=v1.2.0-beta.1
+RELEASE_TAG=v1.2.0-beta.2
 git switch --detach "$RELEASE_TAG"
 test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
 
@@ -70,15 +91,15 @@ swiftc -parse-as-library \
 /tmp/activity-radar-continuity-store-self-test
 
 ./scripts/package-app.sh --mode local \
-  --output-app "$PWD/Activity Radar.app"
-open "$PWD/Activity Radar.app"
+  --output-app "$PWD/AiWingman.app"
+open "$PWD/AiWingman.app"
 ```
 
-Local mode builds a Universal 2 application and applies an ad-hoc signature unless a signing identity is explicitly supplied. That is appropriate for development on the machine that built it, not for public binary distribution.
+Local mode builds a Universal 2 application and applies an ad-hoc signature unless a signing identity is explicitly supplied. AiWingman deliberately retains the legacy `ActivityRadar` executable, bundle identifiers, preference keys, and application-support path so existing Activity Radar users keep their data. These are compatibility identifiers, not a second application. Local mode is appropriate for use on the machine that built it, not for redistributing that locally signed bundle.
 
 For a supported signed download, follow [INSTALL.md](INSTALL.md). GitHub's automatic source archives and a locally ad-hoc-signed app are not installers.
 
-Activity Radar is an `LSUIElement` menu-bar app, so it does not appear in the
+AiWingman is an `LSUIElement` menu-bar app, so it does not appear in the
 Dock after launch. Look for its radar icon in the menu bar, or press `⌘⇧K` to
 show the panel.
 
@@ -98,7 +119,7 @@ The public packager has no unsafe fallback:
 ./scripts/package-app.sh --mode public \
   --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
   --notary-profile "activity-radar-notary" \
-  --release-tag "v1.2.0-beta.2" \
+  --release-tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
   --bundle-id "io.github.mehmetsolakedu.ActivityRadar" \
   --dist-dir ./dist
@@ -122,10 +143,10 @@ Credentials are read from a `notarytool` Keychain profile; passwords and API pri
 
 Bug reports, privacy reviews, accessibility improvements, documentation, deterministic tests, and focused code changes are welcome. All examples and screenshots must be synthetic. Start with [CONTRIBUTING.md](CONTRIBUTING.md), follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and report vulnerabilities through [SECURITY.md](SECURITY.md).
 
-The project is available under the [MIT License](LICENSE). Asset provenance is documented in [ASSET_NOTICES.md](ASSET_NOTICES.md).
+The project is available under the [MIT License](LICENSE). Asset provenance is documented in [ASSET_NOTICES.md](ASSET_NOTICES.md), and research use can cite [CITATION.cff](CITATION.cff).
 
 ## Research boundary
 
-Activity Radar implements a testable product hypothesis; it does not by itself prove faster resumption, lower cognitive load, scientific novelty, or superiority. See [docs/RESEARCH_BOUNDARY.md](docs/RESEARCH_BOUNDARY.md).
+AiWingman is an open-source software artifact; its technical tests do not prove faster resumption, lower cognitive load, scientific novelty, or superiority. See [docs/RESEARCH_BOUNDARY.md](docs/RESEARCH_BOUNDARY.md).
 
-Activity Radar is an independent community project. It is not an official OpenAI product and is not endorsed or supported by OpenAI.
+AiWingman is an independent community project. It is not an official OpenAI product and is not endorsed or supported by OpenAI.

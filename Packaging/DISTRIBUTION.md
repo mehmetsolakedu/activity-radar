@@ -30,7 +30,7 @@ Then run the release with values belonging to the publisher:
 ./scripts/package-app.sh --mode public \
   --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
   --notary-profile "activity-radar-notary" \
-  --release-tag "v1.2.0-beta.2" \
+  --release-tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
   --bundle-id "io.github.mehmetsolakedu.ActivityRadar" \
   --dist-dir ./dist
@@ -69,9 +69,9 @@ notes outside the release directory so the public artifact set remains exact:
 
 ```sh
 ./scripts/publish-github-release.sh \
-  --tag "v1.2.0-beta.2" \
+  --tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
-  --release-dir "./dist/Activity-Radar-1.2.0-beta.2-macOS-universal2" \
+  --release-dir "./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2" \
   --notes-file "/absolute/path/to/release-notes.md"
 ```
 
@@ -122,8 +122,11 @@ holder of that team's Developer ID credentials hiding data in filesystem slack.
 Do not publish the draft binary until the actual GitHub draft DMG has been
 tested with browser quarantine on clean Macs that did not build it. Verify the
 checksum, read-only mount, copy to Applications, eject, Gatekeeper launch,
-menu-bar item, About identity, content-free support text, synthetic Codex
-return-to-task, application replacement, and complete uninstall. Record Apple
+menu-bar item, About identity, content-free support text, persistent instant
+Turkish/English interface switching in the dashboard and status menu, synthetic
+Codex return-to-task, CLI-unavailable fallback, exact transfer preview and
+consent, one synthetic remote Wingman review, application replacement, and
+complete uninstall. Record Apple
 Silicon and Intel results separately. At least one of the two records must come
 from a real macOS 13.x runtime; declaring a 13.0 deployment target is not
 runtime evidence.
@@ -142,16 +145,37 @@ machine, path, task title, task identifier, screenshot, or note in the JSON:
    contain only the fixed build, architecture, and macOS fields shown by the
    app; it must not contain a task title, task identifier, path, checkpoint, or
    transcript text. Do not paste the result into the acceptance JSON.
-4. In Codex, create a disposable task containing only the public phrase
+4. Use a dedicated clean macOS test account whose local Codex state contains no
+   real task. In Codex, create a disposable task containing only the public phrase
    `Activity Radar clean-machine synthetic task`. Refresh Activity Radar, select
    that task, and confirm the return-to-task action opens that same task in
    Codex. Do not record or publish its generated identifier or a screenshot.
-5. Change Activity Radar's date range from **30 gün** to **7 gün**, quit the app,
+5. With the dashboard in Turkish, use the visible language control to switch to
+   **EN**. Confirm the dashboard labels change immediately without a restart,
+   then open the status-item menu and confirm its commands are also in English.
+   Quit and reopen Activity Radar and confirm English persisted. Switch back to
+   **TR** and confirm both the dashboard and status-item menu return to Turkish.
+   Set `interfaceLanguageSwitchPersisted` to `true` only after this complete
+   sequence passes.
+6. Open **Bir Wingman Çağır**. With the network disconnected and without a
+   compatible signed-in CLI, confirm the visible CLI-unavailable message and
+   **Codex CLI'yi yeniden denetle** action. Inspect the complete exact JSON packet
+   that Activity Radar intends to supply, then change scope and the prompt-sharing
+   toggle and confirm consent resets each time. Install a compatible Codex CLI,
+   sign in, reconnect the network, keep prompt excerpts off, inspect the
+   regenerated packet, and grant one-shot consent for one synthetic remote
+   review. Confirm all structured review sections render and that no
+   later/background call starts. Change prompt sharing and confirm the prior
+   review and consent are cleared. The read-only CLI sandbox is not a guarantee
+   that other local files cannot be read, so use only the dedicated synthetic
+   account. Do not put the packet, prompt, response, title, screenshot,
+   identifier, or any free text in the acceptance JSON.
+7. Change Activity Radar's date range from **30 gün** to **7 gün**, quit the app,
    drag the same verified candidate from the DMG to Applications, choose
    **Replace**, reopen it, and confirm **7 gün** persisted. This exercises the
    replacement path for the first installable beta; it is not evidence of a
    migration from an older public binary.
-6. Quit, move the app to Trash, optionally remove only Activity Radar's own
+8. Quit, move the app to Trash, optionally remove only Activity Radar's own
    local support data and preference file, and confirm Codex data was untouched.
 
 Copy `Packaging/CLEAN_MACHINE_ACCEPTANCE.template.json` to the exact versioned
@@ -161,7 +185,7 @@ template is intentionally invalid while any result is `false` or a placeholder
 remains. Obtain the public numeric draft ID and its exact creation time with:
 
 ```sh
-gh release view "v1.2.0-beta.2" \
+gh release view "v1.2.0-beta.3" \
   --repo "mehmetsolakedu/activity-radar" \
   --json databaseId,createdAt \
   --jq '{releaseID: .databaseId, releaseCreatedAt: .createdAt}'
@@ -181,24 +205,24 @@ swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
   "/absolute/path/to/acceptance-working.json" \
   "mehmetsolakedu/activity-radar" \
-  "v1.2.0-beta.2" \
+  "v1.2.0-beta.3" \
   "123456789" \
   "2026-08-20T10:00:00Z" \
-  "Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg" \
+  "Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg" \
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" \
   > "$CANONICAL_ACCEPTANCE"
 
 swift scripts/clean-machine-acceptance-check.swift \
   "$CANONICAL_ACCEPTANCE" \
   "mehmetsolakedu/activity-radar" \
-  "v1.2.0-beta.2" \
+  "v1.2.0-beta.3" \
   "123456789" \
   "2026-08-20T10:00:00Z" \
-  "Activity-Radar-1.2.0-beta.2-macOS-universal2.dmg" \
+  "Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg" \
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 mv "$CANONICAL_ACCEPTANCE" \
-  "/absolute/path/to/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json"
+  "/absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ```
 
 Replace the example release ID, creation time, and digest with the verified
@@ -215,12 +239,12 @@ mode and canonical acceptance file:
 
 ```sh
 ./scripts/publish-github-release.sh \
-  --tag "v1.2.0-beta.2" \
+  --tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
-  --release-dir "./dist/Activity-Radar-1.2.0-beta.2-macOS-universal2" \
+  --release-dir "./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2" \
   --notes-file "/absolute/path/to/release-notes.md" \
   --finalize-existing-draft \
-  --acceptance-file "/absolute/path/to/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json"
+  --acceptance-file "/absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ```
 
 This mode rebuilds the verification snapshot, rechecks the source tag, branch
