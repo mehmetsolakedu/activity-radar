@@ -1,0 +1,77 @@
+status: draft_author_confirmation_required
+platform: Preprints.org
+manuscript_type: Technical Note
+title: >-
+  AiWingman: Design, Implementation, and an Open Evaluation Protocol for a
+  Local Work-Continuity Companion for Parallel Coding-Agent Tasks
+abstract: >-
+  Parallel coding-agent tasks can produce a fragmented work surface: requests
+  for input, completed results, blocked work, and quiet but unfinished tasks may
+  coexist across many windows. Timestamps alone do not establish whether a task
+  is running, finished, abandoned, or worth resuming. This technical report
+  presents AiWingman, an open-source macOS menu-bar companion that reads locally
+  retained Codex task state through read-only adapters, derives bounded and
+  explainable continuity signals, and returns the user to a selected task
+  through a local deep link. The design separates observations from user
+  decisions, treats silence as neutral, and abstains from ranking when evidence
+  is incomplete or insufficient. A distinct optional Wingman flow can send a
+  previewed and bounded packet to a separately installed Codex CLI only after
+  one-shot consent; this remote path is not part of the offline dashboard and is
+  not presented as an isolation guarantee. The public source release was
+  subjected to regression and contract checks on arm64 and native x86_64 macOS
+  runners. These checks establish only the enumerated engineering properties;
+  they do not establish human benefit, scientific superiority, exact token
+  waste, full privacy isolation, or cross-system compatibility. The report
+  therefore contributes a working software artifact, an auditable claim
+  boundary, and an open protocol for later conformance, robustness, privacy,
+  determinism, and performance evaluation. Human efficacy remains untested.
+keywords:
+  - coding agents
+  - work continuity
+  - local software
+  - privacy engineering
+  - explainable triage
+  - abstention
+  - software artifact
+subjects:
+  primary: Computer Science and Mathematics
+  secondary: Artificial Intelligence and Machine Learning
+authors:
+  - given_name: Mehmet
+    family_name: Solak
+    orcid: https://orcid.org/0000-0003-2528-7960
+    affiliation: >-
+      Department of Biosystems Engineering, Faculty of Agriculture, Siirt
+      University, Siirt, Türkiye
+    email: mehmetsolak@siirt.edu.tr
+    corresponding_author: true
+license: CC BY 4.0
+software:
+  license: MIT
+  repository: https://github.com/mehmetsolakedu/activity-radar
+  release: https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2
+  version: 1.2.0-beta.2
+  commit: 5e212181ae177cd555ab6bb92f5f71ac8be9173a
+  ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32648392604
+declarations:
+  funding: AUTHOR_CONFIRMATION_REQUIRED
+  competing_interests: AUTHOR_CONFIRMATION_REQUIRED
+  author_contribution: AUTHOR_CONFIRMATION_REQUIRED
+  ai_assistance: >-
+    OpenAI Codex assisted with source discovery, manuscript structuring, initial
+    language drafting, code inspection, and document formatting. Before deposit,
+    the named author must verify every claim and reference, revise the prose as
+    needed, and assume full responsibility. AI is not listed as an author.
+  ai_assistance_status: AUTHOR_CONFIRMATION_REQUIRED
+  ethics_and_data: >-
+    This report describes software architecture and engineering checks. It
+    collected no human-participant, animal, survey, interview, or private
+    task-history data. No inference about user efficacy is made.
+submission_files:
+  editable_main: output/docx/aiwingman-technical-report-draft.docx
+  review_pdf: output/pdf/aiwingman-technical-report-draft.pdf
+  canonical_source: paper/aiwingman_technical_report.md
+permanence_attestations:
+  distribution_license_to_preprints_org: AUTHOR_CONFIRMATION_REQUIRED
+  right_to_grant_license: AUTHOR_CONFIRMATION_REQUIRED
+  permanent_record_and_third_party_mirroring_understood: AUTHOR_CONFIRMATION_REQUIRED
