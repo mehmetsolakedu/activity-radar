@@ -1,0 +1,22 @@
+{
+  "corpus": {
+    "path": "Research/fixtures/continuity-policy-corpus-v1.json",
+    "sha256": "183025163326aeb7f95470d2ecf494b31bc8239c8abb3e74e939967cf3ad8f30"
+  },
+  "fixtureCounts": {
+    "lifecycle": 80,
+    "total": 155,
+    "triage": 75
+  },
+  "generator": {
+    "path": "Research/generate_continuity_corpus.py",
+    "sha256": "2c27f2bd7950e0aa26b8878ae27e13dfcd3332571f32b61444feb1111a8aae3c"
+  },
+  "independenceBoundary": "The Python oracle does not import or invoke Swift, but the same project produced the specification, oracle, fixtures, and implementation.",
+  "schemaVersion": "1.0",
+  "specification": {
+    "path": "Research/protocol/SPECIFICATION_V1.md",
+    "sha256": "ee6ab6568a3fcf8332facf9ef0a2d3bae66ab15d7f09a63ca6cbef6ce44e6f11"
+  },
+  "status": "FROZEN_BEFORE_SWIFT_BENCHMARK_EXECUTION"
+}
