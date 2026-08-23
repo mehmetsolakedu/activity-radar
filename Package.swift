@@ -11,7 +11,8 @@ let package = Package(
         .library(name: "ActivityRadarCore", targets: ["ActivityRadarCore"]),
         .executable(name: "ActivityRadar", targets: ["ActivityRadar"]),
         .executable(name: "ActivityRadarDiagnostics", targets: ["ActivityRadarDiagnostics"]),
-        .executable(name: "ActivityRadarSelfTest", targets: ["ActivityRadarSelfTest"])
+        .executable(name: "ActivityRadarSelfTest", targets: ["ActivityRadarSelfTest"]),
+        .executable(name: "AiWingmanResearchBenchmark", targets: ["AiWingmanResearchBenchmark"])
     ],
     targets: [
         .target(
@@ -36,6 +37,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "ActivityRadarSelfTest",
+            dependencies: ["ActivityRadarCore"]
+        ),
+        .executableTarget(
+            name: "AiWingmanResearchBenchmark",
             dependencies: ["ActivityRadarCore"]
         ),
         .testTarget(
