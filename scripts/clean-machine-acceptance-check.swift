@@ -23,6 +23,7 @@ private let requiredRecordKeys: Set<String> = [
     "dmgMountedReadOnly",
     "downloadedFromGitHubRelease",
     "gatekeeperLaunchSucceeded",
+    "interfaceLanguageSwitchPersisted",
     "macOSBuild",
     "macOSVersion",
     "machineDidNotBuildRelease",
@@ -31,6 +32,9 @@ private let requiredRecordKeys: Set<String> = [
     "supportInformationContentFree",
     "testedAt",
     "uninstallSucceeded",
+    "wingmanCLIUnavailableFallbackVerified",
+    "wingmanConsentPreviewVerified",
+    "wingmanRemoteReviewSucceeded",
 ]
 
 private func fail(_ message: String) -> Never {

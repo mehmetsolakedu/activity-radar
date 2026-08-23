@@ -1,23 +1,50 @@
-# Activity Radar’ı macOS’e Kurma
+# AiWingman’i macOS’e Kurma
 
 ## Sürüm durumu
 
-[`v1.2.0-beta.1`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.1), kurulabilir uygulama içermeyen tarihsel bir kaynak-öncelikli betadır. Desteklenen bir binary sürüm; Developer ID ile imzalandığını ve Apple tarafından noterlenmiş olduğunu açıkça söylemeli, ayrıca DMG, ZIP, `SHA256SUMS`, `RELEASE-MANIFEST.txt` ve temiz-makine kabul kaydı içermelidir. GitHub'ın otomatik “Source code” arşivlerini macOS yükleyicisi saymayın.
+[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2), ücretsiz kaynak-öncelikli topluluk betasıdır. Hazır uygulama paketi içermez. GitHub’ın otomatik “Source code” arşivleri kaynak koddur; macOS yükleyicisi değildir.
 
 ## Gereksinimler
 
 - macOS 13 veya üzeri.
 - Aynı macOS hesabında daha önce kullanılmış Codex Desktop veya Codex CLI.
 - Seçilen görevi yerel deep link ile açmak için Codex Desktop.
-- Activity Radar hesabı, API anahtarı, OAuth veya eklenti gerekmez.
+- AiWingman hesabı, ayrı API anahtarı isteme/saklama, OAuth veya eklenti gerekmez.
+- Yalnız isteğe bağlı uzak Wingman eleştirisi için uyumlu, ayrı kurulmuş ve
+  giriş yapılmış Codex CLI gerekir; dashboard onsuz çalışır. Uzak çağrı,
+  kullanıcının mevcut Codex planından veya kotasından tüketebilir.
+
+## Güncel kaynak betasını derleme
+
+Xcode veya macOS SDK içeren uyumlu Swift araç zincirini kurun; hareketli bir dal
+yerine exact release tag’ini derleyin:
+
+```sh
+git clone https://github.com/mehmetsolakedu/activity-radar.git
+cd activity-radar
+git switch --detach v1.2.0-beta.2
+swift test
+swift run ActivityRadarSelfTest
+./scripts/package-app.sh --mode local --output-app "$PWD/AiWingman.app"
+open "$PWD/AiWingman.app"
+```
+
+Bu yerel paket yalnız onu derleyen Mac içindir. Ortaya çıkan ad-hoc imzalı
+bundle’ı yayıncı tarafından imzalanmış indirme gibi yeniden dağıtmayın.
+AiWingman menü çubuğunda çalışır; radar simgesini kullanın veya `⌘⇧K` basın.
+
+## Gelecekteki imzalı indirmeler
+
+Aşağıdaki bölümler yalnız ilerideki bir release açıkça Developer ID ile imzalı
+ve Apple tarafından noterlenmiş uygulama içerirse geçerlidir. Güncel beta içermez.
 
 ## İndirmeyi doğrulama
 
 DMG ya da ZIP ile birlikte `SHA256SUMS` dosyasını da indirin. Terminal'de indirdiğiniz dosyaya uygun komutu çalıştırın:
 
 ```sh
-shasum -a 256 "Activity-Radar-<sürüm>-macOS-universal2.dmg"
-shasum -a 256 "Activity-Radar-<sürüm>-macOS-universal2.zip"
+shasum -a 256 "<indirilen-dosya>.dmg"
+shasum -a 256 "<indirilen-dosya>.zip"
 ```
 
 Çıktıdaki özet, `SHA256SUMS` içindeki ilgili satırla birebir aynı olmalıdır. Release sayfasında ayrıca `RELEASE-MANIFEST.txt` ve temiz-makine kabul JSON'u bulunmalıdır. Özet farklıysa, beklenen dosya yoksa veya sürüm imzalı ve noterlenmiş olduğunu açıkça söylemiyorsa durun.
@@ -25,53 +52,69 @@ shasum -a 256 "Activity-Radar-<sürüm>-macOS-universal2.zip"
 ## DMG ile kurulum (önerilen)
 
 1. Doğruladığınız `.dmg` dosyasını açın.
-2. **Activity Radar** uygulamasını disk imajındaki **Applications** bağlantısına sürükleyin.
-3. Finder'da **Activity Radar** disk imajını çıkarın.
-4. `/Applications/Activity Radar.app` dosyasını açın.
+2. **AiWingman** uygulamasını disk imajındaki **Applications** bağlantısına sürükleyin.
+3. Finder'da disk imajını çıkarın.
+4. `/Applications/AiWingman.app` dosyasını açın.
 
 macOS'in olağan Gatekeeper denetimini yapabilmesi için tarayıcı karantinasını koruyun. Uygulamayı disk imajının içinden çalıştırmayın.
 
 ## ZIP ile kurulum (alternatif)
 
 1. Doğruladığınız `.zip` dosyasını açın.
-2. **Activity Radar.app** dosyasını `/Applications` klasörüne taşıyın.
+2. **AiWingman.app** dosyasını `/Applications` klasörüne taşıyın.
 3. Uygulamayı Downloads içinden değil Applications içinden açın.
 
 ZIP, aynı imzalı ve noterlenmiş uygulamanın alternatif taşıma biçimidir. Önerilen indirme DMG'dir.
 
 ## İlk çalıştırma
 
-Activity Radar bir menü çubuğu uygulamasıdır (`LSUIElement`); Dock'ta görünmez. Açtıktan sonra menü çubuğundaki radar simgesine bakın veya paneli göstermek için `⌘⇧K` tuşlarına basın. İlk göreve dönme işleminde macOS, Codex Desktop'ın açılmasını onaylamanızı isteyebilir.
+AiWingman bir menü çubuğu uygulamasıdır (`LSUIElement`); Dock'ta görünmez. Açtıktan sonra menü çubuğundaki radar simgesine bakın veya paneli göstermek için `⌘⇧K` tuşlarına basın. İlk göreve dönme işleminde macOS, Codex Desktop'ın açılmasını onaylamanızı isteyebilir.
 
-Activity Radar uyumlu yerel Codex durumu bulamazsa nötr biçimde durur. Codex verisi oluşturmaz, onarmaz, yüklemez veya değiştirmez.
+Arama başlığındaki kompakt **TR/EN** denetimi dashboard, editör, durum menüsü ve
+Wingman arayüzünün dilini anında değiştirir. AiWingman seçimi sonraki açılış
+için yerel olarak hatırlar.
+
+AiWingman uyumlu yerel Codex durumu bulamazsa nötr biçimde durur. Codex verisi oluşturmaz, onarmaz, yüklemez veya değiştirmez.
+
+**Bir Wingman Çağır** isteğe bağlı bir uzak eleştiri başlatabilir. AiWingman’in
+Codex CLI’a stdin üzerinden vermeyi amaçladığı tam JSON paketini önce
+gösterir ve her çağrı için tek kullanımlık açık onay ister; arka planda çağrı
+yapılmaz. Ham prompt örnekleri varsayılan olarak dışarıdadır. CLI’ın salt-okunur
+sandbox’ı yazmayı engeller, fakat child process’in başka yerel dosyaları
+okuyamayacağını garanti etmez. Dolayısıyla önizleme, paketin CLI’ın teknik olarak
+erişebileceği tek bağlam olduğu iddiası değildir. Onay vermeden önce
+[PRIVACY.md](PRIVACY.md) dosyasını okuyun.
 
 ## İzinler ve gizlilik
 
-Activity Radar mevcut kullanıcının yerel Codex durumunu okur; kendi süreklilik verisini `~/Library/Application Support/Activity Radar` altında saklar. Tam Disk Erişimi, Erişilebilirlik, Ekran Kaydı, yönetici yetkisi ve ağ izni gerekmez. Beklenmedik geniş bir izin vermeyin; durumu [SECURITY.md](SECURITY.md) üzerinden bildirin.
+AiWingman mevcut kullanıcının yerel Codex durumunu okur; kendi süreklilik verisini eski sürümlerle uyum için `~/Library/Application Support/Activity Radar` altında saklar. Tam Disk Erişimi, Erişilebilirlik, Ekran Kaydı ve yönetici yetkisi gerekmez. Dashboard ağ bağlantısı istemez; isteğe bağlı uzak eleştiri yalnız onaydan sonra ayrı kurulmuş ve giriş yapılmış Codex CLI’ı kullanır. Beklenmedik geniş bir izin vermeyin; durumu [SECURITY.md](SECURITY.md) üzerinden bildirin.
 
 Tam veri sınırı için [PRIVACY.md](PRIVACY.md) dosyasına bakın. Bir issue'ya `~/.codex`, Codex veritabanı, rollout dosyası veya gerçek görev ekran görüntüsü eklemeyin.
 
 ## Güncelleme
 
-1. Durum menüsünden Activity Radar'ı kapatın.
+1. Durum menüsünden AiWingman’i kapatın.
 2. Yeni sürümü yukarıdaki adımlarla indirin ve doğrulayın.
 3. Yeni uygulamayı Applications'a sürükleyin; Finder sorarsa **Değiştir** seçeneğini kullanın.
-4. Yeni kopyayı açıp sürümü **Activity Radar Hakkında…** ekranında doğrulayın.
+4. Yeni kopyayı açıp sürümü **AiWingman Hakkında…** ekranında doğrulayın.
 
-Uygulamayı değiştirmek, Activity Radar'ın ayrı yerel süreklilik verisini korur. Bir sürüm geçişi `~/.codex` içine yazmamalı veya orayı değiştirmemelidir.
+Uygulamayı değiştirmek, AiWingman’in ayrı yerel süreklilik verisini korur. Eski `ActivityRadar` bundle kimlikleri ve veri yolu uyumluluk için bilinçli olarak korunur. Bir sürüm geçişi `~/.codex` içine yazmamalı veya orayı değiştirmemelidir.
 
 ## Kaldırma
 
-1. Activity Radar'ı kapatın.
-2. `/Applications/Activity Radar.app` dosyasını Çöp'e taşıyın.
-3. İsteğe bağlı olarak yalnız Activity Radar'a ait `~/Library/Application Support/Activity Radar` klasörünü ve `~/Library/Preferences/io.github.mehmetsolakedu.ActivityRadar.plist` tercih dosyasını silin.
+1. AiWingman’i kapatın.
+2. `/Applications/AiWingman.app` dosyasını Çöp'e taşıyın.
+3. İsteğe bağlı olarak yalnız AiWingman’e ait eski uyumluluk yolu `~/Library/Application Support/Activity Radar` klasörünü ve kullandığınız dağıtıma ait tercih dosyasını silin: imzalı public paket için `~/Library/Preferences/io.github.mehmetsolakedu.ActivityRadar.plist`, yerel paket için `~/Library/Preferences/local.mehmet.activityradar.plist`. İki dağıtımı da kullandıysanız iki kopyayı da kapattıktan sonra iki tercih dosyasını silebilirsiniz.
 
-`~/.codex` klasörünü silmeyin veya düzenlemeyin; bu klasör Activity Radar'a değil Codex'e aittir.
+`~/.codex` klasörünü silmeyin veya düzenlemeyin; bu klasör AiWingman’e değil Codex’e aittir.
 
 ## Güvenli sorun giderme
 
 - Applications içindeki kopyayı açtığınızı doğrulayın; menü çubuğu simgesine bakın veya `⌘⇧K` tuşlarına basın.
 - Codex'in aynı macOS hesabında daha önce kullanıldığını doğrulayın.
+- Yalnız uzak eleştiri kullanılamıyorsa `codex --version` ve `codex login status`
+  komutlarını doğrulayın; ardından Wingman ekranındaki **Codex CLI'yi yeniden
+  denetle** düğmesini kullanın. Dashboard CLI olmadan çalışmaya devam eder.
 - İndirme özetini yeniden karşılaştırın ve release notlarındaki bilinen sınırlamaları okuyun.
 - Issue formu isterse yalnız içeriksiz tanılamayı veya kopyalanan destek bilgisini paylaşın.
 

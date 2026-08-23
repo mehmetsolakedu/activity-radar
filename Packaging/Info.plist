@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>tr</string>
     <key>CFBundleDisplayName</key>
-    <string>Activity Radar</string>
+    <string>AiWingman</string>
     <key>CFBundleExecutable</key>
     <string>ActivityRadar</string>
     <key>CFBundleIconFile</key>
@@ -15,13 +15,13 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Activity Radar</string>
+    <string>AiWingman</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
 		<string>1.2.0</string>
     <key>CFBundleVersion</key>
-		<string>4</string>
+		<string>5</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.productivity</string>
     <key>LSMinimumSystemVersion</key>
@@ -31,6 +31,6 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Activity Radar contributors.</string>
+    <string>AiWingman contributors.</string>
 </dict>
 </plist>

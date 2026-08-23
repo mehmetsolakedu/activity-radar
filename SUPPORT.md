@@ -1,6 +1,6 @@
 # Support
 
-Activity Radar is an independent community project and is not an official
+AiWingman is an independent community project and is not an official
 OpenAI product.
 
 ## Where to ask
@@ -30,12 +30,40 @@ swiftc -parse-as-library \
 swift build -c release --product ActivityRadar
 ~~~
 
-Include the macOS version, CPU architecture, Activity Radar version or commit,
+Include the macOS version, CPU architecture, AiWingman version or commit,
 the smallest synthetic reproduction, expected behavior, actual behavior, and
 which checks passed or failed.
 
 For an installed app, **Destek Bilgisini Kopyala** in the status menu provides
 the same safe version/provenance context without task data.
+
+## Wingman troubleshooting
+
+If the optional remote critique is unavailable, verify a compatible installed
+CLI and saved login with `codex --version` and `codex login status`, then use
+**Codex CLI'yi yeniden denetle** in the Wingman sheet. The dashboard remains
+available without the CLI. AiWingman does not install the CLI, request an
+API key, or start a background call.
+
+Before every remote call, AiWingman displays the exact user-derived JSON packet
+it intends to supply on stdin and requires one-shot consent. The packet is
+processed with the fixed reviewer instruction and output schema shipped in the
+source; those fixed texts contain no task data. Prompt excerpts, prompt-derived
+themes, and local text signals are off by default; with that option off the
+packet contains task titles and numeric measurements only. Scope or
+prompt-sharing changes clear consent, and consent is also
+cleared after an attempt. The CLI's read-only sandbox blocks writes but does not
+prove that the child cannot read another local file; the previewed packet is not
+a sole-context guarantee.
+
+AiWingman validates the saved CLI authentication file's metadata and makes
+an opaque, private temporary copy for the isolated child process. It does not
+parse or include credential contents in the packet, diagnostics, or logs,
+does not copy user rules or configuration, and removes the temporary copy after
+the attempt. A timeout, cancellation,
+unknown or tool event, or invalid schema intentionally discards partial output.
+Never attach the JSON packet, `auth.json`, Codex databases, or rollout files to
+a public support request.
 
 ## Protect private data
 

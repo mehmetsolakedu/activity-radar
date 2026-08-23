@@ -121,6 +121,9 @@
         "gatekeeperLaunchSucceeded": {
           "const": true
         },
+        "interfaceLanguageSwitchPersisted": {
+          "const": true
+        },
         "macOSBuild": {
           "pattern": "^[0-9]{2}[A-Z][A-Za-z0-9]{1,12}$",
           "type": "string"
@@ -150,6 +153,15 @@
         },
         "uninstallSucceeded": {
           "const": true
+        },
+        "wingmanCLIUnavailableFallbackVerified": {
+          "const": true
+        },
+        "wingmanConsentPreviewVerified": {
+          "const": true
+        },
+        "wingmanRemoteReviewSucceeded": {
+          "const": true
         }
       },
       "required": [
@@ -163,6 +175,7 @@
         "dmgMountedReadOnly",
         "downloadedFromGitHubRelease",
         "gatekeeperLaunchSucceeded",
+        "interfaceLanguageSwitchPersisted",
         "macOSBuild",
         "macOSVersion",
         "machineDidNotBuildRelease",
@@ -170,7 +183,10 @@
         "supportInformationContentFree",
         "syntheticCodexDeepLinkSucceeded",
         "testedAt",
-        "uninstallSucceeded"
+        "uninstallSucceeded",
+        "wingmanCLIUnavailableFallbackVerified",
+        "wingmanConsentPreviewVerified",
+        "wingmanRemoteReviewSucceeded"
       ],
       "type": "object"
     },

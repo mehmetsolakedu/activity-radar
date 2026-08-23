@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe the user problem before the proposed interface. Activity Radar
+        Describe the user problem before the proposed interface. AiWingman
         prioritizes local processing, explicit user intent, explainable signals,
         and honest claim boundaries.
 
@@ -39,7 +39,7 @@ body:
       label: New data access
       options:
         - None
-        - New local Activity Radar metadata
+        - New local AiWingman metadata
         - Additional read-only Codex state
         - Exported user-controlled data
         - Network or third-party service

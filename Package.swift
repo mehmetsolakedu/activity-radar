@@ -26,7 +26,8 @@ let package = Package(
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("SwiftUI"),
-                .linkedFramework("Carbon")
+                .linkedFramework("Carbon"),
+                .linkedFramework("Security")
             ]
         ),
         .executableTarget(
@@ -39,7 +40,7 @@ let package = Package(
         ),
         .testTarget(
             name: "ActivityRadarCoreTests",
-            dependencies: ["ActivityRadarCore"]
+            dependencies: ["ActivityRadarCore", "ActivityRadar"]
         )
     ]
 )

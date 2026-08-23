@@ -3,19 +3,12 @@ import AppKit
 import SwiftUI
 
 private enum RadarRelativeTime {
-    private static let formatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.unitsStyle = .full
-        return formatter
-    }()
-
-    static func text(_ date: Date, relativeTo now: Date = Date()) -> String {
-        let elapsed = now.timeIntervalSince(date)
-        guard abs(elapsed) >= 10 else {
-            return "şimdi"
-        }
-        return formatter.localizedString(for: date, relativeTo: now)
+    static func text(
+        _ date: Date,
+        language: RadarLanguage,
+        relativeTo now: Date = Date()
+    ) -> String {
+        RadarL10n(language: language).relativeTime(date, relativeTo: now)
     }
 }
 
@@ -43,6 +36,7 @@ struct RadarView: View {
     @FocusState private var searchFocused: Bool
     @State private var eventMonitor: Any?
     @State private var continuityItem: ActivityItem?
+    @State private var showsWingman = false
     @State private var showsResearchClearConfirmation = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -60,6 +54,7 @@ struct RadarView: View {
             .background(Color.white.opacity(0.965))
         }
         .frame(minWidth: 780, idealWidth: 930, maxWidth: 1_080, minHeight: 620, idealHeight: 724, maxHeight: 840)
+        .environment(\.locale, l10n.locale)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -89,6 +84,7 @@ struct RadarView: View {
             RadarContinuityEditor(
                 itemTitle: item.title,
                 checkpoint: item.checkpoint,
+                language: model.language,
                 initialMetadata: model.continuityMetadata(for: item),
                 hasStoredPlan: model.hasContinuityPlan(for: item),
                 onSave: { importance, deadline, nextAction, waitingOn, snoozeUntil in
@@ -106,19 +102,31 @@ struct RadarView: View {
                 }
             )
         }
-        .alert(
-            "Yerel araştırma olayları silinsin mi?",
-            isPresented: $showsResearchClearConfirmation
-        ) {
-            Button("Sil", role: .destructive) {
-                model.clearResearchLedger()
-            }
-            Button("Vazgeç", role: .cancel) {}
-        } message: {
-            Text("Bu işlem yalnızca Activity Radar’ın içeriksiz araştırma günlüğünü temizler; Codex görevlerine ve park planlarına dokunmaz.")
+        .sheet(isPresented: $showsWingman) {
+            WingmanView(language: model.language)
         }
         .alert(
-            "İçeriksiz araştırma kaydı dışa aktarılsın mı?",
+            l10n.text(
+                "Yerel araştırma olayları silinsin mi?",
+                "Delete local research events?"
+            ),
+            isPresented: $showsResearchClearConfirmation
+        ) {
+            Button(l10n.text("Sil", "Delete"), role: .destructive) {
+                model.clearResearchLedger()
+            }
+            Button(l10n.text("Vazgeç", "Cancel"), role: .cancel) {}
+        } message: {
+            Text(l10n.text(
+                "Bu işlem yalnızca AiWingman’in içeriksiz araştırma günlüğünü temizler; Codex görevlerine ve park planlarına dokunmaz.",
+                "This clears only AiWingman's content-free research log; it does not touch Codex tasks or parked plans."
+            ))
+        }
+        .alert(
+            l10n.text(
+                "İçeriksiz araştırma kaydı dışa aktarılsın mı?",
+                "Export the content-free research log?"
+            ),
             isPresented: Binding(
                 get: { model.researchExportPreview != nil },
                 set: { isPresented in
@@ -128,15 +136,19 @@ struct RadarView: View {
                 }
             )
         ) {
-            Button("Dosya seç…") {
+            Button(l10n.text("Dosya seç…", "Choose File…")) {
                 model.confirmResearchExport()
             }
-            Button("Vazgeç", role: .cancel) {
+            Button(l10n.text("Vazgeç", "Cancel"), role: .cancel) {
                 model.cancelResearchExport()
             }
         } message: {
-            Text(model.researchExportPreviewSummary ?? "Önizleme hazırlanıyor…")
+            Text(model.researchExportPreviewSummary ?? l10n.text("Önizleme hazırlanıyor…", "Preparing preview…"))
         }
+    }
+
+    private var l10n: RadarL10n {
+        model.l10n
     }
 
     private var searchHeader: some View {
@@ -145,12 +157,12 @@ struct RadarView: View {
                 .font(.system(size: 20, weight: .regular))
                 .foregroundStyle(RadarColors.muted)
 
-            TextField("Görev ara veya geç…", text: $model.query)
+            TextField(l10n.text("Görev ara veya geç…", "Search or switch tasks…"), text: $model.query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 16))
                 .foregroundStyle(RadarColors.text)
                 .focused($searchFocused)
-                .accessibilityLabel("Görev ara veya geç")
+                .accessibilityLabel(l10n.text("Görev ara veya geç", "Search or switch tasks"))
 
             if !model.query.isEmpty {
                 Button {
@@ -160,36 +172,56 @@ struct RadarView: View {
                         .foregroundStyle(RadarColors.muted)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Aramayı temizle")
+                .accessibilityLabel(l10n.text("Aramayı temizle", "Clear search"))
             }
+
+            Button {
+                showsWingman = true
+            } label: {
+                Label(
+                    l10n.text("Bir Wingman Çağır", "Call a Wingman"),
+                    systemImage: "person.crop.circle.badge.sparkles"
+                )
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(RadarColors.blue)
+            .help(l10n.text(
+                "Yoğun işleri, soru ağını, harness'i ve token sinyallerini gözden geçir",
+                "Review busy work, question graphs, the harness, and token signals"
+            ))
+            .accessibilityLabel(l10n.text("Bir Wingman çağır", "Call a Wingman"))
 
             Button {
                 model.refresh()
             } label: {
-                Label("Şimdi yenile", systemImage: "arrow.clockwise")
+                Label(l10n.text("Şimdi yenile", "Refresh now"), systemImage: "arrow.clockwise")
                     .labelStyle(.iconOnly)
                     .font(.system(size: 13, weight: .semibold))
                     .opacity(model.isRefreshing ? 0.45 : 1)
             }
             .buttonStyle(.plain)
             .foregroundStyle(RadarColors.muted)
-            .help("Şimdi yenile")
+            .help(l10n.text("Şimdi yenile", "Refresh now"))
 
             Menu {
                 Toggle(
-                    "İçeriksiz yerel araştırma kaydı",
+                    l10n.text("İçeriksiz yerel araştırma kaydı", "Content-free local research log"),
                     isOn: Binding(
                         get: { model.researchLoggingEnabled },
                         set: { model.setResearchLoggingEnabled($0) }
                     )
                 )
                 Divider()
-                Text("\(model.researchEventCount) olay · son 90 gün · ağ aktarımı yok")
-                Button("Önizle ve dışa aktar…") {
+                Text(l10n.text(
+                    "\(model.researchEventCount) olay · son 90 gün · ağ aktarımı yok",
+                    "\(model.researchEventCount) events · last 90 days · no network transfer"
+                ))
+                Button(l10n.text("Önizle ve dışa aktar…", "Preview and Export…")) {
                     model.prepareResearchExport()
                 }
                 .disabled(model.researchEventCount == 0)
-                Button("Yerel olayları temizle…", role: .destructive) {
+                Button(l10n.text("Yerel olayları temizle…", "Clear Local Events…"), role: .destructive) {
                     showsResearchClearConfirmation = true
                 }
                 .disabled(model.researchEventCount == 0)
@@ -200,8 +232,30 @@ struct RadarView: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
-            .help("Gizlilik korumalı araştırma modu")
-            .accessibilityLabel("Gizlilik korumalı araştırma modu")
+            .help(l10n.text("Gizlilik korumalı araştırma modu", "Privacy-preserving research mode"))
+            .accessibilityLabel(l10n.text("Gizlilik korumalı araştırma modu", "Privacy-preserving research mode"))
+
+            Menu {
+                ForEach(RadarLanguage.allCases) { language in
+                    Button {
+                        model.language = language
+                    } label: {
+                        Label(
+                            language.displayName(in: model.language),
+                            systemImage: model.language == language ? "checkmark" : "character"
+                        )
+                    }
+                }
+            } label: {
+                Text(model.language.compactTitle)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .frame(minWidth: 27)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help(l10n.text("Arayüz dili", "Interface language"))
+            .accessibilityLabel(l10n.text("Arayüz dili", "Interface language"))
+            .accessibilityValue(model.language.displayName(in: model.language))
 
             KeyCap(text: "⌘⇧K")
         }
@@ -223,27 +277,45 @@ struct RadarView: View {
 
     private var summaryBar: some View {
         HStack(spacing: 18) {
-            SummaryMetric(color: RadarColors.blue, text: "\(model.recentlyActiveCount) açık turn · ≤2 dk")
-            SummaryMetric(color: RadarColors.amber, text: "\(model.attentionCount) dikkat istiyor")
-            SummaryMetric(color: RadarColors.green, text: "\(model.newResultCount) yeni sonuç")
+            SummaryMetric(
+                color: RadarColors.blue,
+                text: l10n.text(
+                    "\(model.recentlyActiveCount) açık turn · ≤2 dk",
+                    "\(model.recentlyActiveCount) open turns · ≤2 min"
+                )
+            )
+            SummaryMetric(
+                color: RadarColors.amber,
+                text: l10n.text(
+                    "\(model.attentionCount) dikkat istiyor",
+                    "\(model.attentionCount) need attention"
+                )
+            )
+            SummaryMetric(
+                color: RadarColors.green,
+                text: l10n.text(
+                    "\(model.newResultCount) yeni sonuç",
+                    "\(model.newResultCount) new results"
+                )
+            )
 
             Spacer(minLength: 8)
 
             if model.scope == .all || !model.query.isEmpty {
-                Picker("Tarih aralığı", selection: $model.dateRange) {
+                Picker(l10n.text("Tarih aralığı", "Date range"), selection: $model.dateRange) {
                     ForEach(RadarDateRange.allCases) { range in
-                        Text(range.title).tag(range)
+                        Text(l10n.dateRangeTitle(range)).tag(range)
                     }
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .controlSize(.small)
-                .frame(width: 128)
+                .frame(width: 140)
             }
 
-            Picker("Görünüm", selection: $model.scope) {
+            Picker(l10n.text("Görünüm", "View"), selection: $model.scope) {
                 ForEach(RadarScope.allCases) { scope in
-                    Text(scope.rawValue).tag(scope)
+                    Text(l10n.scopeTitle(scope)).tag(scope)
                 }
             }
             .labelsHidden()
@@ -277,7 +349,7 @@ struct RadarView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: "hand.raised.fill")
                                     .foregroundStyle(RadarColors.secondary)
-                                Text("Tek öneri yok · \(abstention)")
+                                Text(l10n.text("Tek öneri yok", "No single recommendation") + " · \(abstention)")
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(RadarColors.secondary)
                                 Spacer()
@@ -286,15 +358,21 @@ struct RadarView: View {
                             .frame(minHeight: 36)
                             .background(RadarColors.graySoft)
                             .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Tek öneri yok. \(abstention)")
+                            .accessibilityLabel(
+                                l10n.text("Tek öneri yok", "No single recommendation") + ". \(abstention)"
+                            )
                         }
                         ForEach(Array(visibleItems.enumerated()), id: \.element.id) { index, item in
                             if let section = model.focusSection(for: item),
                                index == 0 || model.focusSection(for: visibleItems[index - 1]) != section {
-                                FocusSectionHeader(title: model.focusSectionTitle(section))
+                                FocusSectionHeader(
+                                    title: model.focusSectionTitle(section),
+                                    language: model.language
+                                )
                             }
                             RadarTaskRow(
                                 item: item,
+                                language: model.language,
                                 selected: model.selectedID == item.id,
                                 isLastOpened: model.isLastOpened(item),
                                 lifecycleLabel: model.lifecycleLabel(for: item),
@@ -339,7 +417,7 @@ struct RadarView: View {
                 Text(error)
                     .lineLimit(2)
                 Spacer()
-                Button("Yeniden dene") {
+                Button(l10n.text("Yeniden dene", "Try Again")) {
                     model.refresh()
                 }
                 .buttonStyle(.link)
@@ -367,37 +445,56 @@ struct RadarView: View {
 
     private var footer: some View {
         HStack(spacing: 18) {
-            FooterHint(keys: ["↑", "↓"], label: "Gezin")
-            FooterHint(keys: ["Enter"], label: "Göreve dön")
-            FooterHint(keys: ["Esc"], label: "Kapat")
+            FooterHint(keys: ["↑", "↓"], label: l10n.text("Gezin", "Navigate"))
+            FooterHint(keys: ["Enter"], label: l10n.text("Göreve dön", "Open task"))
+            FooterHint(keys: ["Esc"], label: l10n.text("Kapat", "Close"))
 
             Spacer()
 
             if model.scope == .focus, model.query.isEmpty, !model.items.isEmpty {
                 Text(
-                    "\(model.filteredItems.count)/\(model.items.count) odakta"
-                    + (model.triageAbstentionText == nil ? "" : " · tek öneri yok")
+                    l10n.text(
+                        "\(model.filteredItems.count)/\(model.items.count) odakta",
+                        "\(model.filteredItems.count)/\(model.items.count) in focus"
+                    )
+                    + (model.triageAbstentionText == nil ? "" : " · " + l10n.text("tek öneri yok", "no single recommendation"))
                 )
                     .foregroundStyle(RadarColors.muted)
-                    .help(model.triageAbstentionText ?? "Açıklanabilir portföy triyajı")
+                    .help(model.triageAbstentionText ?? l10n.text(
+                        "Açıklanabilir portföy triyajı",
+                        "Explainable portfolio triage"
+                    ))
             } else if model.query.isEmpty, model.scope == .all {
                 Text(
-                    "\(model.filteredItems.count) görev · \(model.dateRange.title)"
-                    + (model.isHistoryCapped ? " · daha eski işler var" : "")
+                    l10n.text(
+                        "\(model.filteredItems.count) görev",
+                        "\(model.filteredItems.count) tasks"
+                    )
+                    + " · \(l10n.dateRangeTitle(model.dateRange))"
+                    + (model.isHistoryCapped
+                        ? " · " + l10n.text("daha eski işler var", "older work exists")
+                        : "")
                 )
                 .foregroundStyle(RadarColors.muted)
             } else if !model.query.isEmpty {
                 Text(
-                    "\(model.filteredItems.count) sonuç · \(model.dateRange.title)"
-                    + (model.isHistoryCapped ? " · daha fazlası var" : "")
+                    l10n.text(
+                        "\(model.filteredItems.count) sonuç",
+                        "\(model.filteredItems.count) results"
+                    )
+                    + " · \(l10n.dateRangeTitle(model.dateRange))"
+                    + (model.isHistoryCapped
+                        ? " · " + l10n.text("daha fazlası var", "more results exist")
+                        : "")
                 )
                     .foregroundStyle(RadarColors.muted)
             }
             if let updated = model.lastRefreshAt {
-                Text("Yerel veri · \(RadarRelativeTime.text(updated))")
+                Text(l10n.text("Yerel veri", "Local data") + " · "
+                    + RadarRelativeTime.text(updated, language: model.language))
                     .foregroundStyle(RadarColors.greenText)
             }
-            Text("Activity Radar · Work Continuity")
+            Text(l10n.text("AiWingman · İş Sürekliliği", "AiWingman · Work Continuity"))
                 .foregroundStyle(RadarColors.muted)
         }
         .padding(.horizontal, 14)
@@ -422,27 +519,27 @@ struct RadarView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(RadarColors.muted)
             if model.query.isEmpty, model.scope == .focus {
-                Button("Tüm görevleri göster") {
+                Button(l10n.text("Tüm görevleri göster", "Show All Tasks")) {
                     model.scope = .all
                 }
                 .buttonStyle(.bordered)
             } else if model.query.isEmpty, model.dateRange != .all {
-                Button("Tüm zamanları göster") {
+                Button(l10n.text("Tüm zamanları göster", "Show All Time")) {
                     model.dateRange = .all
                 }
                 .buttonStyle(.bordered)
             } else if model.query.isEmpty {
-                Button("Yenile") {
+                Button(l10n.text("Yenile", "Refresh")) {
                     model.refresh()
                 }
                 .buttonStyle(.bordered)
             } else {
                 HStack(spacing: 10) {
-                    Button("Aramayı temizle") {
+                    Button(l10n.text("Aramayı temizle", "Clear Search")) {
                         model.query = ""
                     }
                     if model.dateRange != .all {
-                        Button("Tüm zamanlarda ara") {
+                        Button(l10n.text("Tüm zamanlarda ara", "Search All Time")) {
                             model.dateRange = .all
                         }
                     }
@@ -456,32 +553,47 @@ struct RadarView: View {
 
     private var emptyStateTitle: String {
         if !model.query.isEmpty {
-            return "Eşleşen görev yok"
+            return l10n.text("Eşleşen görev yok", "No matching tasks")
         }
         if model.scope == .focus {
-            return "Şu anda odak gerektiren görev yok"
+            return l10n.text("Şu anda odak gerektiren görev yok", "No tasks need focus right now")
         }
-        return "Bu tarih aralığında görev yok"
+        return l10n.text("Bu tarih aralığında görev yok", "No tasks in this date range")
     }
 
     private var emptyStateDescription: String {
         if model.isSearching {
-            return "\(model.dateRange.title) içindeki yerel görevlerde aranıyor…"
+            return l10n.text(
+                "\(l10n.dateRangeTitle(model.dateRange)) içindeki yerel görevlerde aranıyor…",
+                "Searching local tasks in \(l10n.dateRangeTitle(model.dateRange))…"
+            )
         }
         if !model.query.isEmpty {
-            return "Başlığı, projeyi veya son hareketi ara."
+            return l10n.text(
+                "Başlığı, projeyi veya son hareketi ara.",
+                "Search the title, project, or latest activity."
+            )
         }
         if model.scope == .focus {
-            return "Tümü görünümüne geçebilir veya yenileyebilirsin."
+            return l10n.text(
+                "Tümü görünümüne geçebilir veya yenileyebilirsin.",
+                "You can switch to All or refresh."
+            )
         }
-        return "Tarih aralığını genişleterek daha eski işleri geri getirebilirsin."
+        return l10n.text(
+            "Tarih aralığını genişleterek daha eski işleri geri getirebilirsin.",
+            "Expand the date range to bring back older work."
+        )
     }
 
     private var loadingState: some View {
         VStack(spacing: 11) {
             ProgressView()
                 .controlSize(.small)
-            Text("Codex görevleri salt-okunur yükleniyor…")
+            Text(l10n.text(
+                "Codex görevleri salt-okunur yükleniyor…",
+                "Loading Codex tasks read-only…"
+            ))
                 .font(.system(size: 13))
                 .foregroundStyle(RadarColors.muted)
         }
@@ -493,7 +605,10 @@ struct RadarView: View {
         VStack(spacing: 11) {
             ProgressView()
                 .controlSize(.small)
-            Text("\(model.dateRange.title) içindeki yerel görevlerde aranıyor…")
+            Text(l10n.text(
+                "\(l10n.dateRangeTitle(model.dateRange)) içindeki yerel görevlerde aranıyor…",
+                "Searching local tasks in \(l10n.dateRangeTitle(model.dateRange))…"
+            ))
                 .font(.system(size: 13))
                 .foregroundStyle(RadarColors.muted)
         }
@@ -551,6 +666,9 @@ struct RadarView: View {
         if continuityItem != nil {
             return true
         }
+        if showsWingman {
+            return true
+        }
         if event.window?.level == .popUpMenu {
             return true
         }
@@ -579,9 +697,10 @@ struct RadarView: View {
 
 private struct FocusSectionHeader: View {
     let title: String
+    let language: RadarLanguage
 
     var body: some View {
-        Text(title.uppercased(with: Locale(identifier: "tr_TR")))
+        Text(title.uppercased(with: Locale(identifier: language.localeIdentifier)))
             .font(.system(size: 11, weight: .semibold))
             .tracking(0.6)
             .foregroundStyle(RadarColors.muted)
@@ -595,6 +714,7 @@ private struct FocusSectionHeader: View {
 
 private struct RadarTaskRow: View {
     let item: ActivityItem
+    let language: RadarLanguage
     let selected: Bool
     let isLastOpened: Bool
     let lifecycleLabel: RadarLifecycleLabel?
@@ -610,6 +730,10 @@ private struct RadarTaskRow: View {
     let onSetLifecycleOverride: (RadarLifecycleOverride?) -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private var l10n: RadarL10n {
+        RadarL10n(language: language)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Button(action: onSelect) {
@@ -624,7 +748,7 @@ private struct RadarTaskRow: View {
                                 .lineLimit(1)
 
                             if isLastOpened {
-                                Text("Son döndüğün")
+                                Text(l10n.text("Son döndüğün", "Last opened"))
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(RadarColors.blue)
                                     .padding(.horizontal, 8)
@@ -633,7 +757,7 @@ private struct RadarTaskRow: View {
                             }
 
                             if recommended {
-                                Text("Şimdi bak")
+                                Text(l10n.text("Şimdi bak", "Look now"))
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(RadarColors.blue)
                                     .padding(.horizontal, 8)
@@ -678,7 +802,8 @@ private struct RadarTaskRow: View {
 
                     Spacer(minLength: 12)
 
-                    Text("Hareket · \(Self.timeLabel(for: item.timelineActivityAt))")
+                    Text(l10n.text("Hareket", "Activity") + " · "
+                        + l10n.timeLabel(item.timelineActivityAt))
                         .font(.system(size: 12))
                         .foregroundStyle(RadarColors.muted)
 
@@ -693,12 +818,18 @@ private struct RadarTaskRow: View {
             }
             .buttonStyle(.plain)
             .help(
-                "\(item.cwd)\nSon anlamlı hareket: \(Self.fullDateFormatter.string(from: item.timelineActivityAt))"
+                "\(item.cwd)\n"
+                    + l10n.text("Son anlamlı hareket", "Last meaningful activity")
+                    + ": \(l10n.fullDateTime(item.timelineActivityAt))"
             )
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(rowAccessibilityLabel)
-            .accessibilityHint(selected ? "Ayrıntıları kapatır" : "Ayrıntıları açar")
-            .accessibilityValue(selected ? "Seçili; ayrıntılar açık" : "Ayrıntılar kapalı")
+            .accessibilityHint(selected
+                ? l10n.text("Ayrıntıları kapatır", "Collapses details")
+                : l10n.text("Ayrıntıları açar", "Expands details"))
+            .accessibilityValue(selected
+                ? l10n.text("Seçili; ayrıntılar açık", "Selected; details expanded")
+                : l10n.text("Ayrıntılar kapalı", "Details collapsed"))
 
             if selected {
                 details
@@ -728,15 +859,17 @@ private struct RadarTaskRow: View {
 
             HStack(alignment: .top, spacing: 22) {
                 DetailBlock(
-                    title: "Son ajan mesajı",
+                    title: l10n.text("Son ajan mesajı", "Latest agent message"),
                     text: item.checkpoint,
-                    footer: item.historyComplete ? nil : "Geçmişin son bölümü tarandı"
+                    footer: item.historyComplete
+                        ? nil
+                        : l10n.text("Geçmişin son bölümü tarandı", "Only the latest part of history was scanned")
                 )
 
                 Divider()
 
                 DetailBlock(
-                    title: "Son anlamlı hareket",
+                    title: l10n.text("Son anlamlı hareket", "Last meaningful activity"),
                     text: meaningfulActivityText,
                     footer: detailStatusFooter
                 )
@@ -755,18 +888,26 @@ private struct RadarTaskRow: View {
 
             HStack(spacing: 12) {
                 Button(action: onPark) {
-                    Label(hasContinuityPlan ? "Planı düzenle" : "Park et", systemImage: "bookmark")
+                    Label(
+                        hasContinuityPlan
+                            ? l10n.text("Planı düzenle", "Edit plan")
+                            : l10n.text("Park et", "Park"),
+                        systemImage: "bookmark"
+                    )
                         .font(.system(size: 12, weight: .medium))
                 }
                 .buttonStyle(.borderless)
-                .help("Sonraki adımı, önem düzeyini ve dönüş zamanını yerel olarak kaydet")
+                .help(l10n.text(
+                    "Sonraki adımı, önem düzeyini ve dönüş zamanını yerel olarak kaydet",
+                    "Save the next action, importance, and return time locally"
+                ))
                 if showsLifecycleMenu {
                     lifecycleMenu
                 }
                 Spacer()
                 Button(action: onOpen) {
                     HStack(spacing: 8) {
-                        Text("Göreve dön")
+                        Text(l10n.text("Göreve dön", "Open task"))
                         Image(systemName: "arrow.turn.down.left")
                     }
                     .font(.system(size: 13, weight: .semibold))
@@ -791,7 +932,7 @@ private struct RadarTaskRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 9) {
                     Image(systemName: "arrow.right.circle.fill")
                         .foregroundStyle(RadarColors.blue)
-                    Text("Sonraki adım")
+                    Text(l10n.text("Sonraki adım", "Next action"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(RadarColors.secondary)
                     Text(nextAction)
@@ -805,7 +946,7 @@ private struct RadarTaskRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 9) {
                     Image(systemName: "scope")
                         .foregroundStyle(RadarColors.blue)
-                    Text("Neden şimdi?")
+                    Text(l10n.text("Neden şimdi?", "Why now?"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(RadarColors.secondary)
                     Text(triageReasons.joined(separator: " · "))
@@ -831,7 +972,7 @@ private struct RadarTaskRow: View {
         .padding(12)
         .background(RadarColors.blueSoft.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("İş sürekliliği ayrıntıları")
+        .accessibilityLabel(l10n.text("İş sürekliliği ayrıntıları", "Work continuity details"))
     }
 
     private var hasContinuitySignal: Bool {
@@ -851,21 +992,27 @@ private struct RadarTaskRow: View {
         if let importance = continuityMetadata.importance, importance != .normal {
             let title: String
             switch importance {
-            case .low: title = "Düşük önem"
-            case .normal: title = "Normal önem"
-            case .high: title = "Yüksek önem"
-            case .critical: title = "Kritik önem"
+            case .low: title = l10n.text("Düşük önem", "Low importance")
+            case .normal: title = l10n.text("Normal önem", "Normal importance")
+            case .high: title = l10n.text("Yüksek önem", "High importance")
+            case .critical: title = l10n.text("Kritik önem", "Critical importance")
             }
             parts.append(title)
         }
         if let deadline = continuityMetadata.deadline {
-            parts.append("Son tarih \(Self.continuityDateFormatter.string(from: deadline))")
+            parts.append(l10n.text(
+                "Son tarih \(l10n.continuityDateTime(deadline))",
+                "Deadline \(l10n.continuityDateTime(deadline))"
+            ))
         }
         if let waitingOn = normalized(continuityMetadata.waitingOn) {
-            parts.append("Beklenen: \(waitingOn)")
+            parts.append(l10n.text("Beklenen", "Waiting for") + ": \(waitingOn)")
         }
         if let snoozeUntil = continuityMetadata.snoozeUntil, snoozeUntil > Date() {
-            parts.append("\(Self.continuityDateFormatter.string(from: snoozeUntil)) tarihine kadar sessizde")
+            parts.append(l10n.text(
+                "\(l10n.continuityDateTime(snoozeUntil)) tarihine kadar sessizde",
+                "Snoozed until \(l10n.continuityDateTime(snoozeUntil))"
+            ))
         }
         return parts
     }
@@ -882,7 +1029,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.current)
             } label: {
                 Label(
-                    "Güncel kabul et",
+                    l10n.text("Güncel kabul et", "Mark as current"),
                     systemImage: lifecycleOverride == .current ? "checkmark.circle.fill" : "circle"
                 )
             }
@@ -890,7 +1037,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.waitingExternal)
             } label: {
                 Label(
-                    "Dışarıdan bekliyor",
+                    l10n.text("Dışarıdan bekliyor", "Waiting externally"),
                     systemImage: lifecycleOverride == .waitingExternal ? "checkmark.circle.fill" : "clock"
                 )
             }
@@ -898,7 +1045,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.blocked)
             } label: {
                 Label(
-                    "Bloklu olarak doğrula",
+                    l10n.text("Bloklu olarak doğrula", "Confirm as blocked"),
                     systemImage: lifecycleOverride == .blocked ? "checkmark.circle.fill" : "exclamationmark.octagon"
                 )
             }
@@ -907,7 +1054,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.completedElsewhere)
             } label: {
                 Label(
-                    "Başka yerde tamamlandı",
+                    l10n.text("Başka yerde tamamlandı", "Completed elsewhere"),
                     systemImage: lifecycleOverride == .completedElsewhere ? "checkmark.circle.fill" : "checkmark.circle"
                 )
             }
@@ -915,7 +1062,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.superseded)
             } label: {
                 Label(
-                    "Yerine daha güncel iş geçti",
+                    l10n.text("Yerine daha güncel iş geçti", "Superseded by newer work"),
                     systemImage: lifecycleOverride == .superseded ? "checkmark.circle.fill" : "arrow.triangle.branch"
                 )
             }
@@ -923,7 +1070,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.obsolete)
             } label: {
                 Label(
-                    "Güncelliğini yitirmiş olarak doğrula",
+                    l10n.text("Güncelliğini yitirmiş olarak doğrula", "Confirm as obsolete"),
                     systemImage: lifecycleOverride == .obsolete ? "checkmark.circle.fill" : "circle"
                 )
             }
@@ -931,7 +1078,7 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.abandoned)
             } label: {
                 Label(
-                    "Terk edilmiş olarak doğrula",
+                    l10n.text("Terk edilmiş olarak doğrula", "Confirm as abandoned"),
                     systemImage: lifecycleOverride == .abandoned ? "checkmark.circle.fill" : "circle"
                 )
             }
@@ -939,24 +1086,24 @@ private struct RadarTaskRow: View {
                 onSetLifecycleOverride(.duplicate)
             } label: {
                 Label(
-                    "Yinelenen iş olarak doğrula",
+                    l10n.text("Yinelenen iş olarak doğrula", "Confirm as duplicate work"),
                     systemImage: lifecycleOverride == .duplicate ? "checkmark.circle.fill" : "square.on.square"
                 )
             }
             if lifecycleOverride != nil {
                 Divider()
-                Button("Yerel etiketi kaldır") {
+                Button(l10n.text("Yerel etiketi kaldır", "Remove local label")) {
                     onSetLifecycleOverride(nil)
                 }
             }
         } label: {
-            Label("Durum etiketi", systemImage: "tag")
+            Label(l10n.text("Durum etiketi", "Status label"), systemImage: "tag")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(RadarColors.muted)
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .help("Durum etiketi")
+        .help(l10n.text("Durum etiketi", "Status label"))
     }
 
     private var statusIcon: some View {
@@ -1034,44 +1181,53 @@ private struct RadarTaskRow: View {
 
     private var statusText: String {
         if item.attentionReason == .explicitInput {
-            return "yanıtın bekleniyor"
+            return l10n.text("yanıtın bekleniyor", "waiting for your reply")
         }
         if item.attentionReason == .goalBlocked {
-            return "hedef bloklandı"
+            return l10n.text("hedef bloklandı", "goal blocked")
         }
         if item.attentionReason == .usageLimited {
-            return "kullanım sınırına ulaştı"
+            return l10n.text("kullanım sınırına ulaştı", "usage limit reached")
         }
         if item.attentionReason == .budgetLimited {
-            return "görev bütçe sınırına ulaştı"
+            return l10n.text("görev bütçe sınırına ulaştı", "task budget limit reached")
         }
         if item.attentionReason == .newSinceView {
-            return "görmediğin yeni sonuç var"
+            return l10n.text("görmediğin yeni sonuç var", "there is a new unseen result")
         }
         switch item.executionState {
         case .recentlyActive:
-            return "açık turn · son yerel kayıt ≤2 dk"
+            return l10n.text("açık turn · son yerel kayıt ≤2 dk", "open turn · latest local record ≤2 min")
         case .openSilent:
-            return "açık turn · yakın yerel kayıt yok"
+            return l10n.text("açık turn · yakın yerel kayıt yok", "open turn · no recent local record")
         case .completed:
-            return "son turn tamamlandı"
+            return l10n.text("son turn tamamlandı", "latest turn completed")
         case .aborted:
-            return "son turn durduruldu"
+            return l10n.text("son turn durduruldu", "latest turn stopped")
         case .idle:
-            return "beklemede"
+            return l10n.text("beklemede", "idle")
         case .unknown:
-            return "durum doğrulanamadı"
+            return l10n.text("durum doğrulanamadı", "status could not be verified")
         }
     }
 
     private var meaningfulActivityText: String {
         if let date = item.lastMeaningfulAgentAt {
-            return "Ajanın son anlamlı mesajı \(RadarRelativeTime.text(date))."
+            return l10n.text(
+                "Ajanın son anlamlı mesajı \(RadarRelativeTime.text(date, language: language)).",
+                "The agent's latest meaningful message was \(RadarRelativeTime.text(date, language: language))."
+            )
         }
         if let date = item.lastActivityAt {
-            return "Son yerel görev kaydı \(RadarRelativeTime.text(date))."
+            return l10n.text(
+                "Son yerel görev kaydı \(RadarRelativeTime.text(date, language: language)).",
+                "The latest local task record was \(RadarRelativeTime.text(date, language: language))."
+            )
         }
-        return "Henüz zaman damgalı bir yerel görev kaydı yok."
+        return l10n.text(
+            "Henüz zaman damgalı bir yerel görev kaydı yok.",
+            "There is no timestamped local task record yet."
+        )
     }
 
     private var rowAccessibilityLabel: String {
@@ -1079,16 +1235,17 @@ private struct RadarTaskRow: View {
             item.title,
             item.projectName,
             statusText,
-            "Son anlamlı hareket \(Self.fullDateFormatter.string(from: item.timelineActivityAt))"
+            l10n.text("Son anlamlı hareket", "Last meaningful activity")
+                + " \(l10n.fullDateTime(item.timelineActivityAt))"
         ]
         if let lifecycleLabel {
-            parts.insert(lifecycleLabel.title, at: 3)
+            parts.insert(l10n.lifecycleTitle(lifecycleLabel), at: 3)
         }
         if recommended {
-            parts.insert("Şimdi bak önerisi", at: 1)
+            parts.insert(l10n.text("Şimdi bak önerisi", "Look now recommendation"), at: 1)
         }
         if let nextAction = normalized(continuityMetadata.nextAction) {
-            parts.append("Sonraki adım: \(nextAction)")
+            parts.append(l10n.text("Sonraki adım", "Next action") + ": \(nextAction)")
         }
         return parts.joined(separator: ", ")
     }
@@ -1096,26 +1253,26 @@ private struct RadarTaskRow: View {
     private var signalPill: (text: String, color: Color, background: Color)? {
         switch item.attentionReason {
         case .explicitInput:
-            return ("Seni bekliyor", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+            return (l10n.text("Seni bekliyor", "Waiting for you"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
         case .goalBlocked:
-            return ("Bloklandı", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+            return (l10n.text("Bloklandı", "Blocked"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
         case .usageLimited:
-            return ("Sınırda", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+            return (l10n.text("Sınırda", "At limit"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
         case .budgetLimited:
-            return ("Bütçe sınırı", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+            return (l10n.text("Bütçe sınırı", "Budget limit"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
         case .newSinceView:
-            return ("Yeni sonuç", Color(red: 0.12, green: 0.49, blue: 0.22), RadarColors.greenSoft)
+            return (l10n.text("Yeni sonuç", "New result"), Color(red: 0.12, green: 0.49, blue: 0.22), RadarColors.greenSoft)
         case nil:
             guard lifecycleLabel == nil else { return nil }
             switch item.goalStatus {
             case .paused:
-                return ("Park edilmiş", Color(red: 0.52, green: 0.39, blue: 0.16), RadarColors.amberSoft)
+                return (l10n.text("Park edilmiş", "Parked"), Color(red: 0.52, green: 0.39, blue: 0.16), RadarColors.amberSoft)
             case .usageLimited:
-                return ("Kullanım sınırı", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+                return (l10n.text("Kullanım sınırı", "Usage limit"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
             case .budgetLimited:
-                return ("Bütçe sınırı", Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
+                return (l10n.text("Bütçe sınırı", "Budget limit"), Color(red: 0.70, green: 0.38, blue: 0.03), RadarColors.amberSoft)
             case .complete:
-                return ("Hedef tamam", RadarColors.greenText, RadarColors.greenSoft)
+                return (l10n.text("Hedef tamam", "Goal complete"), RadarColors.greenText, RadarColors.greenSoft)
             default:
                 return nil
             }
@@ -1127,85 +1284,36 @@ private struct RadarTaskRow: View {
     ) -> (text: String, color: Color, background: Color) {
         switch label {
         case .historical, .stale:
-            return (label.title, RadarColors.secondary, RadarColors.graySoft)
+            return (l10n.lifecycleTitle(label), RadarColors.secondary, RadarColors.graySoft)
         case .longParked, .unfinishedCandidate, .abandonedCandidate, .snoozed, .waitingExternal:
-            return (label.title, Color(red: 0.63, green: 0.37, blue: 0.04), RadarColors.amberSoft)
+            return (l10n.lifecycleTitle(label), Color(red: 0.63, green: 0.37, blue: 0.04), RadarColors.amberSoft)
         case .blocked:
-            return (label.title, RadarColors.red, RadarColors.redSoft)
+            return (l10n.lifecycleTitle(label), RadarColors.red, RadarColors.redSoft)
         case .completedElsewhere:
-            return (label.title, RadarColors.greenText, RadarColors.greenSoft)
+            return (l10n.lifecycleTitle(label), RadarColors.greenText, RadarColors.greenSoft)
         case .superseded, .obsolete, .duplicate:
-            return (label.title, RadarColors.secondary, RadarColors.graySoft)
+            return (l10n.lifecycleTitle(label), RadarColors.secondary, RadarColors.graySoft)
         case .abandoned:
-            return (label.title, RadarColors.red, RadarColors.redSoft)
+            return (l10n.lifecycleTitle(label), RadarColors.red, RadarColors.redSoft)
         }
-    }
-
-    private static let clockFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
-
-    private static let dayMonthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "d MMM"
-        return formatter
-    }()
-
-    private static let dayMonthYearFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "d MMM yyyy"
-        return formatter
-    }()
-
-    private static let fullDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "d MMM yyyy HH:mm:ss"
-        return formatter
-    }()
-
-    private static let continuityDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "d MMM HH:mm"
-        return formatter
-    }()
-
-    private static func timeLabel(for date: Date, now: Date = Date()) -> String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            return clockFormatter.string(from: date)
-        }
-        if calendar.isDateInYesterday(date) {
-            return "Dün \(clockFormatter.string(from: date))"
-        }
-        if calendar.component(.year, from: date) != calendar.component(.year, from: now) {
-            return dayMonthYearFormatter.string(from: date)
-        }
-        return dayMonthFormatter.string(from: date)
     }
 
     private var goalStatusFooter: String? {
         switch item.goalStatus {
         case .active:
-            return "Hedef: aktif"
+            return l10n.text("Hedef: aktif", "Goal: active")
         case .paused:
-            return "Hedef: duraklatıldı"
+            return l10n.text("Hedef: duraklatıldı", "Goal: paused")
         case .blocked:
-            return "Hedef: bloklandı"
+            return l10n.text("Hedef: bloklandı", "Goal: blocked")
         case .usageLimited:
-            return "Hedef: kullanım sınırında"
+            return l10n.text("Hedef: kullanım sınırında", "Goal: usage limited")
         case .budgetLimited:
-            return "Hedef: bütçe sınırında"
+            return l10n.text("Hedef: bütçe sınırında", "Goal: budget limited")
         case .complete:
-            return "Hedef: tamamlandı"
+            return l10n.text("Hedef: tamamlandı", "Goal: complete")
         case .unknown:
-            return "Hedef: durum doğrulanamadı"
+            return l10n.text("Hedef: durum doğrulanamadı", "Goal: status could not be verified")
         case nil:
             return nil
         }
@@ -1217,7 +1325,7 @@ private struct RadarTaskRow: View {
             parts.append(goalStatusFooter)
         }
         if lifecycleEvidenceSummary == nil, let lifecycleLabel {
-            parts.append(lifecycleLabel.evidence)
+            parts.append(l10n.lifecycleEvidence(lifecycleLabel))
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }

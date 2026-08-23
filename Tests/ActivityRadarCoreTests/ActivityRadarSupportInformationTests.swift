@@ -16,7 +16,7 @@ func supportInformationFormatsOnlyContentFreeBuildMetadata() {
 
     #expect(
         information.formattedText == """
-        Activity Radar destek bilgisi
+        AiWingman destek bilgisi
         Uygulama sürümü: 1.2.0 (4)
         Yayın etiketi: v1.2.0-beta.2
         Kaynak revizyonu: 3454b66ec575

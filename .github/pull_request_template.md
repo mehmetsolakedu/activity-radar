@@ -12,7 +12,12 @@ Describe the user problem and the smallest coherent change.
 - [ ] Codex-owned state remains read-only.
 - [ ] No task text, identifiers, local paths, or account data were added.
 - [ ] Examples and fixtures are synthetic.
-- [ ] No Codex message or continuity text is transmitted.
+- [ ] No dashboard, diagnostics, research-ledger, or background path
+      transmits Codex content or starts an agent call.
+- [ ] Any Wingman change preserves the exact intended JSON preview, one-shot
+      consent, redaction, bounds, separately opt-in prompt excerpts and derived
+      text signals, authentication-only temporary home, cleanup, and the
+      documented residual local-read boundary.
 - [ ] Research logging remains opt-in, local, content-free, and bounded.
 - [ ] Lifecycle confirmations remain explicit and reversible.
 - [ ] Abstention and snooze/waiting intent are preserved.

@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-# Activity Radar macOS packager
+# AiWingman macOS packager (legacy ActivityRadar technical identifiers retained)
 #
 # local  : repeatable Universal 2 app bundle, ad-hoc signed unless an identity
 #          is explicitly supplied. This mode is never described as public.
@@ -15,7 +15,7 @@ export GIT_NO_REPLACE_OBJECTS=1
 
 SCRIPT_DIR="${0:A:h}"
 PROJECT_DIR="${SCRIPT_DIR:h}"
-DEFAULT_LOCAL_APP="${PROJECT_DIR:h}/Activity Radar.app"
+DEFAULT_LOCAL_APP="${PROJECT_DIR:h}/AiWingman.app"
 DEFAULT_DIST_DIR="$PROJECT_DIR/dist"
 SOURCE_ICON="$PROJECT_DIR/Assets/ActivityRadar-Source.png"
 INFO_PLIST="$PROJECT_DIR/Packaging/Info.plist"
@@ -33,6 +33,7 @@ SIGNING_IDENTITY="${DEVELOPER_ID_APPLICATION:-}"
 NOTARY_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-}"
 NOTARY_KEYCHAIN="${NOTARY_KEYCHAIN_PATH:-}"
 BUNDLE_IDENTIFIER="${ACTIVITY_RADAR_BUNDLE_ID:-}"
+BUNDLE_IDENTIFIER_OPTION_SEEN=0
 RELEASE_TAG="${ACTIVITY_RADAR_RELEASE_TAG:-}"
 EXPECTED_TEAM_ID="${DEVELOPER_TEAM_ID:-}"
 BUILD_EPOCH="${SOURCE_DATE_EPOCH:-946684800}"
@@ -55,7 +56,7 @@ Modes:
                         requirements; there is no ad-hoc fallback.
 
 Options:
-  --output-app PATH     Local-mode app destination (default: ../Activity Radar.app)
+  --output-app PATH     Local-mode app destination (default: ../AiWingman.app)
   --dist-dir PATH       Public-mode release root (default: ./dist)
   --identity NAME       Developer ID Application identity. May also be supplied
                         via DEVELOPER_ID_APPLICATION.
@@ -64,13 +65,14 @@ Options:
   --notary-keychain PATH
                         Optional Keychain file containing the notary profile.
                         May also be supplied via NOTARY_KEYCHAIN_PATH.
-  --release-tag TAG     Exact public Git tag, for example v1.2.0-beta.2. May
+  --release-tag TAG     Exact public Git tag, for example v1.2.0-beta.3. May
                         also be supplied via ACTIVITY_RADAR_RELEASE_TAG.
   --team-id TEAMID      Expected 10-character Apple Developer Team ID. May also
                         be supplied via DEVELOPER_TEAM_ID.
-  --bundle-id ID        Bundle identifier to stage. Public mode requires it to
-                        match Info.plist. May also be supplied via
-                        ACTIVITY_RADAR_BUNDLE_ID.
+  --bundle-id ID        Bundle identifier to stage. Without this option local
+                        mode uses local.mehmet.activityradar. Public mode
+                        requires the Info.plist value, which may also be
+                        supplied via ACTIVITY_RADAR_BUNDLE_ID.
   --source-date-epoch N Normalize bundle/archive mtimes to this Unix timestamp.
                         Default: 946684800 (2000-01-01T00:00:00Z).
   --overwrite           Replace only the exact local app or versioned public
@@ -81,7 +83,7 @@ Public example (placeholder values only):
   ./scripts/package-app.sh --mode public \
     --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
     --notary-profile "activity-radar-notary" \
-    --release-tag "v1.2.0-beta.2" \
+    --release-tag "v1.2.0-beta.3" \
     --team-id "TEAMID1234" \
     --bundle-id "io.github.mehmetsolakedu.ActivityRadar"
 
@@ -160,6 +162,7 @@ while (( $# > 0 )); do
     --bundle-id)
       (( $# >= 2 )) || fail "--bundle-id requires a value"
       BUNDLE_IDENTIFIER="$2"
+      BUNDLE_IDENTIFIER_OPTION_SEEN=1
       shift 2
       ;;
     --source-date-epoch)
@@ -213,7 +216,11 @@ VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$INFO_PLIST")"
 BUILD_NUMBER="$(plutil -extract CFBundleVersion raw -o - "$INFO_PLIST")"
 MIN_MACOS="$(plutil -extract LSMinimumSystemVersion raw -o - "$INFO_PLIST")"
 PLIST_BUNDLE_IDENTIFIER="$(plutil -extract CFBundleIdentifier raw -o - "$INFO_PLIST")"
-[[ -n "$BUNDLE_IDENTIFIER" ]] || BUNDLE_IDENTIFIER="$PLIST_BUNDLE_IDENTIFIER"
+if [[ "$MODE" == "local" && "$BUNDLE_IDENTIFIER_OPTION_SEEN" == "0" ]]; then
+  BUNDLE_IDENTIFIER="local.mehmet.activityradar"
+elif [[ -z "$BUNDLE_IDENTIFIER" ]]; then
+  BUNDLE_IDENTIFIER="$PLIST_BUNDLE_IDENTIFIER"
+fi
 
 print -r -- "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+)*$' || fail "Unsafe CFBundleShortVersionString: $VERSION"
 print -r -- "$BUILD_NUMBER" | grep -Eq '^[0-9]+$' || fail "CFBundleVersion must contain decimal digits: $BUILD_NUMBER"

@@ -13,6 +13,7 @@
       "dmgMountedReadOnly" : false,
       "downloadedFromGitHubRelease" : false,
       "gatekeeperLaunchSucceeded" : false,
+      "interfaceLanguageSwitchPersisted" : false,
       "machineDidNotBuildRelease" : false,
       "macOSBuild" : "REPLACE_WITH_BUILD",
       "macOSVersion" : "REPLACE_WITH_VERSION",
@@ -20,7 +21,10 @@
       "supportInformationContentFree" : false,
       "syntheticCodexDeepLinkSucceeded" : false,
       "testedAt" : "REPLACE_WITH_UTC_TIMESTAMP",
-      "uninstallSucceeded" : false
+      "uninstallSucceeded" : false,
+      "wingmanCLIUnavailableFallbackVerified" : false,
+      "wingmanConsentPreviewVerified" : false,
+      "wingmanRemoteReviewSucceeded" : false
     },
     {
       "aboutReleaseIdentityVerified" : false,
@@ -33,6 +37,7 @@
       "dmgMountedReadOnly" : false,
       "downloadedFromGitHubRelease" : false,
       "gatekeeperLaunchSucceeded" : false,
+      "interfaceLanguageSwitchPersisted" : false,
       "machineDidNotBuildRelease" : false,
       "macOSBuild" : "REPLACE_WITH_BUILD",
       "macOSVersion" : "REPLACE_WITH_VERSION",
@@ -40,7 +45,10 @@
       "supportInformationContentFree" : false,
       "syntheticCodexDeepLinkSucceeded" : false,
       "testedAt" : "REPLACE_WITH_UTC_TIMESTAMP",
-      "uninstallSucceeded" : false
+      "uninstallSucceeded" : false,
+      "wingmanCLIUnavailableFallbackVerified" : false,
+      "wingmanConsentPreviewVerified" : false,
+      "wingmanRemoteReviewSucceeded" : false
     }
   ],
   "releaseCreatedAt" : "REPLACE_WITH_GITHUB_DRAFT_CREATED_AT",

@@ -1,10 +1,10 @@
-# Contributing to Activity Radar
+# Contributing to AiWingman
 
-Thank you for helping improve Activity Radar. Contributions of code, tests,
+Thank you for helping improve AiWingman. Contributions of code, tests,
 documentation, accessibility fixes, privacy reviews, and reproducible bug
 reports are welcome.
 
-Activity Radar is an independent community project. Participation is governed
+AiWingman is an independent community project. Participation is governed
 by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Before starting
@@ -22,10 +22,20 @@ Every contribution must preserve these project invariants:
 
 - Treat the user's Codex directory as read-only.
 - Open SQLite state with read-only flags and query-only mode.
-- Keep Activity Radar-owned preferences and metadata outside the Codex
+- Keep AiWingman-owned preferences and metadata outside the Codex
   directory.
-- Do not transmit task titles, prompts, checkpoints, paths, message text, or
-  user-authored next actions.
+- Do not transmit user content from dashboard, diagnostics, research-ledger, or
+  background paths. No background agent call is allowed.
+- Keep the sole optional Wingman boundary user-triggered, bounded, redacted,
+  schema-validated, preceded by the exact intended JSON packet preview, and
+  protected by one-shot consent. Prompt excerpts must remain separately opt-in.
+- Never include raw task identifiers, full paths, working or rollout paths, git
+  or account metadata, system or developer instructions, tool outputs,
+  credentials, checkpoints, or user-authored next actions in a Wingman packet.
+- Do not describe the previewed packet as the child process's sole possible
+  context: read-only sandboxing blocks writes but does not prove that other local
+  files cannot be read. Keep the opaque temporary-auth copy private and bounded
+  to the attempted invocation.
 - Keep research logging opt-in, local, content-free, and retention-bounded.
 - Do not infer abandonment or obsolescence from inactivity alone.
 - Keep high-impact lifecycle decisions explicit and reversible.
@@ -63,10 +73,18 @@ swiftc -parse-as-library \
 swift build -c release --product ActivityRadar
 ~~~
 
+Wingman changes must preserve deterministic fixtures for spawn-tree token
+aggregation, partial-history labels, human-message-only extraction, graph
+stability, exact packet preview, redaction and size limits, direct no-shell
+invocation, environment secret stripping, unknown/tool-event rejection, timeout,
+cancellation, and temporary-file cleanup.
+Tests and CI must use synthetic fixtures or fake processes and must never make a
+live agent call.
+
 For packaging changes, also run:
 
 ~~~sh
-./scripts/package-app.sh "/tmp/Activity Radar.app"
+./scripts/package-app.sh --mode local --output-app "/tmp/AiWingman.app"
 ~~~
 
 The `ActivityRadarDiagnostics` executable reads the local task corpus but emits

@@ -5,8 +5,8 @@ import Foundation
 import UniformTypeIdentifiers
 
 enum RadarScope: String, CaseIterable, Identifiable {
-    case focus = "Odak"
-    case all = "Tümü"
+    case focus
+    case all
 
     var id: String { rawValue }
 }
@@ -19,16 +19,6 @@ enum RadarDateRange: String, CaseIterable, Identifiable {
     case all
 
     var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .day: return "24 saat"
-        case .week: return "7 gün"
-        case .month: return "30 gün"
-        case .quarter: return "90 gün"
-        case .all: return "Tüm zamanlar"
-        }
-    }
 
     var loadLimit: Int {
         switch self {
@@ -72,7 +62,7 @@ struct RadarLifecycleOverrideRecord: Codable, Equatable {
     let setAt: Date
 }
 
-enum RadarLifecycleLabel: Equatable {
+enum RadarLifecycleLabel: CaseIterable, Equatable {
     case historical
     case stale
     case longParked
@@ -87,65 +77,17 @@ enum RadarLifecycleLabel: Equatable {
     case abandoned
     case duplicate
 
-    var title: String {
-        switch self {
-        case .historical: return "Geçmiş"
-        case .stale: return "Uzun süredir sessiz"
-        case .longParked: return "Uzun süredir parkta"
-        case .unfinishedCandidate: return "Yarım kalmış olabilir"
-        case .abandonedCandidate: return "Durumunu gözden geçir"
-        case .snoozed: return "Ertelendi"
-        case .waitingExternal: return "Dışarıdan bekliyor"
-        case .blocked: return "Bloklu"
-        case .completedElsewhere: return "Başka yerde tamamlandı"
-        case .superseded: return "Yerine yenisi geçti"
-        case .obsolete: return "Güncelliğini yitirmiş"
-        case .abandoned: return "Terk edilmiş"
-        case .duplicate: return "Yinelenen iş"
-        }
-    }
-
-    var evidence: String {
-        switch self {
-        case .historical:
-            return "Tamamlanan eski görev"
-        case .stale:
-            return "30+ gündür doğrulanmış anlamlı hareket yok"
-        case .longParked:
-            return "90+ gündür park edilmiş"
-        case .unfinishedCandidate:
-            return "Durdurulmuş ve 30+ gündür sessiz"
-        case .abandonedCandidate:
-            return "Uzun süredir sessiz; durum kararı kullanıcıya ait"
-        case .snoozed:
-            return "Kullanıcının belirlediği dönüş zamanına kadar sessizde"
-        case .waitingExternal:
-            return "Kullanıcı dışarıdan bir kişi veya olay beklediğini belirtti"
-        case .blocked:
-            return "Kullanıcı işi bloklu olarak doğruladı"
-        case .completedElsewhere:
-            return "Kullanıcı işin başka bir yerde tamamlandığını doğruladı"
-        case .superseded:
-            return "Kullanıcı bu işin yerine daha güncel bir iş geçtiğini doğruladı"
-        case .obsolete:
-            return "Kullanıcı işin güncelliğini yitirdiğini doğruladı"
-        case .abandoned:
-            return "Kullanıcı işi terk ettiğini doğruladı"
-        case .duplicate:
-            return "Kullanıcı bunun yinelenen bir iş olduğunu doğruladı"
-        }
-    }
 }
 
-enum RadarFocusSection: String {
-    case lastOpened = "Kaldığın yer"
-    case attention = "Dikkat"
-    case newResults = "Yeni sonuçlar"
-    case whyNow = "Şimdi bak"
-    case active = "Şu an açık"
-    case openSilent = "Sessiz açık"
-    case parked = "Park edilmiş"
-    case other = "Diğer"
+enum RadarFocusSection: CaseIterable {
+    case lastOpened
+    case attention
+    case newResults
+    case whyNow
+    case active
+    case openSilent
+    case parked
+    case other
 }
 
 @MainActor
@@ -154,6 +96,14 @@ final class RadarViewModel: ObservableObject {
     @Published var query = ""
     @Published var scope: RadarScope = .focus
     @Published var dateRange: RadarDateRange = .month
+    @Published var language: RadarLanguage = .turkish {
+        didSet {
+            guard oldValue != language else { return }
+            language.persist(to: defaults)
+            actionMessage = nil
+            languageDidChange?(language)
+        }
+    }
     @Published var selectedID: String?
     @Published private(set) var isRefreshing = false
     @Published private(set) var isSearching = false
@@ -171,7 +121,13 @@ final class RadarViewModel: ObservableObject {
     @Published private(set) var researchExportPreview: RadarResearchExportPreview?
 
     var didOpenThread: (() -> Void)?
+    var languageDidChange: ((RadarLanguage) -> Void)?
 
+    var l10n: RadarL10n {
+        RadarL10n(language: language)
+    }
+
+    private let defaults: UserDefaults
     private let reader = CodexActivityReader()
     private let continuityStore = RadarContinuityStore()
     private let loadQueue = DispatchQueue(
@@ -196,8 +152,9 @@ final class RadarViewModel: ObservableObject {
     private var triagePresentationPending = false
     private var pendingResearchExportData: Data?
 
-    init() {
-        let defaults = UserDefaults.standard
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        language = RadarLanguage.load(from: defaults)
         if let storedRange = defaults.string(forKey: dateRangeKey),
            let range = RadarDateRange(rawValue: storedRange) {
             dateRange = range
@@ -344,7 +301,11 @@ final class RadarViewModel: ObservableObject {
                 case .success:
                     break
                 case .failure(let error) where self.effectiveLoadRange == range:
-                    self.errorMessage = error.localizedDescription
+                    self.errorMessage = self.localizedFailure(
+                        error,
+                        turkish: "Codex görevleri okunamadı",
+                        english: "Codex tasks could not be read"
+                    )
                     self.actionMessage = nil
                 case .failure:
                     break
@@ -362,7 +323,7 @@ final class RadarViewModel: ObservableObject {
     }
 
     func dateRangeDidChange() {
-        UserDefaults.standard.set(dateRange.rawValue, forKey: dateRangeKey)
+        defaults.set(dateRange.rawValue, forKey: dateRangeKey)
         if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             refresh()
         } else {
@@ -425,13 +386,25 @@ final class RadarViewModel: ObservableObject {
         guard let reason = triageResult?.abstentionReason else { return nil }
         switch reason {
         case .noEligibleWork:
-            return "Uygun iş yok; erteleme ve bekleme kararların korunuyor"
+            return l10n.text(
+                "Uygun iş yok; erteleme ve bekleme kararların korunuyor",
+                "No eligible work; your snooze and waiting decisions are preserved"
+            )
         case .insufficientEvidence:
-            return "Tek bir iş önermek için kanıt yetersiz"
+            return l10n.text(
+                "Tek bir iş önermek için kanıt yetersiz",
+                "There is not enough evidence to recommend one task"
+            )
         case .incompleteHistory:
-            return "Geçmiş eksik; sistem tek bir iş seçmiyor"
+            return l10n.text(
+                "Geçmiş eksik; sistem tek bir iş seçmiyor",
+                "History is incomplete; the system will not choose one task"
+            )
         case .competingSignals:
-            return "Birden fazla iş aynı ölçüde kritik; seçim sende"
+            return l10n.text(
+                "Birden fazla iş aynı ölçüde kritik; seçim sende",
+                "Several tasks are equally critical; the choice is yours"
+            )
         }
     }
 
@@ -540,7 +513,10 @@ final class RadarViewModel: ObservableObject {
                         forTaskID: item.id
                     )
                     continuityRecords[item.id] = stored
-                    actionMessage = "Durum kararı yerel olarak kaydedildi."
+                    actionMessage = l10n.text(
+                        "Durum kararı yerel olarak kaydedildi.",
+                        "The status decision was saved locally."
+                    )
                 }
                 await appendResearchEvent(
                     previous == nil ? .lifecycleConfirmed : .lifecycleCorrected,
@@ -548,7 +524,11 @@ final class RadarViewModel: ObservableObject {
                     at: now
                 )
             } catch {
-                actionMessage = "Durum kararı tercihlerde kaldı; süreklilik kaydı yazılamadı: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Durum kararı tercihlerde kaldı; süreklilik kaydı yazılamadı",
+                    english: "The status decision remains in preferences, but the continuity record could not be written"
+                )
             }
         }
     }
@@ -585,13 +565,20 @@ final class RadarViewModel: ObservableObject {
                 )
                 continuityRecords[item.id] = stored
                 recomputeTriage(now: now)
-                actionMessage = "İş sürekliliği planı yerel olarak kaydedildi."
+                actionMessage = l10n.text(
+                    "İş sürekliliği planı yerel olarak kaydedildi.",
+                    "The work continuity plan was saved locally."
+                )
                 await appendResearchEvent(.capsuleSaved, for: item.id, at: now)
                 if let snoozeUntil, snoozeUntil > now {
                     await appendResearchEvent(.snoozeSet, for: item.id, at: now)
                 }
             } catch {
-                actionMessage = "İş sürekliliği planı kaydedilemedi: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "İş sürekliliği planı kaydedilemedi",
+                    english: "The work continuity plan could not be saved"
+                )
             }
         }
     }
@@ -611,9 +598,16 @@ final class RadarViewModel: ObservableObject {
                     continuityRecords.removeValue(forKey: item.id)
                 }
                 recomputeTriage()
-                actionMessage = "Yerel iş sürekliliği planı kaldırıldı."
+                actionMessage = l10n.text(
+                    "Yerel iş sürekliliği planı kaldırıldı.",
+                    "The local work continuity plan was removed."
+                )
             } catch {
-                actionMessage = "Yerel plan kaldırılamadı: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Yerel plan kaldırılamadı",
+                    english: "The local plan could not be removed"
+                )
             }
         }
     }
@@ -626,11 +620,21 @@ final class RadarViewModel: ObservableObject {
                 try await continuityStore.setResearchLoggingEnabled(enabled)
                 await refreshResearchPreview()
                 actionMessage = enabled
-                    ? "İçeriksiz yerel araştırma kaydı açıldı. Hiçbir veri ağ üzerinden gönderilmez."
-                    : "Yerel araştırma kaydı kapatıldı. Mevcut kayıt cihazda kaldı."
+                    ? l10n.text(
+                        "İçeriksiz yerel araştırma kaydı açıldı. Hiçbir veri ağ üzerinden gönderilmez.",
+                        "Content-free local research logging is on. No data is sent over the network."
+                    )
+                    : l10n.text(
+                        "Yerel araştırma kaydı kapatıldı. Mevcut kayıt cihazda kaldı.",
+                        "Local research logging is off. Existing records remain on this device."
+                    )
             } catch {
                 researchLoggingEnabled.toggle()
-                actionMessage = "Araştırma kaydı ayarı değiştirilemedi: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Araştırma kaydı ayarı değiştirilemedi",
+                    english: "The research logging setting could not be changed"
+                )
             }
         }
     }
@@ -639,9 +643,9 @@ final class RadarViewModel: ObservableObject {
         guard let preview = researchExportPreview else { return nil }
         let range: String
         if let oldest = preview.oldestEventAt, let newest = preview.newestEventAt {
-            range = "\(Self.shortDateFormatter.string(from: oldest)) – \(Self.shortDateFormatter.string(from: newest))"
+            range = "\(l10n.dateTime(oldest)) – \(l10n.dateTime(newest))"
         } else {
-            range = "Olay yok"
+            range = l10n.text("Olay yok", "No events")
         }
         let kinds = preview.eventKindCounts
             .sorted { $0.key < $1.key }
@@ -651,17 +655,18 @@ final class RadarViewModel: ObservableObject {
             .sorted { $0.key < $1.key }
             .map { "\($0.key): \($0.value)" }
             .joined(separator: ", ")
-        let size = ByteCountFormatter.string(
-            fromByteCount: Int64(preview.estimatedJSONBytes),
-            countStyle: .file
-        )
+        let size = "\(preview.estimatedJSONBytes) " + l10n.text("bayt", "bytes")
+        let none = l10n.text("yok", "none")
         return [
-            "Toplam: \(preview.eventCount) olay",
-            "Tarih aralığı: \(range)",
-            "Olay türleri: \(kinds.isEmpty ? "yok" : kinds)",
-            "Koşullar: \(conditions.isEmpty ? "yok" : conditions)",
-            "Tahmini JSON boyutu: \(size)",
-            "Başlık, prompt, dosya yolu, checkpoint ve sonraki adım içermez."
+            l10n.text("Toplam", "Total") + ": \(preview.eventCount) " + l10n.text("olay", "events"),
+            l10n.text("Tarih aralığı", "Date range") + ": \(range)",
+            l10n.text("Olay türleri", "Event types") + ": \(kinds.isEmpty ? none : kinds)",
+            l10n.text("Koşullar", "Conditions") + ": \(conditions.isEmpty ? none : conditions)",
+            l10n.text("Tahmini JSON boyutu", "Estimated JSON size") + ": \(size)",
+            l10n.text(
+                "Başlık, prompt, dosya yolu, checkpoint ve sonraki adım içermez.",
+                "Contains no titles, prompts, file paths, checkpoints, or next actions."
+            )
         ].joined(separator: "\n")
     }
 
@@ -671,11 +676,17 @@ final class RadarViewModel: ObservableObject {
             do {
                 let snapshot = try await continuityStore.researchExportSnapshot()
                 guard snapshot.preview.eventCount > 0 else {
-                    actionMessage = "Dışa aktarılacak araştırma olayı yok."
+                    actionMessage = l10n.text(
+                        "Dışa aktarılacak araştırma olayı yok.",
+                        "There are no research events to export."
+                    )
                     return
                 }
                 guard !snapshot.preview.containsHumanAuthoredText else {
-                    actionMessage = "Gizlilik kontrolü dışa aktarımı durdurdu."
+                    actionMessage = l10n.text(
+                        "Gizlilik kontrolü dışa aktarımı durdurdu.",
+                        "The privacy check stopped the export."
+                    )
                     return
                 }
                 pendingResearchExportData = snapshot.data
@@ -683,7 +694,11 @@ final class RadarViewModel: ObservableObject {
             } catch {
                 pendingResearchExportData = nil
                 researchExportPreview = nil
-                actionMessage = "Araştırma kaydı önizlenemedi: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Araştırma kaydı önizlenemedi",
+                    english: "The research log could not be previewed"
+                )
             }
         }
     }
@@ -701,15 +716,25 @@ final class RadarViewModel: ObservableObject {
         cancelResearchExport()
 
         let panel = NSSavePanel()
-        panel.title = "İçeriksiz araştırma kaydını dışa aktar"
+        panel.title = l10n.text(
+            "İçeriksiz araştırma kaydını dışa aktar",
+            "Export content-free research log"
+        )
         panel.nameFieldStringValue = "activity-radar-research-\(Self.exportDateFormatter.string(from: Date())).json"
         panel.allowedContentTypes = [.json]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try data.write(to: url, options: .atomic)
-            actionMessage = "\(preview.eventCount) içeriksiz olay dışa aktarıldı."
+            actionMessage = l10n.text(
+                "\(preview.eventCount) içeriksiz olay dışa aktarıldı.",
+                "\(preview.eventCount) content-free events were exported."
+            )
         } catch {
-            actionMessage = "Araştırma kaydı dışa aktarılamadı: \(error.localizedDescription)"
+            actionMessage = localizedFailure(
+                error,
+                turkish: "Araştırma kaydı dışa aktarılamadı",
+                english: "The research log could not be exported"
+            )
         }
     }
 
@@ -720,9 +745,16 @@ final class RadarViewModel: ObservableObject {
                 try await continuityStore.clearResearchLedger()
                 researchEventCount = 0
                 cancelResearchExport()
-                actionMessage = "Yerel araştırma olayları silindi; kayıt ayarı değişmedi."
+                actionMessage = l10n.text(
+                    "Yerel araştırma olayları silindi; kayıt ayarı değişmedi.",
+                    "Local research events were deleted; the logging setting did not change."
+                )
             } catch {
-                actionMessage = "Araştırma kaydı temizlenemedi: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Araştırma kaydı temizlenemedi",
+                    english: "The research log could not be cleared"
+                )
             }
         }
     }
@@ -782,7 +814,11 @@ final class RadarViewModel: ObservableObject {
                     self.searchItems = []
                     self.searchItemsQuery = normalized
                     self.searchHasMore = false
-                    self.errorMessage = error.localizedDescription
+                    self.errorMessage = self.localizedFailure(
+                        error,
+                        turkish: "Codex görevlerinde arama yapılamadı",
+                        english: "Codex tasks could not be searched"
+                    )
                 }
             }
         }
@@ -816,7 +852,10 @@ final class RadarViewModel: ObservableObject {
 
     func open(_ item: ActivityItem) {
         guard let url = item.codexDeepLink else {
-            actionMessage = "Bu görev için geçerli Codex bağlantısı üretilemedi."
+            actionMessage = l10n.text(
+                "Bu görev için geçerli Codex bağlantısı üretilemedi.",
+                "A valid Codex link could not be created for this task."
+            )
             return
         }
 
@@ -824,14 +863,17 @@ final class RadarViewModel: ObservableObject {
             let openedAt = Date()
             markViewed(item.id, at: openedAt)
             acknowledgeDueSnooze(for: item, at: openedAt)
-            actionMessage = "Codex’te açıldı: \(item.title)"
+            actionMessage = l10n.text("Codex’te açıldı", "Opened in Codex") + ": \(item.title)"
             Task { [weak self] in
                 await self?.appendResearchEvent(.taskOpened, for: item.id, at: openedAt)
             }
             didOpenThread?()
             refresh()
         } else {
-            actionMessage = "Codex açılamadı. /Applications/ChatGPT.app kurulumunu kontrol et."
+            actionMessage = l10n.text(
+                "Codex açılamadı. /Applications/ChatGPT.app kurulumunu kontrol et.",
+                "Codex could not be opened. Check the /Applications/ChatGPT.app installation."
+            )
         }
     }
 
@@ -892,9 +934,9 @@ final class RadarViewModel: ObservableObject {
 
     func focusSectionTitle(_ section: RadarFocusSection) -> String {
         guard section == .whyNow, let triageAbstentionText else {
-            return section.rawValue
+            return l10n.focusSectionTitle(section)
         }
-        return "\(section.rawValue) · \(triageAbstentionText)"
+        return "\(l10n.focusSectionTitle(section)) · \(triageAbstentionText)"
     }
 
     func lifecycleEvidenceSummary(for item: ActivityItem) -> String? {
@@ -903,37 +945,58 @@ final class RadarViewModel: ObservableObject {
         case .current:
             return effectiveLifecycleOverride(for: item) == nil
                 ? nil
-                : "Kullanıcı tarafından güncel kabul edildi"
+                : l10n.text("Kullanıcı tarafından güncel kabul edildi", "You marked this as current")
         case .waitingHuman:
             return nil
         case .waitingExternal:
-            return "Dışarıdan bir kişi veya olay bekleniyor"
+            return l10n.text(
+                "Dışarıdan bir kişi veya olay bekleniyor",
+                "Waiting for an external person or event"
+            )
         case .blocked:
             return effectiveLifecycleOverride(for: item)?.value == .blocked
-                ? "Kullanıcı işi bloklu olarak doğruladı"
+                ? l10n.text("Kullanıcı işi bloklu olarak doğruladı", "You confirmed this work is blocked")
                 : nil
         case .dormant:
             if let snoozeUntil = continuityMetadata(for: item).snoozeUntil,
                snoozeUntil > Date() {
-                return "\(Self.shortDateFormatter.string(from: snoozeUntil)) tarihine kadar ertelendi"
+                return l10n.text(
+                    "\(l10n.dateTime(snoozeUntil)) tarihine kadar ertelendi",
+                    "Snoozed until \(l10n.dateTime(snoozeUntil))"
+                )
             }
             return nil
         case .likelyAbandoned:
-            return "Uzun süredir sessiz; durum kararı kullanıcıya ait"
+            return l10n.text(
+                "Uzun süredir sessiz; durum kararı kullanıcıya ait",
+                "Quiet for a long time; the status decision belongs to you"
+            )
         case .completed:
             return nil
         case .completedElsewhere:
-            return "Kullanıcı işin başka bir yerde tamamlandığını doğruladı"
+            return l10n.text(
+                "Kullanıcı işin başka bir yerde tamamlandığını doğruladı",
+                "You confirmed this work was completed elsewhere"
+            )
         case .superseded:
-            return "Kullanıcı bu işin yerine daha güncel bir iş geçtiğini doğruladı"
+            return l10n.text(
+                "Kullanıcı bu işin yerine daha güncel bir iş geçtiğini doğruladı",
+                "You confirmed that newer work superseded this work"
+            )
         case .abandonedConfirmed:
-            return "Kullanıcı işi terk ettiğini doğruladı"
+            return l10n.text("Kullanıcı işi terk ettiğini doğruladı", "You confirmed this work was abandoned")
         case .obsoleteConfirmed:
-            return "Kullanıcı işin güncelliğini yitirdiğini doğruladı"
+            return l10n.text("Kullanıcı işin güncelliğini yitirdiğini doğruladı", "You confirmed this work is obsolete")
         case .duplicate:
-            return "Kullanıcı bunun yinelenen bir iş olduğunu doğruladı"
+            return l10n.text(
+                "Kullanıcı bunun yinelenen bir iş olduğunu doğruladı",
+                "You confirmed this is duplicate work"
+            )
         case .uncertain:
-            return "Durum için kanıt yetersiz; sistem kesin lifecycle etiketi vermiyor"
+            return l10n.text(
+                "Durum için kanıt yetersiz; sistem kesin lifecycle etiketi vermiyor",
+                "Evidence is insufficient; the system is not assigning a definite lifecycle label"
+            )
         }
     }
 
@@ -946,18 +1009,18 @@ final class RadarViewModel: ObservableObject {
     }
 
     private func loadViewedDates() -> [String: Date] {
-        guard let raw = UserDefaults.standard.dictionary(forKey: viewedDefaultsKey) as? [String: Double] else {
+        guard let raw = defaults.dictionary(forKey: viewedDefaultsKey) as? [String: Double] else {
             return [:]
         }
         return raw.mapValues(Date.init(timeIntervalSince1970:))
     }
 
     private func markViewed(_ threadID: String, at date: Date) {
-        var raw = UserDefaults.standard.dictionary(forKey: viewedDefaultsKey) as? [String: Double] ?? [:]
+        var raw = defaults.dictionary(forKey: viewedDefaultsKey) as? [String: Double] ?? [:]
         raw[threadID] = date.timeIntervalSince1970
-        UserDefaults.standard.set(raw, forKey: viewedDefaultsKey)
-        UserDefaults.standard.set(threadID, forKey: lastOpenedIDKey)
-        UserDefaults.standard.set(date.timeIntervalSince1970, forKey: lastOpenedAtKey)
+        defaults.set(raw, forKey: viewedDefaultsKey)
+        defaults.set(threadID, forKey: lastOpenedIDKey)
+        defaults.set(date.timeIntervalSince1970, forKey: lastOpenedAtKey)
         lastOpenedID = threadID
         lastOpenedAt = date
     }
@@ -1077,7 +1140,11 @@ final class RadarViewModel: ObservableObject {
                     logTriagePresentation()
                 }
             } catch {
-                actionMessage = "Yerel iş sürekliliği kayıtları okunamadı: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Yerel iş sürekliliği kayıtları okunamadı",
+                    english: "Local work continuity records could not be read"
+                )
             }
         }
     }
@@ -1180,25 +1247,25 @@ final class RadarViewModel: ObservableObject {
 
     private func triageReasonLabel(_ code: WorkTriageReasonCode) -> String {
         switch code {
-        case .explicitInput: return "Yanıtın bekleniyor"
-        case .goalBlocked: return "Bloklu hedef"
-        case .usageLimited: return "Kullanım sınırına ulaştı"
-        case .budgetLimited: return "Görev bütçesine ulaştı"
-        case .unseenResult: return "Görülmemiş sonuç"
-        case .deadlineOverdue: return "Son tarih geçti"
-        case .deadlineWithinDay: return "Son tarih 24 saat içinde"
-        case .deadlineWithinThreeDays: return "Son tarih 3 gün içinde"
-        case .deadlineWithinWeek: return "Son tarih 7 gün içinde"
-        case .plannedReturnDue: return "Planlanan dönüş zamanı geldi"
-        case .criticalImportance: return "Kritik olarak işaretlendi"
-        case .highImportance: return "Yüksek önem"
-        case .lowImportance: return "Düşük önem"
-        case .nextActionRecorded: return "Sonraki adım hazır"
-        case .agingWithoutPlan: return "Plan olmadan yaşlanıyor"
-        case .recentlyActive: return "Şu an açık"
-        case .recentlyOpened: return "Az önce açıldı"
-        case .waitingOnRecorded: return "Dışarıdan bekliyor"
-        case .historyIncomplete: return "Geçmiş eksik"
+        case .explicitInput: return l10n.text("Yanıtın bekleniyor", "Waiting for your reply")
+        case .goalBlocked: return l10n.text("Bloklu hedef", "Blocked goal")
+        case .usageLimited: return l10n.text("Kullanım sınırına ulaştı", "Usage limit reached")
+        case .budgetLimited: return l10n.text("Görev bütçesine ulaştı", "Task budget reached")
+        case .unseenResult: return l10n.text("Görülmemiş sonuç", "Unseen result")
+        case .deadlineOverdue: return l10n.text("Son tarih geçti", "Deadline overdue")
+        case .deadlineWithinDay: return l10n.text("Son tarih 24 saat içinde", "Deadline within 24 hours")
+        case .deadlineWithinThreeDays: return l10n.text("Son tarih 3 gün içinde", "Deadline within 3 days")
+        case .deadlineWithinWeek: return l10n.text("Son tarih 7 gün içinde", "Deadline within 7 days")
+        case .plannedReturnDue: return l10n.text("Planlanan dönüş zamanı geldi", "Planned return time is due")
+        case .criticalImportance: return l10n.text("Kritik olarak işaretlendi", "Marked critical")
+        case .highImportance: return l10n.text("Yüksek önem", "High importance")
+        case .lowImportance: return l10n.text("Düşük önem", "Low importance")
+        case .nextActionRecorded: return l10n.text("Sonraki adım hazır", "Next action is ready")
+        case .agingWithoutPlan: return l10n.text("Plan olmadan yaşlanıyor", "Aging without a plan")
+        case .recentlyActive: return l10n.text("Şu an açık", "Active now")
+        case .recentlyOpened: return l10n.text("Az önce açıldı", "Opened recently")
+        case .waitingOnRecorded: return l10n.text("Dışarıdan bekliyor", "Waiting externally")
+        case .historyIncomplete: return l10n.text("Geçmiş eksik", "History incomplete")
         }
     }
 
@@ -1235,7 +1302,11 @@ final class RadarViewModel: ObservableObject {
             )
             await refreshResearchPreview()
         } catch {
-            actionMessage = "Yerel araştırma olayı kaydedilemedi: \(error.localizedDescription)"
+            actionMessage = localizedFailure(
+                error,
+                turkish: "Yerel araştırma olayı kaydedilemedi",
+                english: "The local research event could not be recorded"
+            )
         }
     }
 
@@ -1273,7 +1344,11 @@ final class RadarViewModel: ObservableObject {
                 lastLoggedTriageSignature = signature
                 await refreshResearchPreview()
             } catch {
-                actionMessage = "Triyaj gösterimi araştırma günlüğüne yazılamadı; sonraki gösterimde yeniden denenecek: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Triyaj gösterimi araştırma günlüğüne yazılamadı; sonraki gösterimde yeniden denenecek",
+                    english: "The triage presentation could not be written to the research log; it will be retried next time"
+                )
             }
         }
     }
@@ -1317,7 +1392,7 @@ final class RadarViewModel: ObservableObject {
 
     private func persistLifecycleOverrides() {
         guard let data = try? JSONEncoder().encode(lifecycleOverrides) else { return }
-        UserDefaults.standard.set(data, forKey: lifecycleOverridesKey)
+        defaults.set(data, forKey: lifecycleOverridesKey)
     }
 
     private func acknowledgeDueSnooze(for item: ActivityItem, at date: Date) {
@@ -1351,17 +1426,25 @@ final class RadarViewModel: ObservableObject {
                 continuityRecords[item.id] = stored
                 recomputeTriage(now: date)
             } catch {
-                actionMessage = "Görev açıldı; geçmiş erteleme işareti temizlenemedi: \(error.localizedDescription)"
+                actionMessage = localizedFailure(
+                    error,
+                    turkish: "Görev açıldı; geçmiş erteleme işareti temizlenemedi",
+                    english: "The task opened, but its expired snooze marker could not be cleared"
+                )
             }
         }
     }
 
-    private static let shortDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "tr_TR")
-        formatter.dateFormat = "d MMM yyyy HH:mm"
-        return formatter
-    }()
+    private func localizedFailure(
+        _ error: Error,
+        turkish: String,
+        english: String
+    ) -> String {
+        if language == .turkish {
+            return "\(turkish): \(error.localizedDescription)"
+        }
+        return english + "."
+    }
 
     private static let exportDateFormatter: DateFormatter = {
         let formatter = DateFormatter()

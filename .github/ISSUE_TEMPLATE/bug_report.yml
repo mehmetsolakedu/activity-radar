@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible Activity Radar defect with synthetic or redacted evidence.
+description: Report a reproducible AiWingman defect with synthetic or redacted evidence.
 title: "[Bug]: "
 body:
   - type: markdown

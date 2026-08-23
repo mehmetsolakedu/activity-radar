@@ -17,9 +17,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         statusBarController = StatusBarController(
+            language: model.language,
             onOpen: { [weak self] in self?.panelController.show() },
             onRefresh: { [weak self] in self?.model.refresh() }
         )
+        model.languageDidChange = { [weak self] language in
+            self?.statusBarController.updateLanguage(language)
+        }
 
         globalHotKey = GlobalHotKey { [weak self] in
             self?.panelController.toggle()

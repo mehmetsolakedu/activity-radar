@@ -25,13 +25,13 @@ usage() {
   cat <<'USAGE'
 Usage:
   ./scripts/publish-github-release.sh \
-    --tag v1.2.0-beta.2 \
+    --tag v1.2.0-beta.3 \
     --team-id TEAMID1234 \
-    --release-dir ./dist/Activity-Radar-1.2.0-beta.2-macOS-universal2 \
+    --release-dir ./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2 \
     --notes-file /absolute/path/to/release-notes.md \
     [--repo owner/repository] [--title "Release title"] \
     [--finalize-existing-draft \
-      --acceptance-file /absolute/path/to/Activity-Radar-1.2.0-beta.2-CLEAN-MACHINE-ACCEPTANCE.json]
+      --acceptance-file /absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json]
 
 The command re-verifies the exact tag, source commit, successful CI, app/DMG
 signatures, stapled tickets, Gatekeeper assessments, ZIP/DMG integrity, and

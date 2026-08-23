@@ -7,64 +7,72 @@ final class StatusBarController: NSObject {
     private let onOpen: () -> Void
     private let onRefresh: () -> Void
     private let supportInformation: ActivityRadarSupportInformation
+    private let openItem = NSMenuItem()
+    private let refreshItem = NSMenuItem()
+    private let aboutItem = NSMenuItem()
+    private let copySupportItem = NSMenuItem()
+    private let quitItem = NSMenuItem()
+    private var language: RadarLanguage
 
-    init(onOpen: @escaping () -> Void, onRefresh: @escaping () -> Void) {
+    init(
+        language: RadarLanguage,
+        onOpen: @escaping () -> Void,
+        onRefresh: @escaping () -> Void
+    ) {
         self.onOpen = onOpen
         self.onRefresh = onRefresh
         self.supportInformation = Self.makeSupportInformation()
+        self.language = language
         super.init()
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "Activity Radar")
-            button.toolTip = "Activity Radar · Work Continuity · ⌘⇧K"
+            button.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "AiWingman")
         }
 
         let menu = NSMenu()
-        let openItem = NSMenuItem(
-            title: "Activity Radar’ı Aç",
-            action: #selector(openRadar),
-            keyEquivalent: "k"
-        )
+        openItem.action = #selector(openRadar)
+        openItem.keyEquivalent = "k"
         openItem.keyEquivalentModifierMask = [.command, .shift]
         openItem.target = self
         menu.addItem(openItem)
 
-        let refreshItem = NSMenuItem(
-            title: "Şimdi Yenile",
-            action: #selector(refresh),
-            keyEquivalent: "r"
-        )
+        refreshItem.action = #selector(refresh)
+        refreshItem.keyEquivalent = "r"
         refreshItem.keyEquivalentModifierMask = [.command]
         refreshItem.target = self
         menu.addItem(refreshItem)
         menu.addItem(.separator())
 
-        let aboutItem = NSMenuItem(
-            title: "Activity Radar Hakkında…",
-            action: #selector(showAbout),
-            keyEquivalent: ""
-        )
+        aboutItem.action = #selector(showAbout)
         aboutItem.target = self
         menu.addItem(aboutItem)
 
-        let copySupportItem = NSMenuItem(
-            title: "Destek Bilgisini Kopyala",
-            action: #selector(copySupportInformation),
-            keyEquivalent: ""
-        )
+        copySupportItem.action = #selector(copySupportInformation)
         copySupportItem.target = self
         menu.addItem(copySupportItem)
         menu.addItem(.separator())
 
-        let quitItem = NSMenuItem(
-            title: "Activity Radar’dan Çık",
-            action: #selector(quit),
-            keyEquivalent: "q"
-        )
+        quitItem.action = #selector(quit)
+        quitItem.keyEquivalent = "q"
         quitItem.keyEquivalentModifierMask = [.command]
         quitItem.target = self
         menu.addItem(quitItem)
         statusItem.menu = menu
+        updateLanguage(language)
+    }
+
+    func updateLanguage(_ language: RadarLanguage) {
+        self.language = language
+        let l10n = RadarL10n(language: language)
+        statusItem.button?.toolTip = l10n.text(
+            "AiWingman · İş Sürekliliği · ⌘⇧K",
+            "AiWingman · Work Continuity · ⌘⇧K"
+        )
+        openItem.title = l10n.text("AiWingman’i Aç", "Open AiWingman")
+        refreshItem.title = l10n.text("Şimdi Yenile", "Refresh Now")
+        aboutItem.title = l10n.text("AiWingman Hakkında…", "About AiWingman…")
+        copySupportItem.title = l10n.text("Destek Bilgisini Kopyala", "Copy Support Information")
+        quitItem.title = l10n.text("AiWingman’den Çık", "Quit AiWingman")
     }
 
     @objc private func openRadar() {
@@ -77,11 +85,12 @@ final class StatusBarController: NSObject {
 
     @objc private func showAbout() {
         let alert = NSAlert()
+        let l10n = RadarL10n(language: language)
         alert.alertStyle = .informational
-        alert.messageText = "Activity Radar"
-        alert.informativeText = supportInformation.aboutText
+        alert.messageText = "AiWingman"
+        alert.informativeText = l10n.aboutText(supportInformation)
         alert.icon = NSApp.applicationIconImage
-        alert.addButton(withTitle: "Tamam")
+        alert.addButton(withTitle: l10n.text("Tamam", "OK"))
 
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
@@ -90,7 +99,10 @@ final class StatusBarController: NSObject {
     @objc private func copySupportInformation() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(supportInformation.formattedText, forType: .string)
+        pasteboard.setString(
+            RadarL10n(language: language).supportText(supportInformation),
+            forType: .string
+        )
     }
 
     @objc private func quit() {
@@ -115,7 +127,7 @@ final class StatusBarController: NSObject {
         #elseif arch(x86_64)
         "x86_64"
         #else
-        "bilinmiyor"
+        "unknown"
         #endif
     }
 }

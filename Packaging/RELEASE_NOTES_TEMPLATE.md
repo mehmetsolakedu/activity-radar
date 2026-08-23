@@ -11,6 +11,8 @@ Historical note: v1.2.0-beta.1 is source-only and contains no installable binary
 - macOS 13 or newer.
 - Codex Desktop or Codex CLI previously used by the same macOS account.
 - Codex Desktop for return-to-task links.
+- A compatible, separately installed and signed-in Codex CLI only for the
+  optional remote Wingman critique; the dashboard does not require it.
 
 ## Install
 
@@ -28,8 +30,13 @@ For a published release, the clean-machine acceptance asset listed below is mand
 
 Activity Radar appears in the menu bar, not the Dock. Use the radar item or press `⌘⇧K` to show the panel.
 
+The optional remote Wingman critique displays the exact JSON packet Activity
+Radar intends to supply and requires one-shot consent before every call; no call
+runs in the background and prompt excerpts are off by default.
+
 ## Changes
 
+- The dashboard and status menu can switch instantly between Turkish and English, and the selection persists across launches.
 - REPLACE_WITH_CONCISE_USER_VISIBLE_CHANGE
 
 ## Known limitations
@@ -38,7 +45,7 @@ Activity Radar appears in the menu bar, not the Dock. Use the radar item or pres
 
 ## Privacy, support, update, and removal
 
-Full Disk Access is not required. Activity Radar has no telemetry or network client and never writes to `~/.codex`. Follow the pinned installation document for safe updates and removal; never attach Codex databases, rollout files, or real-task screenshots to an issue.
+Full Disk Access is not required. Activity Radar has no telemetry and never writes to `~/.codex`; its dashboard makes no network request. The optional remote critique uses the separately installed, signed-in Codex CLI only after the exact intended JSON preview and one-shot consent. Activity Radar copies the saved CLI authentication file opaquely into a private temporary home and removes it after the attempt. The read-only child sandbox prevents writes but does not guarantee that other local files cannot be read, so the previewed packet is not a sole-context guarantee. Follow the pinned installation document for safe updates and removal; never attach Codex databases, rollout files, preview packets, `auth.json`, or real-task screenshots to an issue.
 
 - Installation: https://github.com/mehmetsolakedu/activity-radar/blob/REPLACE_WITH_RELEASE_TAG/INSTALL.md
 - Privacy: https://github.com/mehmetsolakedu/activity-radar/blob/REPLACE_WITH_RELEASE_TAG/PRIVACY.md

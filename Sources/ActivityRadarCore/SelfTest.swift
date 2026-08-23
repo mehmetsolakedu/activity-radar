@@ -47,6 +47,9 @@ public enum ActivityRadarSelfTests {
         try checkPublicErrorsHideHomeDirectory()
         passed.append("public errors hide local home paths")
 
+        try checkWingmanCodexContract()
+        passed.append("consent-bounded Wingman invocation contract")
+
         try checkSupportInformationPrivacy()
         passed.append("content-free support information")
 
@@ -559,6 +562,26 @@ public enum ActivityRadarSelfTests {
             try require(!description.contains(macOSHomePrefix), "public error exposed an absolute home path")
             try require(description.contains("~/.codex/state_5.sqlite"), "public error hid the actionable Codex location")
         }
+    }
+
+    private static func checkWingmanCodexContract() throws {
+        let arguments = WingmanCodexContract.arguments(
+            workingDirectory: URL(fileURLWithPath: "/tmp/wingman"),
+            schemaURL: URL(fileURLWithPath: "/tmp/wingman/schema.json")
+        )
+        let joined = arguments.joined(separator: " ")
+        try require(joined.contains("--sandbox read-only"), "Wingman invocation was not read-only")
+        try require(joined.contains("--ephemeral"), "Wingman invocation was not ephemeral")
+        try require(joined.contains("--ignore-user-config"), "Wingman invocation loaded user tools")
+        try require(!joined.contains("danger-full-access"), "Wingman invocation allowed full access")
+        let environment = WingmanCodexContract.sanitizedEnvironment(from: [
+            "HOME": "/tmp/home",
+            "OPENAI_API_KEY": "PRIVATE",
+            "CODEX_API_KEY": "PRIVATE"
+        ])
+        try require(environment["HOME"] == "/tmp/home", "Wingman environment lost HOME")
+        try require(environment["OPENAI_API_KEY"] == nil, "Wingman environment retained an API key")
+        try require(environment["CODEX_API_KEY"] == nil, "Wingman environment retained a Codex API key")
     }
 
     private static func checkSupportInformationPrivacy() throws {
