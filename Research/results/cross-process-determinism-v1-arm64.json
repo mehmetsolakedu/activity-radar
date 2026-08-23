@@ -1,0 +1,1017 @@
+{
+  "allProcessesPassed": true,
+  "architecture": "arm64",
+  "claimBoundary": "Fresh-process equality of the canonical continuity-policy output digest on one machine; excludes cross-architecture, GUI, reader, and remote-model determinism.",
+  "completedAt": "2026-08-23T17:31:32.073384Z",
+  "evaluationCount": 15500,
+  "processCount": 100,
+  "runnerCommit": "fa5186e",
+  "runs": [
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 1,
+      "reportSHA256": "42b0dfe0e6f5b9acd7ff70e016fd0986103d8caded792d9a432b4e286e2c8ef0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 2,
+      "reportSHA256": "0ef1fb632102fdfe5a00d9fccab8684c5ab2f8f66274ed3bc08ffd78eaf6b385",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 3,
+      "reportSHA256": "04e04c4ca8d5adff2c2771286acc08e296c749e002bbf98f04316e359c351763",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 4,
+      "reportSHA256": "a746e80ba10103c2c1226396bf9f59edf03d9bf096b7b1fff1c1def680f1bbcb",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 5,
+      "reportSHA256": "a884a5446e257d476c1a6592dbc785f1804805b637aad29511ae60455ea4e3f3",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 6,
+      "reportSHA256": "1f4d4bae67353941b603979646817257cfe1297e4b64a1b4194fc53b461a462e",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 7,
+      "reportSHA256": "0cae02e8940ef41e6d87e8b403df0f7da4199276569f46aac61ebb4312c4b4b0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 8,
+      "reportSHA256": "c743ce7c17004454f4972ac989b5e33895a327ca995f854d7c3d9b80d76a60ac",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 9,
+      "reportSHA256": "fd3e2a3d766a980f8f7c8b3019b78945d2c0a4b04c9fdf3d5918b60c1ffd20e8",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 10,
+      "reportSHA256": "890d22270d19abccf0b1e2558dba99b7454f92479d55402bb0c3fa1817687e57",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 11,
+      "reportSHA256": "205c4db8bcd31bc8f6737b97fae89973f135c6668e0eab006aa7b0112d0129ba",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 12,
+      "reportSHA256": "48002379ef00acb9049b052c594e6d4a90679348869be5bed0c3fe74f0acc35a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 13,
+      "reportSHA256": "a1309063c3d356bd2c1b4a2ead7d583146025aca835e73c2931edf64185d5fea",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 14,
+      "reportSHA256": "5a347c5abdee7787406502a1b2d8ba29f39da94440b4a34b58c4573252839230",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 15,
+      "reportSHA256": "7a9227c501287c22db0e05941776caa92e80891796cd64fd2b7697d7a79f989a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 16,
+      "reportSHA256": "db106ee0faa72a3c71281415f3d779b04ee67e562bf8be6501c3ece93d8a3c09",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 17,
+      "reportSHA256": "0851419d6ac640d819264ff54e278b1f728ae93195e518541b22df1410cf4f64",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 18,
+      "reportSHA256": "fe05e32c62ae464f822b03f230360ac45732304c3644b4fbeaa3e4da9b043a3a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 19,
+      "reportSHA256": "be44e5f3cc3fea6d0c016d88bf7602e8daa592c941738efd008f3bd88582ea63",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 20,
+      "reportSHA256": "ecce4656a58be464a10295c4b7cb7fc11d3413dd57eeb1eb869ae7a1c24170cc",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 21,
+      "reportSHA256": "e846468f75e248d0296410187eef6aca881c9f5e38c1730dd29a8f8cd0e073a9",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 22,
+      "reportSHA256": "a8caf28643e5e3ee4dde7752a9519101f8ab14f8a0d4260c58b2062e93ce0450",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 23,
+      "reportSHA256": "0fadbd0714a72ce35887dfab65f07c62118313980ddc64cb29e5f46dd9d30274",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 24,
+      "reportSHA256": "2b93ba6033e1b6eab63ec974b6dd04f101fa73393dada942d02ded48216e9854",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 25,
+      "reportSHA256": "74e93a5fbb660a366b2ce2f146cc09da01fdd61ca37fea65dec23d191e654f7d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 26,
+      "reportSHA256": "4068512cc18eef04f6882b27f1084043837e6b6fd1a27153fcb06a05cfc8adc0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 27,
+      "reportSHA256": "adef45f133669772d63bc9cf0401bea4c3caa89cd132ead9a1291afd7fbfff4a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 28,
+      "reportSHA256": "a7da2c383a6e0e9e7af22f7aa3b0252aae02217a31d16f50564c80f03ae2ff7d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 29,
+      "reportSHA256": "1b305b8f7c1f2c034bfcefe80891b733932d490f5592bd6b68e0d90c8326a3db",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 30,
+      "reportSHA256": "8b2ce338deaa14f6fccdab5deadadb15c1b0474277bd60993b6d812511357033",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 31,
+      "reportSHA256": "35f3b4ba12fdfed5fe22c94efa78c93bfcb1d24b932bdb26b88b98daf2dff1ab",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 32,
+      "reportSHA256": "505f537c05f51706d786ea981862a7e2a204e47aba94c4e9873abee74b8be3b5",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 33,
+      "reportSHA256": "59c4adc2b667bdb816f95908185b428cefa21413b6a9093412cc22e984bf8eeb",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 34,
+      "reportSHA256": "12962f8686d13dfdcabab43ea1dde4a375dd7ae1779cd25276442f86d4bcf3af",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 35,
+      "reportSHA256": "1913ba03241775f46f68527464bebcf1eeff9ee0fd5630c9e56250360ebe6709",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 36,
+      "reportSHA256": "18e939088ea926a8037ee08c57cce643b8f7e01562395e1442c273572637271c",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 37,
+      "reportSHA256": "16cfd8018f82dfe8bf8fe2b125ef2366edd798ee3db45edf6176901798ebc795",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 38,
+      "reportSHA256": "755f375f0ace069a0c1a183a2b3c167ab9e3663126afcac6d7869242962d313b",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 39,
+      "reportSHA256": "3e24aacfaf7e89db79f01758e47922b0b923aff1c7ae8914b1fcb74e60756538",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 40,
+      "reportSHA256": "eb1f398c34f70d74b19f233433e8402231482cab19aa17cafbe253b8943b2be0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 41,
+      "reportSHA256": "afe3213bc7fdf92531cd4f707ec1878b53d5c5f037dafebeabf5026f7023e77f",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 42,
+      "reportSHA256": "45cf63b8d0797b6371e483d7f2b071da84b3d73c170ebaa5a8e97fe09719e0b2",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 43,
+      "reportSHA256": "7c26f22c484030f52da31da0cc28576e368093d1fb968935ecd0f4d66fb6bd8c",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 44,
+      "reportSHA256": "37dbd8744be8c4220a1a97b68034ad79629e14abc0275fab7865d5911ddb7cde",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 45,
+      "reportSHA256": "206355c10784395b98b292fcaafe930a634ffc033bcd2a416855817345fba5f2",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 46,
+      "reportSHA256": "c2ff6a2304a3d913a7fb224e1b7e77cbe2a6f24ef8083f3f93095d5f0d455543",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 47,
+      "reportSHA256": "2c0ff9a204739c2ad695481ae15822b2acdc31bb27782c0af0a4a94c24106be8",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 48,
+      "reportSHA256": "26461f80ced6cd5118f7faeb304008514caf2d10b346e3d50ea69665b92acbd1",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 49,
+      "reportSHA256": "0d76e2844c366a32b94c3967dd2442ff06cab73cd66325cd3ecb3386eb234712",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 50,
+      "reportSHA256": "8ba07590f6ac8f5b6ad8ac47cf8ec4b053129664f6ea2f60ce3002fd2cd145a6",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 51,
+      "reportSHA256": "00015ee76db366a1f4449aa58522c2c859ed291e13b048c2fd72fa9d4e6b698f",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 52,
+      "reportSHA256": "41d0a02fff4a9390ecd277c5e8e5e9fe324ac061ba477083eea6d55cbb177d95",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 53,
+      "reportSHA256": "5e0482985b34187ab61870f3a1adf2ccd670562938b7984ee0dbfb9c819e2c87",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 54,
+      "reportSHA256": "a488e4baa5f598ce3d01461fca8a65b54c2cea40e0cc5453164d1a49296c3651",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 55,
+      "reportSHA256": "ee380c68ba59962f3be9731fe217aa096691cea706a3052dcfd6c0ea09b96465",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 56,
+      "reportSHA256": "2db98d72fa8a26643b045362299b4db6fa852311411fea977c1b0cdbc27741a0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 57,
+      "reportSHA256": "4a2efefc460f5ca788d3b835e02b7fa9fdfec488d087acbde240448c0ba7bb99",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 58,
+      "reportSHA256": "75e158f1721e558807854e1cc82f7981ba62cbe3784631925024d2e55468783d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 59,
+      "reportSHA256": "f27ceaf7ddd23714b5b1007341fa93f82e8c220549c56da8a270df4eb968ba7d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 60,
+      "reportSHA256": "ba9b58c65426d679219e156d1d13681ca15c30b37f2685fdcd33f13ad27cfe79",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 61,
+      "reportSHA256": "b3cc7fa7e20d96d9e874f3ea5667639bfb975b305ea0370f942d3b698218f8a1",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 62,
+      "reportSHA256": "e4738fd33e268f18ce47f0bc4389c10e3ee2fdcc31bfe1a611fcded62addb591",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 63,
+      "reportSHA256": "68dd287e7bf5eaa58e859dd3e7934940b8a9eb654195411ba77979dbcc96cb5e",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 64,
+      "reportSHA256": "978da1f05a354602de00a4591cac1e1fbffbe755abee99a47d1572c4dcdcbc15",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 65,
+      "reportSHA256": "b85c00637f9b751cf04ac4f7cc768658f1f5b560ff47fba874fa6819df9900b3",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 66,
+      "reportSHA256": "093f840a4786b348add70af55b25a4118104cdc08756e919212d3dde9cd0bc47",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 67,
+      "reportSHA256": "67c88e1a313f3676c6f34ac1ccee651ab1e07c4fb53d84e14e869ceff2392e72",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 68,
+      "reportSHA256": "290ae46a714f404ed6c77bce10d99713c71c01a8674765993a8905983fbd8451",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 69,
+      "reportSHA256": "a1e74e51533b745e565d96d52ce8d68d6fdb9cb2acd8d4ca7e30173311590a01",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 70,
+      "reportSHA256": "786f5f8e5747c1d8c41bc49ddb965ac539d30f8f996140b7003547807e599399",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 71,
+      "reportSHA256": "473fe59c4341fefbdd4d6cf1cbdfa53f112b7020a91b89aca618deb6bcf83425",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 72,
+      "reportSHA256": "d4dd838325fb640f359232b9cf305cca4f3a56e846f2924c5da6f9d206305d1d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 73,
+      "reportSHA256": "de10fa8fec3b21dddf91c473ae1e7ebf55311077cdcd190d88aa89bfaf77bc95",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 74,
+      "reportSHA256": "0ae2e157ca10130c30176b2d6fa0804d6ce36c896b4f4ee732ca71b9ed53a67d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 75,
+      "reportSHA256": "2184afc8ba6b21555dddeea1e7161f4f095b8b571746e77051b92c1cbc71509a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 76,
+      "reportSHA256": "39ce5efa5bc6642a9fb32ceb3b49bcfceb7d22a04604067c7bac7dc174e30ce5",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 77,
+      "reportSHA256": "e6792c277bef6e1a9d7c991ed533863d61b48a7267e80cca478f1dcbdec76f92",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 78,
+      "reportSHA256": "8593e13e32f1cdb38f44c28eb4175632e6bc41cfcdedf30e552d0feb8d6ded49",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 79,
+      "reportSHA256": "1befa6b8ded42b4a6812907f1ceddd0a93b4719996ceb0ac77c4e2daf35ba2d5",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 80,
+      "reportSHA256": "e26f9f26341c7476c099533ccf5f0965a87f471e3e968a42563f04ecf6a6603a",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 81,
+      "reportSHA256": "41b22e2249027d156879f484057406e8192849a14925b255376e734a8be29572",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 82,
+      "reportSHA256": "9cf59d80882577966ffb52fd7c1c498a2a75c9abcaa850a51aa285bc6fed5d32",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 83,
+      "reportSHA256": "b11ddbf38da3e0833b6faad73a0b62e65a022cfd58ae9d288f279f972bfa428d",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 84,
+      "reportSHA256": "661532b4ebae88937da9b926f4df85bcd543f1d79732fbf1e1a2c553e43e7723",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 85,
+      "reportSHA256": "636181d1ceee7816a9b3ef23eba90d6dcdfb225199086a3c41529f6e6365fc18",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 86,
+      "reportSHA256": "0cd44a4bc740c80f3292c5699704298bb5bfaa54f69b3e6d1d5747881cd18f91",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 87,
+      "reportSHA256": "2e5293f05b2f0aa519c7d85162545c3de8458e18a0ae85aeff8186969726fc9e",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 88,
+      "reportSHA256": "4c7a78776d9d0e30fdd11865395c10888af4d02592f2af976682e269fa130afb",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 89,
+      "reportSHA256": "97d48681c070041ec748da2fbe3dc5170cebe066fcdc3269355d9498190ce187",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 90,
+      "reportSHA256": "e72e40d6dfa7211571992307dd6f74f25648c7be332e381e531cf30a29ac9605",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 91,
+      "reportSHA256": "9689047ba634fb0b5b915ab70e73ac9f750b855d50dfac25a5b44e5315533fdd",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 92,
+      "reportSHA256": "0cede6ed42ef11479aa9189598cd0b6b78566abf12c4270518849dbac443cbf0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 93,
+      "reportSHA256": "7219fcb98b1aae4bb010d40f5e97f967901448b9113ce244e06ea029aa30a376",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 94,
+      "reportSHA256": "a5fdf65d280be9b1e9639bb8cf4940b6ab84f026acb33266343e4bf3f4e5e65c",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 95,
+      "reportSHA256": "042724759ac1dca81151e040cdf2344b341f7dc9cff6675f9527d2ba5364f7dc",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 96,
+      "reportSHA256": "c636838bbb328b1374f25fcb3702d12e615dbe8d5e3b18da383d954a21f0edd0",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 97,
+      "reportSHA256": "e760704c84e417f8ab36b05519ca25e30dabee3e9555d2c70f1634caeed38388",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 98,
+      "reportSHA256": "37e740281c29d99fc1454b258014cff2d65b8ad1139bed089dba308c31ad9541",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 99,
+      "reportSHA256": "3f4417a3867a0d9f663851d7bfadd606ea0654f947dd499e4c955619e4b93711",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    },
+    {
+      "conformancePassedCount": 155,
+      "corpusOutputDigestSHA256": "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6",
+      "exitCode": 0,
+      "overallPassed": true,
+      "process": 100,
+      "reportSHA256": "87bb85be11e30fbb6bbb35789a170d6ab9a0f18812380660ea5963e069e7a158",
+      "stderrEmpty": true,
+      "stdoutReportedPass": true
+    }
+  ],
+  "schemaVersion": "1.0",
+  "startedAt": "2026-08-23T17:31:18.339865Z",
+  "uniqueCorpusOutputDigests": [
+    "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6"
+  ],
+  "uniqueDigestCount": 1
+}
