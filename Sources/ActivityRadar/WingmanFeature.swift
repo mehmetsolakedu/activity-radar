@@ -270,7 +270,9 @@ final class WingmanInputWriter: @unchecked Sendable {
         lock.unlock()
 
         group.enter()
-        DispatchQueue.global(qos: .utility).async { [self] in
+        // Cancellation joins this pump synchronously, so it must make progress even
+        // when the shared libdispatch worker pool is saturated.
+        let worker = Thread { [self] in
             defer { group.leave() }
             var blockedSignals = sigset_t()
             sigemptyset(&blockedSignals)
@@ -329,6 +331,9 @@ final class WingmanInputWriter: @unchecked Sendable {
             }
             lock.unlock()
         }
+        worker.name = "AiWingman stdin writer"
+        worker.qualityOfService = .utility
+        worker.start()
     }
 
     func cancel() {
@@ -396,7 +401,9 @@ final class WingmanPipeReader<Collector: BoundedDataCollector>: @unchecked Senda
         lock.unlock()
 
         group.enter()
-        DispatchQueue.global(qos: .utility).async { [self] in
+        // Cancellation joins this pump synchronously, so it must make progress even
+        // when the shared libdispatch worker pool is saturated.
+        let worker = Thread { [self] in
             defer { group.leave() }
             var buffer = [UInt8](repeating: 0, count: 32 * 1_024)
             while true {
@@ -430,6 +437,9 @@ final class WingmanPipeReader<Collector: BoundedDataCollector>: @unchecked Senda
                 }
             }
         }
+        worker.name = "AiWingman pipe reader"
+        worker.qualityOfService = .utility
+        worker.start()
     }
 
     func cancel() {
