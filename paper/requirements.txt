@@ -1,0 +1,4 @@
+# Exact versions used to build the reviewed DOCX and PDF on 23 August 2026.
+Pillow==12.3.0
+python-docx==1.2.0
+reportlab==4.4.9

@@ -7,6 +7,7 @@ date-released: 2026-08-23
 authors:
   - family-names: "Solak"
     given-names: "Mehmet"
+    orcid: "https://orcid.org/0000-0002-0800-0334"
 repository-code: "https://github.com/mehmetsolakedu/activity-radar"
 url: "https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2"
 license: MIT

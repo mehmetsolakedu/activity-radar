@@ -1,4 +1,4 @@
-status: draft_author_confirmation_required
+status: hold_major_revision_do_not_submit
 platform: Preprints.org
 manuscript_type: Technical Note
 title: >-
@@ -39,7 +39,7 @@ subjects:
 authors:
   - given_name: Mehmet
     family_name: Solak
-    orcid: https://orcid.org/0000-0003-2528-7960
+    orcid: https://orcid.org/0000-0002-0800-0334
     affiliation: >-
       Department of Biosystems Engineering, Faculty of Agriculture, Siirt
       University, Siirt, Türkiye

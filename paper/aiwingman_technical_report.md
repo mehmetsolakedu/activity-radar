@@ -4,7 +4,7 @@ Mehmet Solak
 
 Department of Biosystems Engineering, Faculty of Agriculture, Siirt University, Siirt, Türkiye
 
-ORCID: 0000-0003-2528-7960 | Correspondence: mehmetsolak@siirt.edu.tr
+ORCID: 0000-0002-0800-0334 | Correspondence: mehmetsolak@siirt.edu.tr
 
 Draft 0.1 - 23 August 2026 - Author confirmation required before public deposit
 
