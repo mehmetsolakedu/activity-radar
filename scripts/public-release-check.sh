@@ -29,6 +29,7 @@ cd "$PROJECT_DIR"
 
 command -v rg >/dev/null 2>&1 || fail "Required tool not found: rg (ripgrep)"
 command -v sqlite3 >/dev/null 2>&1 || fail "Required tool not found: sqlite3"
+command -v python3 >/dev/null 2>&1 || fail "Required tool not found: python3"
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [[ -n "$GIT_ROOT" && "${GIT_ROOT:A}" == "$PROJECT_DIR" ]]; then
@@ -85,11 +86,52 @@ plutil -convert xml1 -o /dev/null Packaging/CLEAN_MACHINE_ACCEPTANCE.template.js
   || fail "Clean-machine acceptance schema does not require exactly two records"
 
 ACCEPTANCE_SCHEMA_REQUIRED="$TEMP_ROOT/acceptance-schema-required.txt"
-schema_required_index=0
-while plutil -extract "\$defs.baseRecord.required.$schema_required_index" raw -o - \
-  Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json 2>/dev/null; do
-  (( schema_required_index += 1 ))
-done | sort > "$ACCEPTANCE_SCHEMA_REQUIRED"
+if ! python3 - \
+  Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json \
+  "$ACCEPTANCE_SCHEMA_REQUIRED" <<'PY'; then
+import json
+import sys
+
+schema_path, output_path = sys.argv[1:]
+with open(schema_path, encoding="utf-8") as schema_file:
+    schema = json.load(schema_file)
+
+base_record = schema.get("$defs", {}).get("baseRecord", {})
+required = base_record.get("required")
+if not isinstance(required, list) or not all(isinstance(item, str) for item in required):
+    raise SystemExit("baseRecord.required must be an array of strings")
+
+boolean_keys = (
+    "aboutReleaseIdentityVerified",
+    "applicationCopiedToApplications",
+    "applicationReplacementSucceeded",
+    "browserDownloadQuarantineObserved",
+    "checksumVerified",
+    "dmgEjected",
+    "dmgMountedReadOnly",
+    "downloadedFromGitHubRelease",
+    "gatekeeperLaunchSucceeded",
+    "interfaceLanguageSwitchPersisted",
+    "machineDidNotBuildRelease",
+    "menuBarItemVisible",
+    "supportInformationContentFree",
+    "syntheticCodexDeepLinkSucceeded",
+    "uninstallSucceeded",
+    "wingmanCLIUnavailableFallbackVerified",
+    "wingmanConsentPreviewVerified",
+    "wingmanRemoteReviewSucceeded",
+)
+properties = base_record.get("properties", {})
+for key in boolean_keys:
+    if properties.get(key, {}).get("const") is not True:
+        raise SystemExit(f"baseRecord.properties.{key}.const must be true")
+
+with open(output_path, "w", encoding="utf-8") as output_file:
+    for item in sorted(required):
+        output_file.write(f"{item}\n")
+PY
+  fail "Clean-machine acceptance schema record contract is invalid"
+fi
 ACCEPTANCE_EXPECTED_REQUIRED="$TEMP_ROOT/acceptance-expected-required.txt"
 printf '%s\n' \
   aboutReleaseIdentityVerified \
@@ -117,28 +159,6 @@ printf '%s\n' \
   | sort > "$ACCEPTANCE_EXPECTED_REQUIRED"
 cmp -s "$ACCEPTANCE_SCHEMA_REQUIRED" "$ACCEPTANCE_EXPECTED_REQUIRED" \
   || fail "Clean-machine acceptance schema record keys drifted from the runtime contract"
-for acceptance_boolean_schema_key in \
-  aboutReleaseIdentityVerified \
-  applicationCopiedToApplications \
-  applicationReplacementSucceeded \
-  browserDownloadQuarantineObserved \
-  checksumVerified \
-  dmgEjected \
-  dmgMountedReadOnly \
-  downloadedFromGitHubRelease \
-  gatekeeperLaunchSucceeded \
-  interfaceLanguageSwitchPersisted \
-  machineDidNotBuildRelease \
-  menuBarItemVisible \
-  supportInformationContentFree \
-  syntheticCodexDeepLinkSucceeded \
-  uninstallSucceeded \
-  wingmanCLIUnavailableFallbackVerified \
-  wingmanConsentPreviewVerified \
-  wingmanRemoteReviewSucceeded; do
-  [[ "$(plutil -extract "\$defs.baseRecord.properties.$acceptance_boolean_schema_key.const" raw -o - Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json)" == "true" ]] \
-    || fail "Clean-machine acceptance schema does not require true for $acceptance_boolean_schema_key"
-done
 
 RELEASE_NOTES_VALID="$TEMP_ROOT/release-notes-valid.md"
 sed \

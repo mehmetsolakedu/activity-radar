@@ -308,19 +308,20 @@ public enum WingmanCodexContract {
     private static func rejectUnsupportedWastePrecision(
         in review: WingmanAgentReview
     ) throws {
-        let texts = [review.portfolioSummary]
-            + review.promptFindings
-            + review.harnessFindings
-            + review.unfinishedWork
-            + review.tokenFindings
-            + review.recommendations
-            + review.limitations
+        var texts: [String] = [review.portfolioSummary]
+        texts.append(contentsOf: review.promptFindings)
+        texts.append(contentsOf: review.harnessFindings)
+        texts.append(contentsOf: review.unfinishedWork)
+        texts.append(contentsOf: review.tokenFindings)
+        texts.append(contentsOf: review.recommendations)
+        texts.append(contentsOf: review.limitations)
         let patterns = [
             #"(?i)(?:^|\b)[0-9][0-9., ]{0,20}\s*tokens?\b.{0,48}\b(?:wast(?:e|ed)|israf|boşa|ziyan)\b"#,
             #"(?i)\b(?:wast(?:e|ed)|israf|boşa|ziyan)\b.{0,48}\b[0-9][0-9., ]{0,20}\s*tokens?\b"#,
         ]
-        for text in texts where patterns.contains(where: {
-            text.range(of: $0, options: .regularExpression) != nil
+        let regularExpressionOptions: String.CompareOptions = .regularExpression
+        for text in texts where patterns.contains(where: { pattern in
+            text.range(of: pattern, options: regularExpressionOptions) != nil
         }) {
             throw WingmanCodexContractError.invalidReview(
                 "kesin veya sayısal token israfı iddiası desteklenmiyor"
