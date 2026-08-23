@@ -67,7 +67,7 @@ jobs:
         run: |
           diagnostic_home="$RUNNER_TEMP/activity-radar-diagnostic-home"
           diagnostic_state="$diagnostic_home/.codex/state_5.sqlite"
-          diagnostic_rollout="$diagnostic_home/PRIVATE-PATH-SENTINEL.jsonl"
+          diagnostic_rollout="$diagnostic_home/.codex/PRIVATE-PATH-SENTINEL.jsonl"
           mkdir -p "$diagnostic_home/.codex"
           printf '%s\n' \
             '{"timestamp":"2026-01-01T00:00:00Z","type":"event_msg","payload":{"type":"agent_message","phase":"final_answer","message":"PRIVATE-CHECKPOINT-SENTINEL"}}' \

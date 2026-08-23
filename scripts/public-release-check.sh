@@ -745,7 +745,7 @@ swift build -c release --product ActivityRadarDiagnostics
 note "Verifying content-free diagnostics"
 DIAGNOSTIC_HOME="$TEMP_ROOT/activity-radar-diagnostic-home"
 DIAGNOSTIC_STATE="$DIAGNOSTIC_HOME/.codex/state_5.sqlite"
-DIAGNOSTIC_ROLLOUT="$DIAGNOSTIC_HOME/PRIVATE-PATH-SENTINEL.jsonl"
+DIAGNOSTIC_ROLLOUT="$DIAGNOSTIC_HOME/.codex/PRIVATE-PATH-SENTINEL.jsonl"
 DIAGNOSTIC_JSON="$TEMP_ROOT/diagnostics.json"
 mkdir -p "$DIAGNOSTIC_HOME/.codex"
 printf '%s\n' \
