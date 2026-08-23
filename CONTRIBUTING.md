@@ -33,9 +33,10 @@ Every contribution must preserve these project invariants:
   or account metadata, system or developer instructions, tool outputs,
   credentials, checkpoints, or user-authored next actions in a Wingman packet.
 - Do not describe the previewed packet as the child process's sole possible
-  context: read-only sandboxing blocks writes but does not prove that other local
-  files cannot be read. Keep the opaque temporary-auth copy private and bounded
-  to the attempted invocation.
+  context. Requesting the CLI's read-only sandbox mode is not OS-level isolation
+  or a zero-filesystem-write guarantee and does not prove that other local files
+  cannot be read. Keep the opaque temporary-auth copy private and bounded to the
+  attempted invocation, and verify its cleanup.
 - Keep research logging opt-in, local, content-free, and retention-bounded.
 - Do not infer abandonment or obsolescence from inactivity alone.
 - Keep high-impact lifecycle decisions explicit and reversible.

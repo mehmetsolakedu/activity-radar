@@ -2,7 +2,10 @@
 
 ## Release status
 
-[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) is the current free, source-only community beta. It has no prebuilt app. GitHub's automatic “Source code” archives are source code, not macOS installers.
+**SAFETY HOLD:** `v1.2.0-beta.2` and the matching default-branch snapshot are
+superseded. Do not build or use them. No supported public tag or binary is
+currently available. The [beta2 release page](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2)
+records the same warning.
 
 ## Requirements
 
@@ -14,24 +17,11 @@
   for the optional remote Wingman critique. The dashboard works without it.
   Remote calls can consume the user's existing Codex plan or quota.
 
-## Build the current source beta
+## Installation hold
 
-Install Xcode or a compatible Swift toolchain with the macOS SDK, then build the
-exact release tag rather than a moving branch:
-
-```sh
-git clone https://github.com/mehmetsolakedu/activity-radar.git
-cd activity-radar
-git switch --detach v1.2.0-beta.2
-swift test
-swift run ActivityRadarSelfTest
-./scripts/package-app.sh --mode local --output-app "$PWD/AiWingman.app"
-open "$PWD/AiWingman.app"
-```
-
-This local build is for the Mac that built it. Do not redistribute the resulting
-ad-hoc-signed bundle as if it were a publisher-signed download. AiWingman is a
-menu-bar app; after launch use the radar icon or press `⌘⇧K`.
+Do not build from `v1.2.0-beta.2` or from a moving/default branch. Exact-tag
+source instructions will be published only after the hardened candidate passes
+its privacy and release gates. GitHub source archives are not installers.
 
 ## Future signed downloads
 
@@ -79,9 +69,11 @@ If AiWingman cannot find compatible local Codex state, it stops neutrally. It do
 **Bir Wingman Çağır** can start an optional remote critique. It first displays
 the exact user-derived JSON packet that AiWingman intends to supply to the Codex CLI and
 requires one-shot consent; no call runs in the background. Prompt excerpts are
-excluded by default. The CLI's read-only sandbox prevents writes but does not
-guarantee that the child cannot read another local file, so the preview is not a
-claim that the packet is the process's only technically accessible context. Read
+excluded by default. AiWingman requests the CLI's read-only sandbox mode,
+intended to deny agent-tool writes to the workspace; this is not OS-level
+isolation or a zero-filesystem-write guarantee. It also does not prove that the
+child cannot read another local file, so the preview is not a claim that the
+packet is the process's only technically accessible context. Read
 [PRIVACY.md](PRIVACY.md) before consenting.
 
 ## Permissions and privacy

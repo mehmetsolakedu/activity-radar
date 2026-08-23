@@ -2,7 +2,10 @@
 
 ## Sürüm durumu
 
-[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2), ücretsiz kaynak-öncelikli topluluk betasıdır. Hazır uygulama paketi içermez. GitHub’ın otomatik “Source code” arşivleri kaynak koddur; macOS yükleyicisi değildir.
+**GÜVENLİK BEKLEMESİ:** `v1.2.0-beta.2` ve onunla eşleşen ana dal görüntüsü
+geçersiz kılındı. Derlemeyin veya kullanmayın. Şu anda desteklenen public tag ya
+da binary yoktur. [Beta2 release sayfası](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2)
+aynı uyarıyı taşır.
 
 ## Gereksinimler
 
@@ -14,24 +17,11 @@
   giriş yapılmış Codex CLI gerekir; dashboard onsuz çalışır. Uzak çağrı,
   kullanıcının mevcut Codex planından veya kotasından tüketebilir.
 
-## Güncel kaynak betasını derleme
+## Kurulum beklemede
 
-Xcode veya macOS SDK içeren uyumlu Swift araç zincirini kurun; hareketli bir dal
-yerine exact release tag’ini derleyin:
-
-```sh
-git clone https://github.com/mehmetsolakedu/activity-radar.git
-cd activity-radar
-git switch --detach v1.2.0-beta.2
-swift test
-swift run ActivityRadarSelfTest
-./scripts/package-app.sh --mode local --output-app "$PWD/AiWingman.app"
-open "$PWD/AiWingman.app"
-```
-
-Bu yerel paket yalnız onu derleyen Mac içindir. Ortaya çıkan ad-hoc imzalı
-bundle’ı yayıncı tarafından imzalanmış indirme gibi yeniden dağıtmayın.
-AiWingman menü çubuğunda çalışır; radar simgesini kullanın veya `⌘⇧K` basın.
+`v1.2.0-beta.2` veya hareketli/ana daldan derlemeyin. Exact-tag kaynak
+talimatları yalnız güçlendirilmiş aday gizlilik ve sürüm kapılarını geçtikten
+sonra yayımlanacaktır. GitHub kaynak arşivleri yükleyici değildir.
 
 ## Gelecekteki imzalı indirmeler
 
@@ -79,9 +69,11 @@ AiWingman uyumlu yerel Codex durumu bulamazsa nötr biçimde durur. Codex verisi
 **Bir Wingman Çağır** isteğe bağlı bir uzak eleştiri başlatabilir. AiWingman’in
 Codex CLI’a stdin üzerinden vermeyi amaçladığı tam JSON paketini önce
 gösterir ve her çağrı için tek kullanımlık açık onay ister; arka planda çağrı
-yapılmaz. Ham prompt örnekleri varsayılan olarak dışarıdadır. CLI’ın salt-okunur
-sandbox’ı yazmayı engeller, fakat child process’in başka yerel dosyaları
-okuyamayacağını garanti etmez. Dolayısıyla önizleme, paketin CLI’ın teknik olarak
+yapılmaz. Ham prompt örnekleri varsayılan olarak dışarıdadır. AiWingman CLI’ın
+salt-okunur sandbox modunu ister; bu mod agent araçlarının workspace’e yazmasını
+engellemek üzere tasarlanmıştır, ancak OS düzeyinde izolasyon veya sıfır dosya
+yazma garantisi değildir. Child process’in başka yerel dosyaları okuyamayacağını
+da garanti etmez. Dolayısıyla önizleme, paketin CLI’ın teknik olarak
 erişebileceği tek bağlam olduğu iddiası değildir. Onay vermeden önce
 [PRIVACY.md](PRIVACY.md) dosyasını okuyun.
 

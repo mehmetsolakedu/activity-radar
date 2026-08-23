@@ -48,19 +48,18 @@ API key, or start a background call.
 Before every remote call, AiWingman displays the exact user-derived JSON packet
 it intends to supply on stdin and requires one-shot consent. The packet is
 processed with the fixed reviewer instruction and output schema shipped in the
-source; those fixed texts contain no task data. Prompt excerpts, prompt-derived
-themes, and local text signals are off by default; with that option off the
-packet contains task titles and numeric measurements only. Scope or
-prompt-sharing changes clear consent, and consent is also
-cleared after an attempt. The CLI's read-only sandbox blocks writes but does not
-prove that the child cannot read another local file; the previewed packet is not
-a sole-context guarantee.
+source. This superseded document is not an exhaustive packet-field contract;
+inspect the one-shot preview before any optional call. Scope changes clear
+consent, and consent is also
+cleared after an attempt. AiWingman requests the CLI's read-only sandbox mode,
+intended to deny agent-tool writes to the workspace; this is not OS-level
+isolation, a zero-filesystem-write guarantee, or a sole-context guarantee.
 
 AiWingman validates the saved CLI authentication file's metadata and makes
-an opaque, private temporary copy for the isolated child process. It does not
+an opaque, private temporary copy for the child process. It does not
 parse or include credential contents in the packet, diagnostics, or logs,
-does not copy user rules or configuration, and removes the temporary copy after
-the attempt. A timeout, cancellation,
+does not copy user rules or configuration. Beta2 attempts but does not verify
+temporary-copy cleanup. A timeout, cancellation,
 unknown or tool event, or invalid schema intentionally discards partial output.
 Never attach the JSON packet, `auth.json`, Codex databases, or rollout files to
 a public support request.
@@ -77,7 +76,8 @@ structured data.
 
 ## Current distribution boundary
 
-Source builds are the supported collaboration path. Availability of signed,
-notarized, architecture-specific, or package-manager binaries depends on the
-artifacts explicitly published by project maintainers. Do not treat an
-unpublished or locally built artifact as an official public release.
+`v1.2.0-beta.2` and the matching default-branch snapshot are superseded; do not
+build or use them. There is currently no supported public tag or binary. Exact-
+tag source instructions will return only after the hardened candidate completes
+review. Do not treat an unpublished, moving-branch, or locally built artifact as
+an official public release.

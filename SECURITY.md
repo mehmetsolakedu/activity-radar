@@ -7,9 +7,10 @@ are treated as security issues.
 
 | Target | Security support |
 | --- | --- |
-| Current default branch | Supported |
-| Latest tagged release | Supported |
-| Older revisions and releases | Best effort |
+| `v1.2.0-beta.2` | Superseded; do not build or use |
+| Current default-branch snapshot | Superseded; do not build or use |
+| Hardened review candidate | Not yet a supported public release |
+| Older revisions and releases | Unsupported |
 
 This policy does not promise a response or remediation SLA.
 
@@ -43,17 +44,15 @@ Changes should preserve these constraints:
   and never start a background agent call.
 - The sole optional Wingman transmission remains user-triggered, bounded,
   redacted, schema-validated, preceded by the exact intended JSON packet preview,
-  and protected by one-shot consent. Prompt excerpts, prompt-derived themes, and
-  local text signals remain separately opt-in; with that option off the packet
-  contains task titles and numeric measurements only. User-authored continuity
-  text is never included.
+  and protected by one-shot consent. This superseded document is not an
+  exhaustive packet-field contract; users must inspect the one-shot preview.
 - Wingman packets exclude raw task identifiers, full paths, working and rollout
   paths, git and account metadata, system and developer instructions, tool
   outputs, and credentials. Unknown or tool events fail closed.
 - The CLI authentication file is copied opaquely into a private temporary Codex
-  home and removed after the attempt; user rules and configuration files are not
-  copied. The read-only child sandbox prevents
-  writes but is not treated as proof that other local files cannot be read.
+  home; user rules and configuration files are not copied. Beta2 attempts but
+  does not verify cleanup. AiWingman requests the CLI's read-only sandbox mode;
+  this is not OS-level isolation or a zero-filesystem-write guarantee.
 - Research logging is disabled by default and its export excludes task content
   and raw task identifiers.
 - High-impact lifecycle decisions require an explicit, reversible user action.
