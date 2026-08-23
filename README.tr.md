@@ -4,7 +4,7 @@ AiWingman, paralel Codex görevleri arasında doğru işe geri dönmeyi kolayla�
 
 [Kurulum](INSTALL.tr.md) · [English installation](INSTALL.md) · [Gizlilik](PRIVACY.md) · [Katkı](CONTRIBUTING.md)
 
-[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) ücretsiz, kaynak-öncelikli topluluk betasıdır. Hazır uygulama paketi içermez; exact tag’i inceleyip aşağıdaki komutlarla kendi Mac’inizde derleyebilirsiniz. GitHub’ın otomatik kaynak arşivleri macOS yükleyicisi değildir.
+> **GÜVENLİK BEKLEMESİ:** `v1.2.0-beta.2` ve bu etiketle eşleşen ana dal görüntüsü geçersiz kılındı. Derlemeyin veya kullanmayın. Sonraki inceleme; eksik yol sınırlandırması, sınırsız session-index okumaları, doğrulanamayan geçici kimlik doğrulama temizliği ve fazla geniş gizlilik ifadeleri dahil olmak üzere sürümü engelleyen kusurlar buldu. [Beta2 release sayfası](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) aynı uyarıyı taşır. Güçlendirilmiş kaynak adayı incelemeyi bitirene kadar desteklenen public tag yoktur.
 
 ## Temel özellikler
 
@@ -19,8 +19,9 @@ AiWingman, paralel Codex görevleri arasında doğru işe geri dönmeyi kolayla�
   değiştirir; yerel seçimi sonraki açılış için hatırlar.
 - İstenirse prompting, harness, yarım kalan işler ve token inceleme adayları
   için ayrı bir Codex CLI Wingman turu başlatır.
-- Dashboard ağ isteği yapmaz; AiWingman hiçbir özellikte
-  `~/.codex` içine yazmaz ve arka planda ajan çağrısı başlatmaz.
+- Dashboard ağ isteği yapmaz ve arka planda ajan çağrısı başlatmaz. Bu
+  geçersiz kılınmış sürüm, `~/.codex` altındaki SQLite WAL yan dosyaları için
+  yazmama garantisi oluşturmaz.
 
 ## Gereksinimler
 
@@ -34,14 +35,17 @@ Uzak çağrıdan önce AiWingman, stdin üzerinden vermeyi amaçladığı kullan
 türevi JSON paketinin tamamını gösterir ve her çağrı için tek kullanımlık açık
 onay ister. Paket, kaynakta bulunan ve görev verisi içermeyen sabit inceleme
 talimatı ile çıktı şemasıyla birlikte işlenir.
-Ham prompt örnekleri, prompt-türevi temalar ve yerel metin sinyalleri tek bir
-ayrı seçenekle ve varsayılanı kapalı olarak paylaşılır. Seçenek kapalıyken uzak
-paket yalnız görev başlıkları ve sayısal ölçümler taşır. Salt-okunur
-CLI sandbox’ı yazmayı engeller; fakat child process’in başka yerel dosyaları
-okuyamayacağının garantisi değildir. Bu nedenle önizlenen paket, CLI’ın teknik
+Bu geçersiz kılınmış dalın metnini paket alanlarının eksiksiz tanımı olarak
+kabul etmeyin; her isteğe bağlı çağrıdan önce tek kullanımlık önizlemeyi
+inceleyin. AiWingman CLI’ın salt-okunur sandbox modunu ister; bu OS düzeyinde
+izolasyon veya sıfır dosya yazma garantisi değildir ve child process’in başka
+yerel dosyaları okuyamayacağını da kanıtlamaz. Bu nedenle önizlenen paket, CLI’ın teknik
 olarak erişebileceği tek bağlam gibi değerlendirilmemelidir.
 
-Bu beta kaynaktan kurulur; GitHub kaynak arşivini “çift tıkla kurulum” paketi olarak değerlendirmeyin. Güncel dağıtım durumu ana [README](README.md) ve release notlarında açıkça belirtilir.
+Şu anda desteklenen public derleme veya tag yoktur. `v1.2.0-beta.2` ya da bu
+hareketli ana dal görüntüsünden derlemeyin. GitHub kaynak arşivini “çift tıkla
+kurulum” paketi olarak değerlendirmeyin. Güncel dağıtım durumu ana
+[README](README.md) ve release notlarında açıkça belirtilir.
 
 İmzalı bir sürüm yayımlandığında checksum, Gatekeeper, ilk açılış, güncelleme ve kaldırma adımlarını [Türkçe kurulum kılavuzundan](INSTALL.tr.md) izleyin.
 

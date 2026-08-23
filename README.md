@@ -9,7 +9,7 @@ AiWingman is a native menu-bar application that helps you return to the right Co
 [Install](INSTALL.md) · [Türkçe kurulum](INSTALL.tr.md) · [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Publication blueprint](docs/PUBLICATION_BLUEPRINT.md) · [Contributing](CONTRIBUTING.md)
 
 > [!IMPORTANT]
-> [`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) is the current free, source-first community beta. It contains no prebuilt app: inspect the exact tag and build it locally with the commands below. GitHub's automatic source archives are source code, not macOS installers.
+> **SAFETY HOLD:** `v1.2.0-beta.2` and this matching default-branch snapshot are superseded. Do not build or use them. Later review found release-blocking privacy and robustness defects, including incomplete path containment, unbounded session-index reads, unverifiable temporary-auth cleanup, and overbroad privacy copy. The [beta2 release page](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) carries the same warning. No supported public tag is available until the hardened source candidate completes review.
 
 ## Why it exists
 
@@ -41,16 +41,15 @@ Parallel agent work creates a prospective-memory problem: results arrive in diff
 - The optional remote Wingman critique requires a separately installed and
   signed-in Codex CLI. AiWingman shows the exact user-derived JSON packet it
   intends to supply on stdin and requires one-shot consent before every call.
-  That packet is processed with a fixed review instruction and output schema
-  that contain no task data; prompt
-  excerpts, prompt-derived themes, and local text signals share one separate,
-  off-by-default choice. With it off, the packet contains task titles and
-  numeric measurements only.
+  That packet is processed with a fixed review instruction and output schema.
+  Do not rely on this superseded branch's prose as an exhaustive statement of
+  the packet fields; inspect the one-shot preview before any optional call.
 - The child CLI uses a read-only sandbox, but this is not a guarantee that it
   cannot read other local files. The previewed packet must not be treated as the
   only context technically accessible to that process. See [PRIVACY.md](PRIVACY.md).
-- Codex SQLite files are opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`.
-- AiWingman never writes to `~/.codex`.
+- Codex SQLite files are requested in read-only/query-only mode. This
+  superseded build does not establish a no-write guarantee for SQLite WAL
+  sidecars such as `-shm` under `~/.codex`.
 - Continuity data stays under the legacy compatibility path
   `~/Library/Application Support/Activity Radar`.
 - Research export excludes task identifiers, titles, prompts, messages, paths, checkpoints, next actions, and waiting-on text.
@@ -69,35 +68,12 @@ See [PRIVACY.md](PRIVACY.md) for the complete storage and export boundary.
 
 AiWingman is an unofficial local integration. Codex may change its local schema or deep-link contract; incompatible versions fail neutrally instead of attempting to repair Codex data. The optional remote critique uses the user's existing Codex CLI account and may consume that account's plan or quota; AiWingman itself is free and does not sell a subscription.
 
-## Build from source
+## Installation hold
 
-A current Xcode installation or compatible Swift toolchain with the macOS SDK is required.
-
-For a published source release, replace the example tag below with the exact tag shown on that release page. Do not build a release binary from a moving branch.
-
-```bash
-git clone https://github.com/mehmetsolakedu/activity-radar.git
-cd activity-radar
-RELEASE_TAG=v1.2.0-beta.2
-git switch --detach "$RELEASE_TAG"
-test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
-
-swift run ActivityRadarSelfTest
-
-swiftc -parse-as-library \
-  Sources/ActivityRadar/RadarContinuityStore.swift \
-  scripts/continuity-store-self-test.swift \
-  -o /tmp/activity-radar-continuity-store-self-test
-/tmp/activity-radar-continuity-store-self-test
-
-./scripts/package-app.sh --mode local \
-  --output-app "$PWD/AiWingman.app"
-open "$PWD/AiWingman.app"
-```
-
-Local mode builds a Universal 2 application and applies an ad-hoc signature unless a signing identity is explicitly supplied. AiWingman deliberately retains the legacy `ActivityRadar` executable, bundle identifiers, preference keys, and application-support path so existing Activity Radar users keep their data. These are compatibility identifiers, not a second application. Local mode is appropriate for use on the machine that built it, not for redistributing that locally signed bundle.
-
-For a supported signed download, follow [INSTALL.md](INSTALL.md). GitHub's automatic source archives and a locally ad-hoc-signed app are not installers.
+There is currently no supported public build or tag. Do not build from
+`v1.2.0-beta.2` or from this moving/default-branch snapshot. Exact-tag source
+instructions will return only after the hardened candidate passes its release
+and privacy gates. GitHub's automatic source archives are not macOS installers.
 
 AiWingman is an `LSUIElement` menu-bar app, so it does not appear in the
 Dock after launch. Look for its radar icon in the menu bar, or press `⌘⇧K` to

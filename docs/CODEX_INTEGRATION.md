@@ -1,5 +1,9 @@
 # Codex integration
 
+> **Safety hold:** This document belongs to the superseded
+> `v1.2.0-beta.2`/default-branch snapshot. Do not build or use that version. No
+> supported public tag is available while the hardened candidate is reviewed.
+
 AiWingman does not embed an OpenAI API client. Its ordinary dashboard uses
 two local interfaces:
 
@@ -50,11 +54,9 @@ in-memory structured result
 
 Before every invocation, AiWingman shows the exact user-derived JSON packet it
 intends to supply on stdin. The packet is processed together with the fixed
-reviewer instruction and output schema shipped in the source; those fixed texts
-contain no task data. Prompt excerpts, prompt-derived themes, and local text signals
-share one separate, off-by-default choice. With it off, the remote packet
-contains task titles and numeric measurements only.
-Changing the scope or prompt-sharing setting clears consent, and consent is
+reviewer instruction and output schema shipped in the source. This superseded
+document is not an exhaustive packet-field contract; inspect the one-shot
+preview before any optional call. Changing the scope or prompt-sharing setting clears consent, and consent is
 cleared after the attempt. The local analysis can select up to 20 task trees;
 the remote packet carries detailed rows for at most the 12 busiest selected
 trees and states the selected, detailed, and omitted-detail counts.
@@ -63,13 +65,14 @@ The CLI is launched with approval disabled, read-only sandboxing, an ephemeral
 turn, ignored user configuration, no shell, bounded input/output/time, and a
 strict output schema. Unknown or tool events fail closed. AiWingman
 validates the saved authentication file's metadata, copies it opaquely into a
-private temporary Codex home, and removes the copy after the attempt. User rules
-and configuration files are not copied. Credential contents are not parsed or
+private temporary Codex home. Beta2 attempts but does not verify cleanup after
+the attempt. User rules and configuration files are not copied. Credential contents are not parsed or
 added to the packet.
 
 These controls describe the intended invocation, not an isolation proof. A
-read-only sandbox prevents writes but does not guarantee that the child process
-cannot read another local file. The exact previewed packet is therefore not a
+read-only sandbox mode is intended to deny agent-tool writes to the workspace,
+but is not OS-level isolation or a zero-filesystem-write guarantee. It also
+does not guarantee that the child process cannot read another local file. The exact previewed packet is therefore not a
 claim that it is the CLI's only technically accessible context. `--ephemeral`
 prevents a local rollout from being saved; it does not define service-side
 retention. See [PRIVACY.md](../PRIVACY.md) before consenting.

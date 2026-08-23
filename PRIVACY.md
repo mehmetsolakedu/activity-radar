@@ -1,5 +1,10 @@
 # Privacy
 
+> **Safety hold:** This document belongs to the superseded
+> `v1.2.0-beta.2`/default-branch snapshot. Do not build or use that version, and
+> do not treat its privacy statements as the current supported contract. No
+> supported public tag is available while the hardened candidate is reviewed.
+
 AiWingman is a local, unofficial companion for Codex on macOS. It does not ask for, store, or manage a separate OpenAI API key; it reuses the saved authentication mechanism of the user's separately installed and signed-in Codex CLI without parsing it. AiWingman does not sign in to an AiWingman service, send analytics, or start an agent call in the background. The optional Wingman review uses that CLI only after explicit consent, as described below.
 
 ## Data it reads
@@ -11,7 +16,9 @@ AiWingman reads the current macOS user's local Codex state under `~/.codex`:
 - `session_index.jsonl`, when present
 - rollout JSONL files referenced by the local Codex database
 
-SQLite is opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`. AiWingman has no code path that writes to `~/.codex`.
+SQLite is requested with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`.
+This superseded build does not establish a no-write guarantee for SQLite WAL
+sidecars such as `-shm` under `~/.codex`.
 
 ## Data it stores
 
@@ -35,10 +42,10 @@ uses a compatible Codex CLI already installed and signed in by the same macOS
 user. Before every invocation, AiWingman displays the exact user-derived JSON
 packet it intends to supply on stdin, including task, theme, prompt-excerpt, and UTF-8 byte
 counts, and requires one-shot consent. Consent is cleared after the attempt and
-whenever the scope or prompt-sharing choice changes. Prompt excerpts,
-prompt-derived themes, and local text signals are all excluded by default and
-require the same separate toggle. With that toggle off, the packet contains task
-titles and numeric measurements only. No Wingman call runs in the background.
+whenever the scope or prompt-sharing choice changes. Do not rely on this
+superseded document as an exhaustive statement of the packet fields; inspect
+the one-shot preview before any optional call. No Wingman call runs in the
+background.
 
 The packet excludes raw task identifiers, full paths, working and rollout paths,
 git and account metadata, system and developer instructions, and tool outputs.
@@ -52,8 +59,9 @@ turn, ignored user configuration, and read-only sandboxing. Only the validated
 authentication file is copied into the isolated Codex home; user rules and
 configuration files are not copied. It rejects unknown
 or tool events and bounds packet size, output, and execution time. These controls
-limit the intended invocation, but the read-only sandbox prevents writes rather
-than proving that the child process cannot read another local file. The exact
+limit the intended invocation. AiWingman requests Codex CLI read-only sandbox
+mode, intended to deny agent-tool writes to the workspace; this is not OS-level
+isolation or a zero-filesystem-write guarantee. The exact
 preview is exact for the user-derived stdin packet AiWingman intentionally
 supplies; the fixed instruction and schema are separately documented below. It
 is not a claim that this is the only context technically accessible to the CLI. Do not use
@@ -61,8 +69,10 @@ the remote review if that residual local-read boundary is unacceptable.
 
 Before launch, AiWingman validates the saved Codex authentication file's
 metadata and makes an opaque temporary copy in an isolated Codex home. The
-temporary directory and file use private permissions and are removed after the
-attempt. AiWingman does not parse the credential contents or include them
+temporary directory and file use private permissions. The superseded beta2
+build attempts cleanup but does not verify its completion; the hardened
+candidate treats unverifiable cleanup as a failure. AiWingman does not parse
+the credential contents or include them
 in the packet, diagnostics, or logs. The CLI's `--ephemeral` option avoids
 creating a local rollout for this turn; it does not define service-side data
 retention.
@@ -104,7 +114,7 @@ There is no tester, device, user, path, note, or free-text field.
 
 ## Permissions and sandboxing
 
-The direct-download build is intentionally not App Sandbox–restricted because it must read the hidden `~/.codex` directory. AiWingman's access to `~/.codex` is read-only. The app does not request Full Disk Access, Contacts, Calendar, Photos, microphone, camera, or location. The optional child CLI boundary is described separately above and is not represented as a guarantee that the child cannot read other local files.
+The direct-download build is intentionally not App Sandbox–restricted because it must read the hidden `~/.codex` directory. The app requests read-only/query-only database access, subject to the WAL-sidecar limitation stated above. It does not request Full Disk Access, Contacts, Calendar, Photos, microphone, camera, or location. The optional child CLI boundary is described separately above and is not represented as a guarantee that the child cannot read other local files or make zero filesystem writes.
 
 ## Removing local data
 
