@@ -276,7 +276,7 @@ private final class FakeWingmanRunner: WingmanRunning, @unchecked Sendable {
         return storedCancelCount
     }
 
-    func prepareInvocation() {}
+    func prepareInvocation() -> Bool { true }
 
     func probe() throws -> WingmanCLIProbe {
         try probeHandler()

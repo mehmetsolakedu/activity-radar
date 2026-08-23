@@ -36,8 +36,13 @@ then establish a private channel.
 
 Changes should preserve these constraints:
 
-- The Codex state directory remains read-only.
-- SQLite uses read-only open flags and query-only mode.
+- AiWingman issues no SQL writes to Codex records or schema and does not
+  intentionally create or modify Codex rollout files, the main database, or
+  its WAL. SQLite uses read-only open flags and query-only mode. SQLite's VFS
+  may still create or update an auxiliary `state_5.sqlite-shm` or
+  `goals_1.sqlite-shm` file for WAL coordination; this narrow exception is
+  documented rather than represented as a directory-immutability guarantee.
+  The `-shm` file may persist according to the SQLite/Codex lifecycle.
 - AiWingman-owned state is stored outside the Codex directory.
 - Dashboard, diagnostics, and research-ledger paths transmit no Codex content
   and never start a background agent call.
@@ -49,11 +54,22 @@ Changes should preserve these constraints:
   text is never included.
 - Wingman packets exclude raw task identifiers, full paths, working and rollout
   paths, git and account metadata, system and developer instructions, tool
-  outputs, and credentials. Unknown or tool events fail closed.
+  outputs, and authentication-file contents. Allowed titles and separately
+  opted-in text can still contain a secret outside the finite sanitizer rules;
+  sanitization is best-effort and the user must inspect the exact preview.
+  Unknown or tool events fail closed.
 - The CLI authentication file is copied opaquely into a private temporary Codex
-  home and removed after the attempt; user rules and configuration files are not
-  copied. The read-only child sandbox prevents
-  writes but is not treated as proof that other local files cannot be read.
+  home; user rules and configuration files are not copied. Cleanup is attempted
+  after every normal result or error and absence is checked. If absence cannot
+  be verified, a visible error is returned and the current app process blocks
+  later remote calls until cleanup succeeds. Only one remote Wingman operation
+  may cross this temporary-auth lifecycle at a time. A crash or forced
+  termination can still leave a temporary `ActivityRadar-Wingman-` or
+  `ActivityRadar-CLI-Probe-` directory. Quit the app, inspect only immediate
+  children of the current user's macOS temporary directory with either exact
+  prefix, remove only those residue directories, and then reopen; never delete
+  a broader temporary path. The read-only child sandbox prevents writes but is
+  not treated as proof that other local files cannot be read.
 - Research logging is disabled by default and its export excludes task content
   and raw task identifiers.
 - High-impact lifecycle decisions require an explicit, reversible user action.

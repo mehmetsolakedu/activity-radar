@@ -8,13 +8,20 @@ Codex Desktop or CLI
         │ writes local task state
         ▼
 ~/.codex SQLite and JSONL files
-        │ read-only
+        │ query-only SQL / bounded file reads
         ▼
 AiWingman
         │ opens codex://threads/<thread-id>
         ▼
 Codex opens the selected task
 ```
+
+AiWingman issues no SQL writes to Codex records or schema and does not
+intentionally modify Codex rollout files, the main database, or its WAL.
+SQLite's VFS may create or update an auxiliary `state_5.sqlite-shm` or
+`goals_1.sqlite-shm` file for WAL coordination, and that file may persist
+according to the SQLite/Codex lifecycle; therefore the integration is not
+described as making the entire `~/.codex` directory immutable.
 
 ## Requirements
 
@@ -36,7 +43,7 @@ the exact packet preview work without a network request. No agent call runs in
 the background.
 
 ```text
-read-only local evidence
+query-only SQL and bounded local evidence
         │ bounded analysis and redaction
         ▼
 exact intended JSON preview + one-shot consent
@@ -62,17 +69,24 @@ trees and states the selected, detailed, and omitted-detail counts.
 The CLI is launched with approval disabled, read-only sandboxing, an ephemeral
 turn, ignored user configuration, no shell, bounded input/output/time, and a
 strict output schema. Unknown or tool events fail closed. AiWingman
-validates the saved authentication file's metadata, copies it opaquely into a
-private temporary Codex home, and removes the copy after the attempt. User rules
-and configuration files are not copied. Credential contents are not parsed or
+validates the saved authentication file's metadata and copies it opaquely into
+a private temporary Codex home. Normal result and error paths attempt cleanup
+and verify absence; an unverified cleanup rejects the result and blocks later
+remote calls in the current app process until cleanup succeeds. A process-wide
+gate allows only one remote temporary-auth lifecycle at a time. A crash can
+still leave `ActivityRadar-Wingman-` or `ActivityRadar-CLI-Probe-` residue;
+quit the app and follow the narrowly scoped recovery procedure in `SECURITY.md`
+before reopening. User rules and configuration files are not copied.
+Credential contents are not parsed or
 added to the packet.
 
 These controls describe the intended invocation, not an isolation proof. A
 read-only sandbox prevents writes but does not guarantee that the child process
 cannot read another local file. The exact previewed packet is therefore not a
 claim that it is the CLI's only technically accessible context. `--ephemeral`
-prevents a local rollout from being saved; it does not define service-side
-retention. See [PRIVACY.md](../PRIVACY.md) before consenting.
+requests a turn intended not to save a local rollout; it does not prove that no
+local artifact exists and does not define service-side retention. See
+[PRIVACY.md](../PRIVACY.md) before consenting.
 
 ## Compatibility boundary
 

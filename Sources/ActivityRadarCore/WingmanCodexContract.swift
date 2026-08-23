@@ -365,6 +365,10 @@ public enum WingmanCodexContract {
 }
 
 public struct WingmanCodexJSONLParser: Sendable {
+    private static let allowedItemLifecycleTypes = Set([
+        "item.started", "item.updated", "item.completed"
+    ])
+
     public private(set) var finalReviewData: Data?
     public private(set) var usage: WingmanAgentUsage?
     public private(set) var completed = false
@@ -380,6 +384,10 @@ public struct WingmanCodexJSONLParser: Sendable {
             return
         }
         if type.hasPrefix("item.") {
+            guard Self.allowedItemLifecycleTypes.contains(type) else {
+                failure = .forbiddenToolEvent(type)
+                return
+            }
             guard let item = event["item"] as? [String: Any],
                   let itemType = item["type"] as? String else {
                 failure = .malformedJSONEvent

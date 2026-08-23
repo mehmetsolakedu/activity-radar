@@ -35,6 +35,26 @@ func wingmanJSONLParserRejectsUnknownEventsFailClosed() throws {
 }
 
 @Test
+func wingmanJSONLParserRejectsUnknownItemLifecycleWithAgentMessage() throws {
+    var parser = WingmanCodexJSONLParser()
+    let event = try JSONSerialization.data(
+        withJSONObject: [
+            "type": "item.future_unknown",
+            "item": [
+                "type": "agent_message",
+                "text": "This must not be accepted as a review."
+            ]
+        ],
+        options: [.sortedKeys]
+    )
+
+    parser.consume(line: event)
+
+    #expect(parser.failure == .forbiddenToolEvent("item.future_unknown"))
+    #expect(parser.finalReviewData == nil)
+}
+
+@Test
 func wingmanPacketNamesTokenProxyAndRelativeMetricsHonestly() throws {
     let now = Date(timeIntervalSince1970: 2_000_000_000)
     let analysis = WingmanPortfolioAnalyzer.analyze(

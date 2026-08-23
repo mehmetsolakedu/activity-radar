@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetsolakedu/activity-radar/actions/workflows/ci.yml)
 
-AiWingman is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It reads local Codex state in read-only mode, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
+AiWingman is a native menu-bar application that helps you return to the right Codex task without treating inactivity as progress—or abandonment. It queries local Codex state through read-only/query-only SQL access, keeps a small user-owned continuity layer, and opens the selected task back in Codex.
 
 [Install](INSTALL.md) · [Türkçe kurulum](INSTALL.tr.md) · [Türkçe README](README.tr.md) · [Privacy](PRIVACY.md) · [Codex integration](docs/CODEX_INTEGRATION.md) · [Publication blueprint](docs/PUBLICATION_BLUEPRINT.md) · [Contributing](CONTRIBUTING.md)
 
@@ -49,8 +49,13 @@ Parallel agent work creates a prospective-memory problem: results arrive in diff
 - The child CLI uses a read-only sandbox, but this is not a guarantee that it
   cannot read other local files. The previewed packet must not be treated as the
   only context technically accessible to that process. See [PRIVACY.md](PRIVACY.md).
-- Codex SQLite files are opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`.
-- AiWingman never writes to `~/.codex`.
+- Codex SQLite files are opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`; AiWingman issues no SQL writes to Codex records or schema.
+- SQLite's WAL coordination can nevertheless create or update an auxiliary
+  `state_5.sqlite-shm` or `goals_1.sqlite-shm` file under `~/.codex`. AiWingman
+  does not intentionally create or modify Codex records, rollout files, the
+  main database, or its WAL. The `-shm` file can persist according to the
+  SQLite/Codex lifecycle. See [PRIVACY.md](PRIVACY.md) for this narrow VFS
+  exception.
 - Continuity data stays under the legacy compatibility path
   `~/Library/Application Support/Activity Radar`.
 - Research export excludes task identifiers, titles, prompts, messages, paths, checkpoints, next actions, and waiting-on text.

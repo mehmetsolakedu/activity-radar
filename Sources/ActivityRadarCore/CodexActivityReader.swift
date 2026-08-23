@@ -23,10 +23,10 @@ public final class CodexActivityReader: @unchecked Sendable {
     }
 
     private struct RolloutCacheEntry {
-        var fileSize: UInt64
-        var modifiedAt: Date
+        var identity: CodexFileIdentity
         var processedOffset: UInt64
         var carry: Data
+        var discardingOversizedLine: Bool
         var reducer: RolloutReducer
     }
 
@@ -39,17 +39,22 @@ public final class CodexActivityReader: @unchecked Sendable {
     private let stateDatabaseURL: URL
     private let goalsDatabaseURL: URL
     private let sessionIndexURL: URL
+    private let safeFiles: CodexSafeFileAccess
     private let initialRolloutReadLimit: UInt64 = 4 * 1_024 * 1_024
+    private let maximumRolloutLineBytes = 1 * 1_024 * 1_024
+    static let sessionIndexReadLimit: UInt64 = 4 * 1_024 * 1_024
     private let loadLock = NSLock()
     private var rolloutCache: [String: RolloutCacheEntry] = [:]
     private var cachedSessionNames: [String: String] = [:]
     private var cachedSessionIndexSignature: String?
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
-        codexDirectory = homeDirectory.appendingPathComponent(".codex", isDirectory: true)
+        let codexDirectory = homeDirectory.appendingPathComponent(".codex", isDirectory: true)
+        self.codexDirectory = codexDirectory
         stateDatabaseURL = codexDirectory.appendingPathComponent("state_5.sqlite")
         goalsDatabaseURL = codexDirectory.appendingPathComponent("goals_1.sqlite")
         sessionIndexURL = codexDirectory.appendingPathComponent("session_index.jsonl")
+        safeFiles = CodexSafeFileAccess(root: codexDirectory)
     }
 
     public func load(
@@ -515,19 +520,44 @@ public final class CodexActivityReader: @unchecked Sendable {
     }
 
     private func readSessionNames() -> [String: String] {
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: sessionIndexURL.path),
-              let size = attributes[.size] as? NSNumber,
-              let modifiedAt = attributes[.modificationDate] as? Date else {
+        guard let identity = safeFiles.metadata(path: sessionIndexURL.path) else {
             return cachedSessionNames
         }
 
-        let signature = "\(size.uint64Value)-\(modifiedAt.timeIntervalSince1970)"
+        let signature = identity.cacheSignature
         if signature == cachedSessionIndexSignature {
             return cachedSessionNames
         }
 
-        guard let data = try? Data(contentsOf: sessionIndexURL) else {
+        let startOffset = identity.size > Self.sessionIndexReadLimit
+            ? identity.size - Self.sessionIndexReadLimit
+            : 0
+        let contextualOffset = startOffset > 0 ? startOffset - 1 : 0
+        let maximumLength = min(
+            identity.size - contextualOffset,
+            Self.sessionIndexReadLimit + (startOffset > 0 ? 1 : 0)
+        )
+        guard var data = safeFiles.read(
+            path: sessionIndexURL.path,
+            offset: contextualOffset,
+            maximumLength: maximumLength,
+            expectedIdentity: identity
+        )?.data else {
             return cachedSessionNames
+        }
+
+        if startOffset > 0 {
+            guard let precedingByte = data.first else {
+                return cachedSessionNames
+            }
+            data.removeFirst()
+            if precedingByte != 0x0A {
+                if let firstNewline = data.firstIndex(of: 0x0A) {
+                    data = Data(data[data.index(after: firstNewline)...])
+                } else {
+                    data = Data()
+                }
+            }
         }
 
         var names: [String: String] = [:]
@@ -549,33 +579,26 @@ public final class CodexActivityReader: @unchecked Sendable {
 
     private func readRollout(path: String) -> RolloutSummary {
         guard !path.isEmpty,
-              let attributes = try? FileManager.default.attributesOfItem(atPath: path),
-              let sizeNumber = attributes[.size] as? NSNumber,
-              let modifiedAt = attributes[.modificationDate] as? Date else {
+              let identity = safeFiles.metadata(path: path) else {
             var summary = RolloutSummary()
             summary.historyComplete = false
             return summary
         }
 
-        let fileSize = sizeNumber.uint64Value
+        let fileSize = identity.size
         if let cached = rolloutCache[path],
-           cached.fileSize == fileSize,
-           cached.modifiedAt == modifiedAt {
-            return cached.reducer.summary
-        } else if var cached = rolloutCache[path],
-                  fileSize >= cached.processedOffset,
-                  fileSize - cached.processedOffset <= 8 * 1_024 * 1_024,
-                  let newData = readFile(path: path, offset: cached.processedOffset) {
-            consume(data: cached.carry + newData, into: &cached)
-            cached.fileSize = fileSize
-            cached.modifiedAt = modifiedAt
-            cached.processedOffset = fileSize
-            rolloutCache[path] = cached
+           cached.identity == identity {
             return cached.reducer.summary
         }
 
         let startOffset = fileSize > initialRolloutReadLimit ? fileSize - initialRolloutReadLimit : 0
-        guard var data = readFile(path: path, offset: startOffset) else {
+        guard var data = safeFiles.read(
+            path: path,
+            offset: startOffset,
+            maximumLength: fileSize - startOffset,
+            expectedIdentity: identity
+        )?.data,
+        data.count == Int(fileSize - startOffset) else {
             var summary = RolloutSummary()
             summary.historyComplete = false
             return summary
@@ -592,10 +615,10 @@ public final class CodexActivityReader: @unchecked Sendable {
         }
 
         var entry = RolloutCacheEntry(
-            fileSize: fileSize,
-            modifiedAt: modifiedAt,
+            identity: identity,
             processedOffset: fileSize,
             carry: Data(),
+            discardingOversizedLine: false,
             reducer: reducer
         )
         consume(data: data, into: &entry)
@@ -603,35 +626,48 @@ public final class CodexActivityReader: @unchecked Sendable {
         return entry.reducer.summary
     }
 
-    private func readFile(path: String, offset: UInt64) -> Data? {
-        guard let handle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)) else {
-            return nil
-        }
-        defer { try? handle.close() }
-        do {
-            try handle.seek(toOffset: offset)
-            return try handle.readToEnd() ?? Data()
-        } catch {
-            return nil
-        }
-    }
-
     private func consume(data: Data, into entry: inout RolloutCacheEntry) {
-        guard !data.isEmpty else {
-            entry.carry = Data()
-            return
+        guard !data.isEmpty else { return }
+
+        var framedData = data
+        if entry.discardingOversizedLine {
+            guard let newline = framedData.firstIndex(of: 0x0A) else {
+                entry.carry = Data()
+                return
+            }
+            framedData = Data(framedData[framedData.index(after: newline)...])
+            entry.discardingOversizedLine = false
         }
 
-        var segments = data.split(separator: 0x0A, omittingEmptySubsequences: false)
-        let endsWithNewline = data.last == 0x0A
+        var segments = framedData.split(separator: 0x0A, omittingEmptySubsequences: false)
+        let endsWithNewline = framedData.last == 0x0A
+        var trailingLine: Data?
         if !endsWithNewline, let trailing = segments.popLast() {
-            entry.carry = Data(trailing)
+            if trailing.count > maximumRolloutLineBytes {
+                entry.carry = Data()
+                entry.discardingOversizedLine = true
+                entry.reducer.markHistoryIncomplete()
+            } else {
+                trailingLine = Data(trailing)
+            }
         } else {
             entry.carry = Data()
         }
 
         for segment in segments where !segment.isEmpty {
+            guard segment.count <= maximumRolloutLineBytes else {
+                entry.reducer.markHistoryIncomplete()
+                continue
+            }
             entry.reducer.consume(line: Data(segment))
+        }
+
+        if let trailingLine {
+            if entry.reducer.consume(line: trailingLine) {
+                entry.carry = Data()
+            } else {
+                entry.carry = trailingLine
+            }
         }
     }
 

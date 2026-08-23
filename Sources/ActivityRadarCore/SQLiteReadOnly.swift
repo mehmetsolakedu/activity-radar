@@ -5,13 +5,30 @@ final class SQLiteReadOnly {
     private var database: OpaquePointer?
     private let path: String
 
-    init(path: String) throws {
+    init(path: String, testingBeforeOpen: (() throws -> Void)? = nil) throws {
         self.path = path
+        let originalURL = URL(fileURLWithPath: path).standardizedFileURL
+        var status = stat()
+        guard lstat(originalURL.path, &status) == 0,
+              status.st_mode & S_IFMT == S_IFREG,
+              status.st_uid == geteuid() else {
+            throw ActivityReaderError.sqliteOpen(path: path, message: "Güvenli düzenli dosya doğrulanamadı")
+        }
+        let parentPath = originalURL.deletingLastPathComponent().path
+        guard let canonicalParentPointer = parentPath.withCString({ realpath($0, nil) }) else {
+            throw ActivityReaderError.sqliteOpen(path: path, message: "Üst dizin doğrulanamadı")
+        }
+        defer { free(canonicalParentPointer) }
+        let openURL = URL(
+            fileURLWithPath: String(cString: canonicalParentPointer),
+            isDirectory: true
+        ).appendingPathComponent(originalURL.lastPathComponent)
+        try testingBeforeOpen?()
         var handle: OpaquePointer?
         let result = sqlite3_open_v2(
-            path,
+            openURL.path,
             &handle,
-            SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX,
+            SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_NOFOLLOW,
             nil
         )
 
@@ -116,5 +133,9 @@ final class SQLiteReadOnly {
 
     static func int64(_ statement: OpaquePointer, index: Int32) -> Int64 {
         sqlite3_column_int64(statement, index)
+    }
+
+    static func byteCount(_ statement: OpaquePointer, index: Int32) -> Int {
+        max(0, Int(sqlite3_column_bytes(statement, index)))
     }
 }

@@ -309,31 +309,32 @@ def box(drawing: Drawing, x, y, w, h, fill, title, lines, border=RULE):
 
 
 def architecture_figure(width: float) -> Drawing:
-    height = 220
+    height = 236
     d = Drawing(width, height)
     d.add(Rect(0, 0, width, height, rx=10, ry=10, fillColor=PAPER, strokeColor=RULE))
-    d.add(String(14, 202, "ORDINARY LOCAL PATH", fontName="SansBold", fontSize=7.3, fillColor=TEAL))
-    d.add(String(14, 96, "OPTIONAL REMOTE REVIEW", fontName="SansBold", fontSize=7.3, fillColor=AMBER))
+    d.add(String(14, 218, "ORDINARY DASHBOARD PIPELINE", fontName="SansBold", fontSize=7.3, fillColor=TEAL))
+    d.add(String(14, 111, "OPTIONAL WINGMAN PIPELINE", fontName="SansBold", fontSize=7.3, fillColor=AMBER))
 
-    box(d, 14, 124, 105, 60, PALE_BLUE, "Codex local state", ["SQLite + JSONL", "external, read-only input"])
-    box(d, 143, 124, 105, 60, PALE_TEAL, "ActivityRadarCore", ["bounded reduction", "signals + abstention"])
-    box(d, 272, 124, 105, 60, PALE_BLUE, "Local interface", ["triage + continuity", "explicit lifecycle"])
-    box(d, 401, 124, 78, 60, PALE_TEAL, "Return", ["codex:// link", "after user action"])
-    arrow(d, 119, 154, 143, 154, TEAL)
-    arrow(d, 248, 154, 272, 154, TEAL)
-    arrow(d, 377, 154, 401, 154, TEAL)
+    box(d, 14, 139, 102, 60, PALE_BLUE, "Codex local state", ["top-level task rows", "each root rollout"])
+    box(d, 135, 139, 102, 60, PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"])
+    box(d, 256, 139, 102, 60, PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"])
+    box(d, 377, 139, 102, 60, PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"])
+    arrow(d, 116, 169, 135, 169, TEAL)
+    arrow(d, 237, 169, 256, 169, TEAL)
+    arrow(d, 358, 169, 377, 169, TEAL)
 
-    box(d, 75, 28, 112, 54, PALE_AMBER, "Exact packet preview", ["bounded + redacted", "one-shot consent"])
-    box(d, 215, 28, 105, 54, PALE_AMBER, "Ephemeral CLI", ["no shell", "read-only sandbox"])
-    box(d, 348, 28, 112, 54, PALE_RED, "Remote review", ["schema-constrained", "external service boundary"], border=HexColor("#F2B8B5"))
-    arrow(d, 195, 124, 131, 82, AMBER, dashed=True)
-    arrow(d, 187, 55, 215, 55, AMBER, dashed=True)
-    arrow(d, 320, 55, 348, 55, RED, dashed=True)
+    box(d, 14, 31, 102, 60, PALE_BLUE, "Codex local state", ["root + child rows", "rollout tails"])
+    box(d, 135, 31, 102, 60, PALE_AMBER, "Wingman reader", ["task-tree graph", "bounded evidence"])
+    box(d, 256, 31, 102, 60, PALE_AMBER, "Preview + consent", ["bounded packet", "one-shot approval"])
+    box(d, 377, 31, 102, 60, PALE_RED, "External CLI", ["--ephemeral request", "service boundary"], border=HexColor("#F2B8B5"))
+    arrow(d, 116, 61, 135, 61, AMBER, dashed=True)
+    arrow(d, 237, 61, 256, 61, AMBER, dashed=True)
+    arrow(d, 358, 61, 377, 61, RED, dashed=True)
     d.add(
         String(
             14,
-            10,
-            "Residual boundary: read-only blocks writes; it does not prove sole-context local read isolation.",
+            13,
+            "The pipelines are separate. Read-only child sandboxing does not prove sole-context read isolation.",
             fontName="SansItalic",
             fontSize=6.6,
             fillColor=RED,
@@ -343,26 +344,25 @@ def architecture_figure(width: float) -> Drawing:
 
 
 def triage_figure(width: float) -> Drawing:
-    height = 166
+    height = 174
     d = Drawing(width, height)
     d.add(Rect(0, 0, width, height, rx=10, ry=10, fillColor=PAPER, strokeColor=RULE))
-    box(d, 14, 86, 110, 60, PALE_BLUE, "Observed evidence", ["input, result, blocker", "activity, partial history"])
-    box(d, 150, 86, 126, 60, PALE_TEAL, "Evidence gate", ["complete enough?", "strong and distinct?"])
-    box(d, 302, 100, 90, 46, PALE_BLUE, "Rank", ["up to 3", "show why now"])
-    box(d, 302, 38, 90, 46, PALE_AMBER, "Abstain", ["show no ranking", "retain uncertainty"])
-    box(d, 418, 70, 62, 64, PALE_TEAL, "User", ["open", "snooze", "label"])
-    arrow(d, 124, 116, 150, 116, TEAL)
-    arrow(d, 276, 122, 302, 122, BLUE)
-    arrow(d, 276, 103, 302, 61, AMBER)
-    arrow(d, 392, 123, 418, 108, TEAL)
-    arrow(d, 392, 61, 418, 91, TEAL)
-    d.add(String(281, 133, "PASS", fontName="SansBold", fontSize=6.2, fillColor=BLUE))
-    d.add(String(280, 72, "FAIL", fontName="SansBold", fontSize=6.2, fillColor=AMBER))
+    box(d, 14, 92, 105, 60, PALE_BLUE, "Eligibility", ["not deferred", "complete history"])
+    box(d, 138, 92, 105, 60, PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"])
+    box(d, 262, 92, 105, 60, PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10"])
+    box(d, 386, 106, 93, 46, PALE_TEAL, "Recommend", ["up to 3 items", "show reasons"])
+    box(d, 386, 40, 93, 46, PALE_AMBER, "Suppress ranking", ["no eligible item", "weak/close scores"])
+    arrow(d, 119, 122, 138, 122, TEAL)
+    arrow(d, 243, 122, 262, 122, TEAL)
+    arrow(d, 367, 128, 386, 128, BLUE)
+    arrow(d, 367, 108, 386, 63, AMBER)
+    d.add(String(370, 138, "PASS", fontName="SansBold", fontSize=6.2, fillColor=BLUE))
+    d.add(String(369, 73, "FAIL", fontName="SansBold", fontSize=6.2, fillColor=AMBER))
     d.add(
         String(
             14,
-            16,
-            "Silence does not cross the gate as evidence of running, completion, obsolete status, or abandonment.",
+            18,
+            "An incomplete item is excluded; it does not suppress a supported recommendation from another complete item.",
             fontName="SansItalic",
             fontSize=6.7,
             fillColor=MUTED,
@@ -392,8 +392,8 @@ class ReportDocTemplate(BaseDocTemplate):
         canvas.saveState()
         canvas.setTitle(self.manuscript_title)
         canvas.setAuthor("Mehmet Solak")
-        canvas.setSubject("AiWingman software architecture and open technical evaluation protocol")
-        canvas.setKeywords("coding agents, work continuity, privacy engineering, software artifact, abstention")
+        canvas.setSubject("AiWingman design and specification-based continuity-policy evaluation")
+        canvas.setKeywords("coding agents, work continuity, local software, deterministic ranking suppression, software artifact")
         page_width, page_height = A4
         if doc.page > 1:
             canvas.setStrokeColor(RULE)
@@ -402,7 +402,7 @@ class ReportDocTemplate(BaseDocTemplate):
             canvas.setFont("Sans", 6.8)
             canvas.setFillColor(MUTED)
             canvas.drawString(self.leftMargin, page_height - 21.2 * mm, "AIWINGMAN TECHNICAL REPORT")
-            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, "DRAFT 0.1 - AUTHOR CONFIRMATION REQUIRED")
+            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, "DRAFT 0.3 - AUTHOR CONFIRMATION REQUIRED")
         canvas.setStrokeColor(RULE)
         canvas.setLineWidth(0.5)
         canvas.line(self.leftMargin, 17 * mm, page_width - self.rightMargin, 17 * mm)

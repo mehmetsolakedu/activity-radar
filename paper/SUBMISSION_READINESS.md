@@ -2,11 +2,11 @@
 
 Status: `HOLD_MAJOR_REVISION_DO_NOT_SUBMIT`, not submitted.
 
-The draft PDF and DOCX at commit `80c6acb` failed the independent methods,
-novelty, and artifact-review round completed on 23 August 2026. They must not be
-uploaded. Author attestation is necessary but no longer sufficient: the
-technical benchmark, corrected claim boundary, rebuilt documents, artifact
-gate, and second review below must all pass first.
+The generated PDF and DOCX still represent the superseded Draft 0.1 package and
+must not be uploaded. The canonical Markdown is now Draft 0.3, but author
+attestation is necessary and not sufficient: the current source checkpoint,
+dual-architecture CI, rebuilt documents, artifact gate, and second review below
+must all pass first.
 
 ## Selected route
 
@@ -33,10 +33,11 @@ is guaranteed on a particular date.
 - Portal metadata: `paper/preprints_metadata.yaml`
 
 These files are preserved for review provenance. They are not submission-ready.
-The superseded manuscript contains 2 figures, 3 evidence/claim/protocol tables,
-and 8 references. It identifies source release `v1.2.0-beta.2`, commit
-`5e212181ae177cd555ab6bb92f5f71ac8be9173a`, and GitHub Actions run
-`32648392604`.
+The generated files identify the historical source release
+`v1.2.0-beta.2`, commit `5e212181ae177cd555ab6bb92f5f71ac8be9173a`,
+and GitHub Actions run `32648392604`, but they do not contain the Draft 0.3
+methods, 21-reference related-work section, result erratum, or corrected claim
+ledger.
 
 ## Evidence boundary
 
@@ -55,21 +56,27 @@ All gates are fail-closed.
 - [x] Methods, novelty, and artifact/security reviewers issued written findings.
 - [x] A separate specification and 155-fixture Python-oracle corpus were frozen
   at commit `53aa3e2` before the Swift benchmark was executed.
-- [ ] The Swift implementation matches every frozen expected output.
-- [ ] Every fixture is byte-stable across 100 repeated evaluations.
-- [ ] Seeded content sentinels do not appear in serialized policy outputs.
-- [ ] Baselines and policy perturbations are reported without human-benefit
+- [x] The Swift implementation matches all 155 frozen expected outputs on the
+  recorded arm64 environment.
+- [x] Every fixture was stable across 100 within-process evaluations, and all
+  100 fresh processes returned the same canonical corpus digest on that arm64
+  machine; the V1 fresh-process counter terminology is corrected by an erratum.
+- [x] Five seeded content sentinels did not appear in serialized policy outputs.
+- [x] Baselines and policy perturbations are reported without human-benefit
   interpretation.
-- [ ] Confirmed dashboard-reader path and bounded-read weaknesses are corrected
-  and regression-tested.
-- [ ] The manuscript separates the ordinary dashboard and optional Wingman
+- [x] Confirmed dashboard-reader path, bounded-read, malformed-tail, graph, and
+  temporary-auth lifecycle weaknesses are corrected and locally regression-
+  tested; the enforced fallback suite currently discovers 82 tests, and 16/16
+  deterministic self-tests pass. This is not macOS 13 runtime evidence.
+- [x] The manuscript separates the ordinary dashboard and optional Wingman
   evidence pipelines.
-- [ ] The manuscript replaces broad novelty and statistical-abstention wording
+- [x] The manuscript replaces broad novelty and statistical-abstention wording
   with the narrower design-integration and ranking-suppression claims.
-- [ ] The nearest programming-resumption, dashboard, agent-observability, and
+- [x] The nearest programming-resumption, dashboard, agent-observability, and
   current GitHub Copilot precedents are included.
-- [ ] Credentials, temporary-auth cleanup, subprocess, network, sandbox, and
-  undocumented Codex integration claims are narrowed to the tested boundary.
+- [x] Credentials, temporary-auth cleanup, subprocess, network, sandbox,
+  SQLite WAL `-shm`, and undocumented Codex integration claims are narrowed to
+  the tested boundary.
 - [ ] `PUBLIC_SOURCE_MANIFEST.txt` matches all tracked publication artifacts and
   the full public release gate passes from a clean archive.
 - [ ] Rebuilt DOCX and PDF pass all-page visual inspection, structural checks,

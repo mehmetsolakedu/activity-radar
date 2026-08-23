@@ -74,7 +74,12 @@ Arama başlığındaki kompakt **TR/EN** denetimi dashboard, editör, durum men�
 Wingman arayüzünün dilini anında değiştirir. AiWingman seçimi sonraki açılış
 için yerel olarak hatırlar.
 
-AiWingman uyumlu yerel Codex durumu bulamazsa nötr biçimde durur. Codex verisi oluşturmaz, onarmaz, yüklemez veya değiştirmez.
+AiWingman uyumlu yerel Codex durumu bulamazsa nötr biçimde durur. SQL yazma
+komutu çalıştırmaz; Codex şemasını onarmaz, veriyi yüklemez ve kayıtları ya da
+rollout dosyalarını bilinçli olarak değiştirmez. SQLite, WAL eşgüdümü için
+yardımcı bir `-shm` dosyası oluşturabilir veya güncelleyebilir; bu dosya kalıcı
+olabilir. Ayrıntı
+[PRIVACY.md](PRIVACY.md) dosyasındadır.
 
 **Bir Wingman Çağır** isteğe bağlı bir uzak eleştiri başlatabilir. AiWingman’in
 Codex CLI’a stdin üzerinden vermeyi amaçladığı tam JSON paketini önce
@@ -98,7 +103,7 @@ Tam veri sınırı için [PRIVACY.md](PRIVACY.md) dosyasına bakın. Bir issue'y
 3. Yeni uygulamayı Applications'a sürükleyin; Finder sorarsa **Değiştir** seçeneğini kullanın.
 4. Yeni kopyayı açıp sürümü **AiWingman Hakkında…** ekranında doğrulayın.
 
-Uygulamayı değiştirmek, AiWingman’in ayrı yerel süreklilik verisini korur. Eski `ActivityRadar` bundle kimlikleri ve veri yolu uyumluluk için bilinçli olarak korunur. Bir sürüm geçişi `~/.codex` içine yazmamalı veya orayı değiştirmemelidir.
+Uygulamayı değiştirmek, AiWingman’in ayrı yerel süreklilik verisini korur. Eski `ActivityRadar` bundle kimlikleri ve veri yolu uyumluluk için bilinçli olarak korunur. Bir sürüm geçişi SQL yazma komutu çalıştırmamalı; Codex kayıtlarını, şemasını, rollout dosyalarını, ana veritabanını veya WAL dosyasını bilinçli olarak değiştirmemelidir. Belgelenen SQLite WAL `-shm` eşgüdüm istisnası geçerlidir.
 
 ## Kaldırma
 

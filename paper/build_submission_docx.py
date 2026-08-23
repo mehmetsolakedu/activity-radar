@@ -362,36 +362,36 @@ def build_figure(kind, output):
     draw.rounded_rectangle((4, 4, width - 4, height - 4), radius=28, fill="#FBFCFE", outline=f"#{RULE}", width=4)
 
     if kind == "architecture":
-        draw.text((55, 48), "ORDINARY LOCAL PATH", font=label, fill=f"#{TEAL}")
-        add_box(draw, (55, 135, 380, 185), PALE_BLUE, "Codex local state", ["SQLite + JSONL", "external, read-only input"], bold, small)
-        add_box(draw, (535, 135, 380, 185), PALE_TEAL, "ActivityRadarCore", ["bounded reduction", "signals + abstention"], bold, small)
-        add_box(draw, (1015, 135, 380, 185), PALE_BLUE, "Local interface", ["triage + continuity", "explicit lifecycle"], bold, small)
-        add_box(draw, (1495, 135, 390, 185), PALE_TEAL, "Return to task", ["codex:// link", "after user action"], bold, small)
+        draw.text((55, 48), "ORDINARY DASHBOARD PIPELINE", font=label, fill=f"#{TEAL}")
+        add_box(draw, (55, 135, 380, 185), PALE_BLUE, "Codex local state", ["top-level task rows", "each root rollout"], bold, small)
+        add_box(draw, (535, 135, 380, 185), PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"], bold, small)
+        add_box(draw, (1015, 135, 380, 185), PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"], bold, small)
+        add_box(draw, (1495, 135, 390, 185), PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"], bold, small)
         draw_arrow(draw, (435, 228), (535, 228), TEAL)
         draw_arrow(draw, (915, 228), (1015, 228), TEAL)
         draw_arrow(draw, (1395, 228), (1495, 228), TEAL)
-        draw.text((55, 372), "OPTIONAL REMOTE REVIEW", font=label, fill=f"#{AMBER}")
-        add_box(draw, (235, 430, 430, 175), PALE_AMBER, "Exact packet preview", ["bounded + redacted", "one-shot consent"], bold, small)
-        add_box(draw, (765, 430, 410, 175), PALE_AMBER, "Ephemeral CLI", ["no shell", "read-only sandbox"], bold, small)
-        add_box(draw, (1275, 430, 440, 175), PALE_RED, "Remote review", ["schema-constrained", "external service boundary"], bold, small, "F2B8B5")
-        draw_arrow(draw, (720, 320), (450, 430), AMBER, dashed=True)
-        draw_arrow(draw, (665, 517), (765, 517), AMBER, dashed=True)
-        draw_arrow(draw, (1175, 517), (1275, 517), RED, dashed=True)
-        draw.text((55, 684), "Residual boundary: read-only blocks writes; it does not prove sole-context local read isolation.", font=italic, fill=f"#{RED}")
+        draw.text((55, 372), "OPTIONAL WINGMAN PIPELINE", font=label, fill=f"#{AMBER}")
+        add_box(draw, (55, 430, 380, 175), PALE_BLUE, "Codex local state", ["root + child rows", "rollout tails"], bold, small)
+        add_box(draw, (535, 430, 380, 175), PALE_AMBER, "Wingman reader", ["task-tree graph", "bounded evidence"], bold, small)
+        add_box(draw, (1015, 430, 380, 175), PALE_AMBER, "Preview + consent", ["bounded packet", "one-shot approval"], bold, small)
+        add_box(draw, (1495, 430, 390, 175), PALE_RED, "External CLI", ["--ephemeral request", "service boundary"], bold, small, "F2B8B5")
+        draw_arrow(draw, (435, 517), (535, 517), AMBER, dashed=True)
+        draw_arrow(draw, (915, 517), (1015, 517), AMBER, dashed=True)
+        draw_arrow(draw, (1395, 517), (1495, 517), RED, dashed=True)
+        draw.text((55, 684), "The pipelines are separate. Read-only child sandboxing does not prove sole-context read isolation.", font=italic, fill=f"#{RED}")
     else:
-        add_box(draw, (55, 120, 410, 190), PALE_BLUE, "Observed evidence", ["input, result, blocker", "activity, partial history"], bold, small)
-        add_box(draw, (575, 120, 455, 190), PALE_TEAL, "Evidence gate", ["complete enough?", "strong and distinct?"], bold, small)
-        add_box(draw, (1150, 70, 330, 155), PALE_BLUE, "Rank", ["up to 3", "show why now"], bold, small)
-        add_box(draw, (1150, 285, 330, 155), PALE_AMBER, "Abstain", ["show no ranking", "retain uncertainty"], bold, small)
-        add_box(draw, (1590, 160, 280, 205), PALE_TEAL, "User", ["open", "snooze", "label"], bold, small)
-        draw_arrow(draw, (465, 215), (575, 215), TEAL)
-        draw_arrow(draw, (1030, 185), (1150, 145), BLUE)
-        draw_arrow(draw, (1030, 245), (1150, 360), AMBER)
-        draw_arrow(draw, (1480, 145), (1590, 225), TEAL)
-        draw_arrow(draw, (1480, 360), (1590, 300), TEAL)
-        draw.text((1050, 125), "PASS", font=label, fill=f"#{BLUE}")
-        draw.text((1045, 365), "FAIL", font=label, fill=f"#{AMBER}")
-        draw.text((55, 515), "Silence does not cross the gate as evidence of running, completion, obsolete status, or abandonment.", font=italic, fill=f"#{MUTED}")
+        add_box(draw, (55, 120, 390, 190), PALE_BLUE, "Eligibility", ["not deferred", "complete history"], bold, small)
+        add_box(draw, (535, 120, 390, 190), PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"], bold, small)
+        add_box(draw, (1015, 120, 390, 190), PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10"], bold, small)
+        add_box(draw, (1495, 75, 390, 155), PALE_TEAL, "Recommend", ["up to 3 items", "show reasons"], bold, small)
+        add_box(draw, (1495, 290, 390, 155), PALE_AMBER, "Suppress ranking", ["no eligible item", "weak or close scores"], bold, small)
+        draw_arrow(draw, (445, 215), (535, 215), TEAL)
+        draw_arrow(draw, (925, 215), (1015, 215), TEAL)
+        draw_arrow(draw, (1405, 190), (1495, 150), BLUE)
+        draw_arrow(draw, (1405, 245), (1495, 365), AMBER)
+        draw.text((1415, 125), "PASS", font=label, fill=f"#{BLUE}")
+        draw.text((1410, 365), "FAIL", font=label, fill=f"#{AMBER}")
+        draw.text((55, 515), "An incomplete item is excluded; it does not suppress a supported recommendation from another complete item.", font=italic, fill=f"#{MUTED}")
     im.save(output, dpi=(300, 300))
 
 
@@ -594,11 +594,11 @@ def parse_manuscript(doc, markdown, bullet_num_id, figure_dir):
 
 def set_core_properties(doc):
     props = doc.core_properties
-    props.title = "AiWingman: Design, Implementation, and an Open Evaluation Protocol for a Local Work-Continuity Companion for Parallel Coding-Agent Tasks"
-    props.subject = "AiWingman software architecture and open technical evaluation protocol"
+    props.title = "AiWingman: Design and Specification-Based Evaluation of a Local Continuity Overlay for Codex Task Portfolios"
+    props.subject = "AiWingman design and specification-based continuity-policy evaluation"
     props.author = "Mehmet Solak"
-    props.keywords = "coding agents; work continuity; privacy engineering; software artifact; abstention"
-    props.comments = "Draft 0.1 - author confirmation required before public deposit"
+    props.keywords = "coding agents; work continuity; local software; deterministic ranking suppression; software artifact"
+    props.comments = "Draft 0.3 - author confirmation required before public deposit"
 
 
 def main():

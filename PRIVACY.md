@@ -11,7 +11,15 @@ AiWingman reads the current macOS user's local Codex state under `~/.codex`:
 - `session_index.jsonl`, when present
 - rollout JSONL files referenced by the local Codex database
 
-SQLite is opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`. AiWingman has no code path that writes to `~/.codex`.
+SQLite is opened with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`, and
+AiWingman issues no SQL writes to Codex records or schema. SQLite's own VFS may
+nevertheless create or update an auxiliary `state_5.sqlite-shm` or
+`goals_1.sqlite-shm`
+under `~/.codex` when coordinating a database in WAL mode. AiWingman does not
+intentionally create or modify Codex records, rollout files, the main database,
+or its WAL. The `-shm` file may persist according to the SQLite/Codex lifecycle.
+This narrow SQLite auxiliary-file behavior is why this policy does not claim
+that the whole Codex state directory is immutable.
 
 ## Data it stores
 
@@ -61,11 +69,19 @@ the remote review if that residual local-read boundary is unacceptable.
 
 Before launch, AiWingman validates the saved Codex authentication file's
 metadata and makes an opaque temporary copy in an isolated Codex home. The
-temporary directory and file use private permissions and are removed after the
-attempt. AiWingman does not parse the credential contents or include them
-in the packet, diagnostics, or logs. The CLI's `--ephemeral` option avoids
-creating a local rollout for this turn; it does not define service-side data
-retention.
+temporary directory and file use private permissions. Cleanup is attempted
+after every normal result or error and absence is checked. If absence cannot be
+verified, the result is rejected and the current app process blocks later
+remote calls until cleanup succeeds. Only one remote Wingman operation may use
+the temporary-auth lifecycle at a time. A crash or forced termination can still
+leave an `ActivityRadar-Wingman-` or `ActivityRadar-CLI-Probe-` temporary
+directory. Quit the app, inspect only immediate children of the current user's
+macOS temporary directory with either exact prefix, remove only those residue
+directories, and then reopen; never delete a broader temporary path. AiWingman
+does not parse the credential contents or include them in the packet,
+diagnostics, or logs. The CLI's `--ephemeral` option requests a turn intended
+not to save a local rollout; it does not prove that no local artifact exists
+and does not define service-side data retention.
 
 The user-derived JSON packet is processed together with the fixed reviewer
 instruction and output schema shipped in the source. Those fixed texts contain
@@ -104,7 +120,7 @@ There is no tester, device, user, path, note, or free-text field.
 
 ## Permissions and sandboxing
 
-The direct-download build is intentionally not App Sandbox–restricted because it must read the hidden `~/.codex` directory. AiWingman's access to `~/.codex` is read-only. The app does not request Full Disk Access, Contacts, Calendar, Photos, microphone, camera, or location. The optional child CLI boundary is described separately above and is not represented as a guarantee that the child cannot read other local files.
+The direct-download build is intentionally not App Sandbox–restricted because it must read the hidden `~/.codex` directory. AiWingman's SQL access is read-only/query-only, subject to SQLite's WAL `-shm` coordination behavior documented above. The app does not request Full Disk Access, Contacts, Calendar, Photos, microphone, camera, or location. The optional child CLI boundary is described separately above and is not represented as a guarantee that the child cannot read other local files.
 
 ## Removing local data
 

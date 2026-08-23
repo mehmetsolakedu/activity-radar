@@ -36,10 +36,12 @@ rollout, lifecycle, and token-counter evidence. A technical companion must
 separate observed facts from heuristics, avoid double counting, abstain under
 insufficient evidence, and preserve local data boundaries.
 
-**Artifact:** AiWingman is a native macOS menu-bar application that reads
-supported local Codex state in read-only mode, presents task-continuity signals,
-keeps explicit lifecycle decisions reversible, and offers an optional,
-consent-gated Wingman review.
+**Artifact:** AiWingman is a native macOS menu-bar application that queries
+supported local Codex state with read-only/query-only SQL, presents
+task-continuity signals, keeps explicit lifecycle decisions reversible, and
+offers an optional, consent-gated Wingman review. SQLite WAL coordination may
+create or update a persistent auxiliary `-shm` file; this is a declared VFS
+exception rather than a source-directory immutability claim.
 
 **Evaluation:** The artifact will be evaluated with a versioned, seeded
 synthetic corpus and adversarial fixtures. The frozen dimensions are
@@ -68,7 +70,8 @@ The intended contribution is technical and reproducibility-oriented:
    abstention.
 3. A public synthetic and adversarial benchmark corpus with implementation-
    independent expected outcomes.
-4. A privacy test contract covering read-only source access, content
+4. A privacy test contract covering query-only SQL and no application-authored
+   Codex data mutation, the declared SQLite WAL `-shm` exception, content
    minimization, explicit transmission consent, temporary-file handling, and
    forbidden-field rejection.
 5. A reproducibility package that distinguishes deterministic local analysis
@@ -250,8 +253,9 @@ robustness claim and the public artifact release.
 - private permissions and verified cleanup for temporary sensitive files;
 - an explicit allowlist manifest for every auth/config file copied into an
   isolated CLI home;
-- zero writes to the source Codex fixture and zero reads from real user data
-  during benchmark execution.
+- no application-authored mutation of source Codex records, schema, rollouts,
+  main database, or WAL, with any SQLite VFS `-shm` effect recorded separately;
+  and zero reads from real user data during benchmark execution.
 
 Passing these checks supports only the enumerated privacy properties. A
 read-only child sandbox is a write boundary, not proof that the child can read

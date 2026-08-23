@@ -24,7 +24,8 @@ struct RolloutReducer {
         summary.historyComplete = false
     }
 
-    mutating func consume(line: Data) {
+    @discardableResult
+    mutating func consume(line: Data) -> Bool {
         guard
             let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
             let timestampText = object["timestamp"] as? String,
@@ -32,7 +33,8 @@ struct RolloutReducer {
             let envelopeType = object["type"] as? String,
             let payload = object["payload"] as? [String: Any]
         else {
-            return
+            markHistoryIncomplete()
+            return false
         }
 
         summary.lastActivityAt = Self.latest(summary.lastActivityAt, timestamp)
@@ -45,6 +47,7 @@ struct RolloutReducer {
         default:
             break
         }
+        return true
     }
 
     private mutating func consumeEvent(payload: [String: Any], timestamp: Date) {

@@ -13,6 +13,21 @@ public enum WingmanEvidenceReaderError: LocalizedError {
 }
 
 public final class CodexWingmanEvidenceReader: @unchecked Sendable {
+    private static let maximumThreadRecords = 50_000
+    private static let maximumSpawnEdges = 100_000
+    private static let maximumThreadTextBytes = 64 * 1_024 * 1_024
+    private static let maximumEdgeTextBytes = 32 * 1_024 * 1_024
+
+    private struct SpawnEdge: Hashable {
+        let parent: String
+        let child: String
+    }
+
+    private struct GraphVisitFrame {
+        let id: String
+        var nextChildIndex: Int
+    }
+
     private struct ThreadRecord {
         let id: String
         let source: String
@@ -86,14 +101,17 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
 
     private let codexDirectory: URL
     private let stateDatabaseURL: URL
+    private let safeFiles: CodexSafeFileAccess
     private let perRolloutTailLimit: Int64
 
     public init(
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
         perRolloutTailLimit: Int64 = 4 * 1_024 * 1_024
     ) {
-        codexDirectory = homeDirectory.appendingPathComponent(".codex", isDirectory: true)
+        let codexDirectory = homeDirectory.appendingPathComponent(".codex", isDirectory: true)
+        self.codexDirectory = codexDirectory
         stateDatabaseURL = codexDirectory.appendingPathComponent("state_5.sqlite")
+        safeFiles = CodexSafeFileAccess(root: codexDirectory)
         self.perRolloutTailLimit = max(64 * 1_024, min(perRolloutTailLimit, 16 * 1_024 * 1_024))
     }
 
@@ -265,6 +283,8 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
         }
 
         var records: [String: ThreadRecord] = [:]
+        var rowCount = 0
+        var totalTextBytes = 0
         try database.rows(
             sql: """
             SELECT
@@ -281,8 +301,30 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
             FROM threads;
             """
         ) { statement in
+            rowCount += 1
+            guard rowCount <= Self.maximumThreadRecords else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("görev düğümü sınırı aşıldı")
+            }
+
+            let limits = [1_024, 128, 16 * 1_024, 64 * 1_024, 16 * 1_024, 16 * 1_024]
+            var rowBytes = 0
+            for (index, maximum) in limits.enumerated() {
+                let count = SQLiteReadOnly.byteCount(statement, index: Int32(index))
+                guard count <= maximum else {
+                    throw WingmanEvidenceReaderError.incompatibleTaskGraph("görev metni sınırı aşıldı")
+                }
+                rowBytes += count
+            }
+            guard totalTextBytes <= Self.maximumThreadTextBytes - rowBytes else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("toplam görev metni sınırı aşıldı")
+            }
+            totalTextBytes += rowBytes
+
             let id = SQLiteReadOnly.text(statement, index: 0)
             guard !id.isEmpty else { return }
+            guard records[id] == nil else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("yinelenen görev kimliği")
+            }
             records[id] = ThreadRecord(
                 id: id,
                 source: SQLiteReadOnly.text(statement, index: 1),
@@ -313,9 +355,26 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
             )
         }
         var edges: [(String, String)] = []
+        var rowCount = 0
+        var totalTextBytes = 0
         try database.rows(
             sql: "SELECT parent_thread_id, child_thread_id FROM thread_spawn_edges;"
         ) { statement in
+            rowCount += 1
+            guard rowCount <= Self.maximumSpawnEdges else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("görev bağlantısı sınırı aşıldı")
+            }
+            let parentBytes = SQLiteReadOnly.byteCount(statement, index: 0)
+            let childBytes = SQLiteReadOnly.byteCount(statement, index: 1)
+            guard parentBytes <= 1_024, childBytes <= 1_024 else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("görev bağlantısı metni sınırı aşıldı")
+            }
+            let rowBytes = parentBytes + childBytes
+            guard totalTextBytes <= Self.maximumEdgeTextBytes - rowBytes else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("toplam görev bağlantısı metni sınırı aşıldı")
+            }
+            totalTextBytes += rowBytes
+
             let parent = SQLiteReadOnly.text(statement, index: 0)
             let child = SQLiteReadOnly.text(statement, index: 1)
             if !parent.isEmpty && !child.isEmpty {
@@ -331,9 +390,13 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
     ) throws -> (parentByChild: [String: String], childrenByParent: [String: [String]]) {
         var parentByChild: [String: String] = [:]
         var childrenByParent: [String: [String]] = [:]
+        var seenEdges = Set<SpawnEdge>()
         for edge in edges {
             guard records[edge.parent] != nil, records[edge.child] != nil else {
                 throw WingmanEvidenceReaderError.incompatibleTaskGraph("eksik görev düğümü")
+            }
+            guard seenEdges.insert(SpawnEdge(parent: edge.parent, child: edge.child)).inserted else {
+                continue
             }
             if let existing = parentByChild[edge.child], existing != edge.parent {
                 throw WingmanEvidenceReaderError.incompatibleTaskGraph("bir alt görevin birden çok üst görevi var")
@@ -346,19 +409,30 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
         }
 
         var marks: [String: Int] = [:]
-        func visit(_ id: String) throws {
-            if marks[id] == 1 {
-                throw WingmanEvidenceReaderError.incompatibleTaskGraph("döngü algılandı")
+        for startID in records.keys.sorted() {
+            guard marks[startID] == nil else { continue }
+
+            marks[startID] = 1
+            var stack = [GraphVisitFrame(id: startID, nextChildIndex: 0)]
+            while let frame = stack.last {
+                let children = childrenByParent[frame.id] ?? []
+                guard frame.nextChildIndex < children.count else {
+                    marks[frame.id] = 2
+                    stack.removeLast()
+                    continue
+                }
+
+                let child = children[frame.nextChildIndex]
+                stack[stack.count - 1].nextChildIndex += 1
+                if marks[child] == 1 {
+                    throw WingmanEvidenceReaderError.incompatibleTaskGraph("döngü algılandı")
+                }
+                if marks[child] == 2 {
+                    continue
+                }
+                marks[child] = 1
+                stack.append(GraphVisitFrame(id: child, nextChildIndex: 0))
             }
-            if marks[id] == 2 { return }
-            marks[id] = 1
-            for child in childrenByParent[id] ?? [] {
-                try visit(child)
-            }
-            marks[id] = 2
-        }
-        for id in records.keys.sorted() {
-            try visit(id)
         }
         return (parentByChild, childrenByParent)
     }
@@ -370,10 +444,12 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
     ) -> [(ThreadRecord, Int)] {
         var result: [(ThreadRecord, Int)] = []
         var queue = (childrenByParent[rootID] ?? []).map { ($0, 1) }
+        var visited = Set<String>()
         var cursor = 0
         while cursor < queue.count {
             let (id, depth) = queue[cursor]
             cursor += 1
+            guard visited.insert(id).inserted else { continue }
             guard let record = records[id] else { continue }
             result.append((record, depth))
             for child in childrenByParent[id] ?? [] {
@@ -420,7 +496,7 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
             if summary.coverage != .complete {
                 everyRolloutComplete = false
             }
-            if summary.totalBytes > (knownSizes[index] ?? 0) {
+            if summary.fileAvailable {
                 knownSizes[index] = summary.totalBytes
             }
             mergeTail(summary, recordID: record.id, into: &aggregate)
@@ -474,79 +550,74 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
         includeHumanPrompts: Bool
     ) -> TailSummary {
         var summary = TailSummary()
-        guard let safeURL = safeRolloutURL(path: path),
-              let attributes = try? FileManager.default.attributesOfItem(atPath: safeURL.path),
-              let size = (attributes[.size] as? NSNumber)?.int64Value,
-              size >= 0 else {
+        guard let identity = safeFiles.metadata(path: path),
+              identity.size <= UInt64(Int64.max) else {
             return summary
         }
+        let size = Int64(identity.size)
         summary.totalBytes = size
-        guard let handle = try? FileHandle(forReadingFrom: safeURL) else { return summary }
-        summary.fileAvailable = true
-        defer { try? handle.close() }
 
         if size == 0 {
+            guard safeFiles.read(
+                path: path,
+                offset: 0,
+                maximumLength: 0,
+                expectedIdentity: identity
+            ) != nil else { return summary }
+            summary.fileAvailable = true
             summary.coverage = .complete
             return summary
         }
 
         let bytesToRead = min(size, max(1, byteLimit))
         let startOffset = max(0, size - bytesToRead)
-        do {
-            try handle.seek(toOffset: UInt64(startOffset))
-            guard var data = try handle.read(upToCount: Int(bytesToRead)) else {
-                return summary
+        guard var data = safeFiles.read(
+            path: path,
+            offset: UInt64(startOffset),
+            maximumLength: UInt64(bytesToRead),
+            expectedIdentity: identity
+        )?.data,
+        Int64(data.count) == bytesToRead else {
+            return summary
+        }
+        summary.fileAvailable = true
+        summary.scannedBytes = Int64(data.count)
+        summary.coverage = startOffset == 0 ? .complete : .partial
+        if startOffset > 0, let newline = data.firstIndex(of: 0x0A) {
+            data = Data(data[data.index(after: newline)...])
+        } else if startOffset > 0 {
+            return summary
+        }
+        for line in data.split(separator: 0x0A, omittingEmptySubsequences: false) {
+            let hasContent = line.contains { byte in
+                byte != 0x09 && byte != 0x0D && byte != 0x20
             }
-            summary.scannedBytes = Int64(data.count)
-            summary.coverage = startOffset == 0 && Int64(data.count) == bytesToRead ? .complete : .partial
-            if startOffset > 0, let newline = data.firstIndex(of: 0x0A) {
-                data = Data(data[data.index(after: newline)...])
-            } else if startOffset > 0 {
-                return summary
-            }
-            for line in data.split(separator: 0x0A, omittingEmptySubsequences: false) {
-                let hasContent = line.contains { byte in
-                    byte != 0x09 && byte != 0x0D && byte != 0x20
-                }
-                guard hasContent else { continue }
-                if !consumeRolloutLine(
-                    Data(line),
-                    includeHumanPrompts: includeHumanPrompts,
-                    into: &summary
-                ) {
-                    summary.coverage = .partial
-                }
-            }
-            if let finalSize = rolloutFileSize(path: path), finalSize != size {
-                summary.totalBytes = max(size, finalSize)
+            guard hasContent else { continue }
+            if !consumeRolloutLine(
+                Data(line),
+                includeHumanPrompts: includeHumanPrompts,
+                into: &summary
+            ) {
                 summary.coverage = .partial
             }
-        } catch {
-            summary.coverage = .unavailable
+        }
+        guard let finalIdentity = safeFiles.metadata(path: path) else {
+            summary.coverage = .partial
+            return summary
+        }
+        if finalIdentity != identity {
+            summary.totalBytes = Int64(min(UInt64(Int64.max), max(identity.size, finalIdentity.size)))
+            summary.coverage = .partial
         }
         return summary
     }
 
     private func rolloutFileSize(path: String) -> Int64? {
-        guard let safeURL = safeRolloutURL(path: path),
-              let attributes = try? FileManager.default.attributesOfItem(atPath: safeURL.path),
-              let size = (attributes[.size] as? NSNumber)?.int64Value,
-              size >= 0 else {
+        guard let identity = safeFiles.metadata(path: path),
+              identity.size <= UInt64(Int64.max) else {
             return nil
         }
-        return size
-    }
-
-    private func safeRolloutURL(path: String) -> URL? {
-        guard !path.isEmpty else { return nil }
-        let base = codexDirectory.standardizedFileURL.resolvingSymlinksInPath()
-        let candidate = URL(fileURLWithPath: path).standardizedFileURL.resolvingSymlinksInPath()
-        let basePrefix = base.path.hasSuffix("/") ? base.path : base.path + "/"
-        guard candidate.path.hasPrefix(basePrefix),
-              FileManager.default.fileExists(atPath: candidate.path) else {
-            return nil
-        }
-        return candidate
+        return Int64(identity.size)
     }
 
     private func consumeRolloutLine(

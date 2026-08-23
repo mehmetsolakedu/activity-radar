@@ -74,7 +74,11 @@ Use the compact **TR/EN** control in the search header to switch the dashboard,
 editor, status menu, and Wingman interface instantly. AiWingman remembers
 the choice locally for the next launch.
 
-If AiWingman cannot find compatible local Codex state, it stops neutrally. It does not create, repair, upload, or modify Codex data.
+If AiWingman cannot find compatible local Codex state, it stops neutrally. It
+does not issue SQL writes, repair schemas, upload Codex data, or intentionally
+modify Codex records or rollouts. SQLite may create or update an auxiliary
+`-shm` file for WAL coordination, and that file may persist, as disclosed in
+[PRIVACY.md](PRIVACY.md).
 
 **Bir Wingman Çağır** can start an optional remote critique. It first displays
 the exact user-derived JSON packet that AiWingman intends to supply to the Codex CLI and
@@ -97,7 +101,7 @@ See [PRIVACY.md](PRIVACY.md) for the complete data boundary. Never attach `~/.co
 3. Drag the new app into Applications and choose **Replace** when Finder asks.
 4. Open the new copy and confirm its version in **About AiWingman…**.
 
-Replacing the app preserves AiWingman's separate continuity data. The legacy `ActivityRadar` bundle identifiers and storage path are intentionally retained for compatibility. A release migration must not write to or alter `~/.codex`.
+Replacing the app preserves AiWingman's separate continuity data. The legacy `ActivityRadar` bundle identifiers and storage path are intentionally retained for compatibility. A release migration must not issue SQL writes or intentionally alter Codex records, schemas, rollouts, the main database, or its WAL. SQLite's documented WAL `-shm` coordination exception still applies.
 
 ## Uninstall
 

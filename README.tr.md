@@ -1,6 +1,6 @@
 # AiWingman — macOS için İş Sürekliliği
 
-AiWingman, paralel Codex görevleri arasında doğru işe geri dönmeyi kolaylaştıran yerel ve native bir macOS menü çubuğu uygulamasıdır. Dashboard, Codex’in `~/.codex` altındaki yerel kayıtlarını salt okunur inceler ve ağ isteği yapmaz. Yalnız isteğe bağlı Wingman eleştirisi, tam JSON paket önizlemesi ve tek kullanımlık açık onaydan sonra ayrı kurulmuş ve giriş yapılmış Codex CLI üzerinden Codex/OpenAI işlemeyi kullanır; AiWingman hesabı veya ayrı bir API anahtarı istemez, saklamaz ya da yönetmez. Kayıtlı CLI kimlik doğrulama mekanizmasını içeriğini ayrıştırmadan yeniden kullanır.
+AiWingman, paralel Codex görevleri arasında doğru işe geri dönmeyi kolaylaştıran yerel ve native bir macOS menü çubuğu uygulamasıdır. Dashboard, Codex’in `~/.codex` altındaki yerel kayıtlarını salt-okunur/query-only SQL erişimiyle inceler ve ağ isteği yapmaz. Yalnız isteğe bağlı Wingman eleştirisi, tam JSON paket önizlemesi ve tek kullanımlık açık onaydan sonra ayrı kurulmuş ve giriş yapılmış Codex CLI üzerinden Codex/OpenAI işlemeyi kullanır; AiWingman hesabı veya ayrı bir API anahtarı istemez, saklamaz ya da yönetmez. Kayıtlı CLI kimlik doğrulama mekanizmasını içeriğini ayrıştırmadan yeniden kullanır.
 
 [Kurulum](INSTALL.tr.md) · [English installation](INSTALL.md) · [Gizlilik](PRIVACY.md) · [Katkı](CONTRIBUTING.md)
 
@@ -19,8 +19,12 @@ AiWingman, paralel Codex görevleri arasında doğru işe geri dönmeyi kolayla�
   değiştirir; yerel seçimi sonraki açılış için hatırlar.
 - İstenirse prompting, harness, yarım kalan işler ve token inceleme adayları
   için ayrı bir Codex CLI Wingman turu başlatır.
-- Dashboard ağ isteği yapmaz; AiWingman hiçbir özellikte
-  `~/.codex` içine yazmaz ve arka planda ajan çağrısı başlatmaz.
+- Dashboard ağ isteği yapmaz ve arka planda ajan çağrısı başlatmaz. AiWingman
+  Codex kaydı, şeması veya rollout dosyası yazmaz; ancak SQLite WAL eşgüdümü
+  `~/.codex` altında yardımcı bir `state_5.sqlite-shm` ya da
+  `goals_1.sqlite-shm` dosyası oluşturabilir veya güncelleyebilir. Ayrıntılı
+  sınır [PRIVACY.md](PRIVACY.md) dosyasındadır; bu dosya SQLite/Codex yaşam
+  döngüsüne göre kalıcı olabilir.
 
 ## Gereksinimler
 

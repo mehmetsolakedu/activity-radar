@@ -57,7 +57,7 @@ struct WingmanInvocationOutput {
 }
 
 protocol WingmanRunning: AnyObject, Sendable {
-    func prepareInvocation()
+    func prepareInvocation() -> Bool
     func probe() throws -> WingmanCLIProbe
     func invoke(
         packetData: Data,
@@ -75,6 +75,8 @@ enum WingmanRunnerError: LocalizedError {
     case timedOut
     case cancelled
     case outputTooLarge
+    case cleanupFailed
+    case operationInProgress
     case processFailed(Int32)
 
     var errorDescription: String? {
@@ -111,6 +113,16 @@ enum WingmanRunnerError: LocalizedError {
             return language.text(tr: "Wingman çağrısı iptal edildi.", en: "The Wingman call was cancelled.")
         case .outputTooLarge:
             return language.text(tr: "Wingman çıktısı güvenli boyut sınırını aştı ve atıldı.", en: "The Wingman output exceeded the safe size limit and was discarded.")
+        case .cleanupFailed:
+            return language.text(
+                tr: "Geçici Wingman kimlik alanının silindiği doğrulanamadı. Bu uygulama sürecindeki uzak çağrılar engellendi; yeniden açmadan önce ActivityRadar-Wingman- ve ActivityRadar-CLI-Probe- geçici klasörlerini denetleyip kaldır.",
+                en: "Removal of the temporary Wingman authentication area could not be verified. Remote calls are blocked in this app process; inspect and remove ActivityRadar-Wingman- and ActivityRadar-CLI-Probe- temporary folders before reopening."
+            )
+        case .operationInProgress:
+            return language.text(
+                tr: "Başka bir Wingman uzak işlemi sürüyor. Bu işlem bitmeden yeni bir uzak çağrı başlatılmadı.",
+                en: "Another Wingman remote operation is in progress. No new remote call was started."
+            )
         case .processFailed(let status):
             return language.text(
                 tr: "Wingman ajan turu tamamlanamadı (Codex çıkış kodu: \(status)). Kısmi çıktı kullanılmadı.",
@@ -607,10 +619,143 @@ final class WingmanSpawnedProcess: @unchecked Sendable {
     }
 }
 
+typealias WingmanTemporaryRootRemover = @Sendable (URL) throws -> Void
+
+enum WingmanTemporaryRootCleanup {
+    static func perform<T>(
+        at root: URL,
+        remover: WingmanTemporaryRootRemover,
+        operation: () throws -> T
+    ) throws -> T {
+        let operationResult: Result<T, Error>
+        do {
+            operationResult = .success(try operation())
+        } catch {
+            operationResult = .failure(error)
+        }
+
+        let cleanupSucceeded: Bool
+        do {
+            try remover(root)
+            cleanupSucceeded = true
+        } catch {
+            cleanupSucceeded = false
+        }
+
+        // A cleanup failure is security-relevant and must never be hidden by
+        // the operation result. Normal cancellation and timeout errors remain
+        // unchanged when cleanup succeeds.
+        guard cleanupSucceeded else { throw WingmanRunnerError.cleanupFailed }
+        return try operationResult.get()
+    }
+
+    static func remove(_ root: URL) throws {
+        guard isAllowedRoot(root) else { throw WingmanRunnerError.cleanupFailed }
+
+        for attempt in 0..<2 {
+            guard try pathExists(root) else { return }
+            restoreOwnerAccessWithoutFollowingSymlinks(root)
+            try? FileManager.default.removeItem(at: root)
+            guard try pathExists(root) else { return }
+            if attempt == 0 {
+                Thread.sleep(forTimeInterval: 0.01)
+            }
+        }
+        throw WingmanRunnerError.cleanupFailed
+    }
+
+    private static func isAllowedRoot(_ root: URL) -> Bool {
+        let temporaryDirectory = FileManager.default.temporaryDirectory
+            .standardizedFileURL.resolvingSymlinksInPath()
+        let parent = root.deletingLastPathComponent()
+            .standardizedFileURL.resolvingSymlinksInPath()
+        let name = root.lastPathComponent
+        return parent.path == temporaryDirectory.path
+            && (name.hasPrefix("ActivityRadar-Wingman-")
+                || name.hasPrefix("ActivityRadar-CLI-Probe-"))
+    }
+
+    private static func pathExists(_ root: URL) throws -> Bool {
+        var metadata = stat()
+        if lstat(root.path, &metadata) == 0 { return true }
+        if errno == ENOENT { return false }
+        throw WingmanRunnerError.cleanupFailed
+    }
+
+    private static func restoreOwnerAccessWithoutFollowingSymlinks(_ root: URL) {
+        let descriptor = open(
+            root.path,
+            O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW
+        )
+        guard descriptor >= 0 else { return }
+        defer { Darwin.close(descriptor) }
+        _ = fchmod(descriptor, mode_t(0o700))
+    }
+}
+
+enum WingmanTemporaryRootCleanupLatch {
+    private static let lock = NSLock()
+    private static var pendingRoots = Set<URL>()
+
+    static var hasPendingCleanup: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return !pendingRoots.isEmpty
+    }
+
+    static func record(_ root: URL) {
+        lock.lock()
+        pendingRoots.insert(root.standardizedFileURL)
+        lock.unlock()
+    }
+
+    static func retryPending(
+        remover: WingmanTemporaryRootRemover = { try WingmanTemporaryRootCleanup.remove($0) }
+    ) throws {
+        lock.lock()
+        defer { lock.unlock() }
+
+        var unresolved = Set<URL>()
+        for root in pendingRoots {
+            do {
+                try remover(root)
+            } catch {
+                unresolved.insert(root)
+            }
+        }
+        pendingRoots = unresolved
+        guard unresolved.isEmpty else { throw WingmanRunnerError.cleanupFailed }
+    }
+}
+
+enum WingmanRemoteOperationGate {
+    private static let lock = NSLock()
+    private static var operationActive = false
+
+    static func perform<T>(_ operation: () throws -> T) throws -> T {
+        lock.lock()
+        guard !operationActive else {
+            lock.unlock()
+            throw WingmanRunnerError.operationInProgress
+        }
+        operationActive = true
+        lock.unlock()
+
+        defer {
+            lock.lock()
+            operationActive = false
+            lock.unlock()
+        }
+        return try operation()
+    }
+}
+
 final class CodexWingmanRunner: WingmanRunning, @unchecked Sendable {
     private let lock = NSLock()
+    private let temporaryRootRemover: WingmanTemporaryRootRemover
     private var activeProcess: WingmanSpawnedProcess?
     private var cancellationRequested = false
+    private var invocationReserved = false
 
     private enum StopReason {
         case contract(WingmanCodexContractError)
@@ -620,68 +765,114 @@ final class CodexWingmanRunner: WingmanRunning, @unchecked Sendable {
         case timedOut
     }
 
-    func prepareInvocation() {
+    init(
+        temporaryRootRemover: @escaping WingmanTemporaryRootRemover = {
+            try WingmanTemporaryRootCleanup.remove($0)
+        }
+    ) {
+        self.temporaryRootRemover = temporaryRootRemover
+    }
+
+    func prepareInvocation() -> Bool {
         lock.lock()
+        defer { lock.unlock() }
+        guard !invocationReserved, activeProcess == nil else { return false }
+        invocationReserved = true
         cancellationRequested = false
-        activeProcess = nil
-        lock.unlock()
+        return true
     }
 
     func probe() throws -> WingmanCLIProbe {
-        guard let executable = locateExecutable() else {
-            throw WingmanRunnerError.cliUnavailable
+        try beginPreparedInvocation()
+        defer { finishPreparedInvocation() }
+        return try WingmanRemoteOperationGate.perform {
+            try WingmanTemporaryRootCleanupLatch.retryPending()
+            guard let executable = locateExecutable() else {
+                throw WingmanRunnerError.cliUnavailable
+            }
+            return try withTemporaryRoot(prefix: "ActivityRadar-CLI-Probe") { probeRoot in
+                let isolatedCodexHome = try makeIsolatedCodexHome(in: probeRoot)
+                let environment = childEnvironment(codexHome: isolatedCodexHome)
+                let versionResult = try runSimple(
+                    executable: executable,
+                    arguments: ["--version"],
+                    environment: environment,
+                    timeout: 8
+                )
+                guard versionResult.status == 0,
+                      let version = String(data: versionResult.stdout, encoding: .utf8)?
+                        .trimmingCharacters(in: .whitespacesAndNewlines),
+                      !version.isEmpty else {
+                    throw WingmanRunnerError.cliIncompatible
+                }
+                let help = try runSimple(
+                    executable: executable,
+                    arguments: ["exec", "--help"],
+                    environment: environment,
+                    timeout: 8
+                )
+                let helpText = String(data: help.stdout, encoding: .utf8) ?? ""
+                let requiredFlags = [
+                    "--sandbox", "--ephemeral", "--ignore-user-config",
+                    "--output-schema", "--json"
+                ]
+                guard help.status == 0, requiredFlags.allSatisfy(helpText.contains) else {
+                    throw WingmanRunnerError.cliIncompatible
+                }
+                let login = try runSimple(
+                    executable: executable,
+                    arguments: ["login", "status"],
+                    environment: environment,
+                    timeout: 12
+                )
+                guard login.status == 0 else {
+                    throw WingmanRunnerError.notLoggedIn
+                }
+                return WingmanCLIProbe(
+                    executable: executable,
+                    version: String(version.prefix(120))
+                )
+            }
         }
-        let probeRoot = try makeTemporaryRoot(prefix: "ActivityRadar-CLI-Probe")
-        defer { removeTemporaryRoot(probeRoot) }
-        let isolatedCodexHome = try makeIsolatedCodexHome(in: probeRoot)
-        let environment = childEnvironment(codexHome: isolatedCodexHome)
-        let versionResult = try runSimple(
-            executable: executable,
-            arguments: ["--version"],
-            environment: environment,
-            timeout: 8
-        )
-        guard versionResult.status == 0,
-              let version = String(data: versionResult.stdout, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-              !version.isEmpty else {
-            throw WingmanRunnerError.cliIncompatible
-        }
-        let help = try runSimple(
-            executable: executable,
-            arguments: ["exec", "--help"],
-            environment: environment,
-            timeout: 8
-        )
-        let helpText = String(data: help.stdout, encoding: .utf8) ?? ""
-        let requiredFlags = [
-            "--sandbox", "--ephemeral", "--ignore-user-config",
-            "--output-schema", "--json"
-        ]
-        guard help.status == 0, requiredFlags.allSatisfy(helpText.contains) else {
-            throw WingmanRunnerError.cliIncompatible
-        }
-        let login = try runSimple(
-            executable: executable,
-            arguments: ["login", "status"],
-            environment: environment,
-            timeout: 12
-        )
-        guard login.status == 0 else {
-            throw WingmanRunnerError.notLoggedIn
-        }
-        return WingmanCLIProbe(
-            executable: executable,
-            version: String(version.prefix(120))
-        )
     }
 
     func invoke(
         packetData: Data,
         executable: WingmanVerifiedExecutable
     ) throws -> WingmanInvocationOutput {
-        let temporaryRoot = try makeTemporaryRoot(prefix: "ActivityRadar-Wingman")
-        defer { removeTemporaryRoot(temporaryRoot) }
+        try beginPreparedInvocation()
+        defer { finishPreparedInvocation() }
+        return try WingmanRemoteOperationGate.perform {
+            try WingmanTemporaryRootCleanupLatch.retryPending()
+            return try withTemporaryRoot(prefix: "ActivityRadar-Wingman") { temporaryRoot in
+                try invokeUsingTemporaryRoot(
+                    packetData: packetData,
+                    executable: executable,
+                    temporaryRoot: temporaryRoot
+                )
+            }
+        }
+    }
+
+    private func beginPreparedInvocation() throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard invocationReserved else {
+            throw WingmanRunnerError.operationInProgress
+        }
+    }
+
+    private func finishPreparedInvocation() {
+        lock.lock()
+        invocationReserved = false
+        lock.unlock()
+    }
+
+    private func invokeUsingTemporaryRoot(
+        packetData: Data,
+        executable: WingmanVerifiedExecutable,
+        temporaryRoot: URL
+    ) throws -> WingmanInvocationOutput {
         let schemaURL = temporaryRoot.appendingPathComponent("review-schema.json")
         try writePrivateSnapshot(WingmanCodexContract.reviewSchemaData, to: schemaURL)
         let isolatedCodexHome = try makeIsolatedCodexHome(in: temporaryRoot)
@@ -830,16 +1021,51 @@ final class CodexWingmanRunner: WingmanRunning, @unchecked Sendable {
         return environment
     }
 
+    private func withTemporaryRoot<T>(
+        prefix: String,
+        operation: (URL) throws -> T
+    ) throws -> T {
+        let root = try makeTemporaryRoot(prefix: prefix)
+        do {
+            return try WingmanTemporaryRootCleanup.perform(
+                at: root,
+                remover: temporaryRootRemover
+            ) {
+                try operation(root)
+            }
+        } catch {
+            if case .cleanupFailed? = error as? WingmanRunnerError {
+                WingmanTemporaryRootCleanupLatch.record(root)
+            }
+            throw error
+        }
+    }
+
     private func makeTemporaryRoot(prefix: String) throws -> URL {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(prefix)-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(
-            at: root,
-            withIntermediateDirectories: false,
-            attributes: [.posixPermissions: 0o700]
-        )
+        do {
+            try FileManager.default.createDirectory(
+                at: root,
+                withIntermediateDirectories: false,
+                attributes: [.posixPermissions: 0o700]
+            )
+        } catch {
+            do {
+                try WingmanTemporaryRootCleanup.remove(root)
+            } catch {
+                WingmanTemporaryRootCleanupLatch.record(root)
+                throw WingmanRunnerError.cleanupFailed
+            }
+            throw WingmanRunnerError.launchFailed
+        }
         guard chmod(root.path, 0o700) == 0 else {
-            try? FileManager.default.removeItem(at: root)
+            do {
+                try WingmanTemporaryRootCleanup.remove(root)
+            } catch {
+                WingmanTemporaryRootCleanupLatch.record(root)
+                throw WingmanRunnerError.cleanupFailed
+            }
             throw WingmanRunnerError.launchFailed
         }
         return root
@@ -1183,25 +1409,6 @@ final class CodexWingmanRunner: WingmanRunning, @unchecked Sendable {
         }
     }
 
-    private func removeTemporaryRoot(_ url: URL) {
-        let fileManager = FileManager.default
-        let temporaryDirectory = fileManager.temporaryDirectory
-            .standardizedFileURL.resolvingSymlinksInPath()
-        let parent = url.deletingLastPathComponent()
-            .standardizedFileURL.resolvingSymlinksInPath()
-        let name = url.lastPathComponent
-        guard parent.path == temporaryDirectory.path,
-              name.hasPrefix("ActivityRadar-Wingman-") || name.hasPrefix("ActivityRadar-CLI-Probe-") else {
-            return
-        }
-        try? fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: url.path)
-        try? fileManager.removeItem(at: url)
-        if fileManager.fileExists(atPath: url.path) {
-            Thread.sleep(forTimeInterval: 0.01)
-            try? fileManager.removeItem(at: url)
-        }
-    }
-
     private static func close(pipe: Pipe) {
         try? pipe.fileHandleForReading.close()
         try? pipe.fileHandleForWriting.close()
@@ -1444,6 +1651,10 @@ final class WingmanFeatureModel: ObservableObject {
 
         agentReview = nil
         agentUsage = nil
+        guard runner.prepareInvocation() else {
+            errorMessage = WingmanRunnerError.operationInProgress.message(language: language)
+            return
+        }
         markAgentCallStarted()
         errorMessage = nil
         actionMessage = language.text(
@@ -1451,7 +1662,6 @@ final class WingmanFeatureModel: ObservableObject {
             en: "A separate, ephemeral Wingman session is running…"
         )
         let runner = self.runner
-        runner.prepareInvocation()
         queue.async { [weak self] in
             let result = Result {
                 try runner.invoke(packetData: packetData, executable: executable)
@@ -1480,6 +1690,17 @@ final class WingmanFeatureModel: ObservableObject {
         isCancellingAgent = false
 
         if cancellationWasRequested {
+            if case .failure(let error) = result,
+               case .cleanupFailed? = error as? WingmanRunnerError {
+                agentReview = nil
+                agentUsage = nil
+                actionMessage = nil
+                errorMessage = WingmanRunnerError.cleanupFailed.message(language: language)
+                cliExecutable = nil
+                cliState = .unavailable(errorMessage ?? "")
+                performPendingReload()
+                return
+            }
             agentReview = nil
             agentUsage = nil
             actionMessage = nil
@@ -1506,9 +1727,14 @@ final class WingmanFeatureModel: ObservableObject {
                     tr: "Wingman ajan turu tamamlanamadı. Kısmi çıktı kullanılmadı.",
                     en: "The Wingman agent turn did not complete. Partial output was not used."
                 )
-            if case .cliUntrusted? = error as? WingmanRunnerError {
-                cliExecutable = nil
-                cliState = .unavailable(WingmanRunnerError.cliUntrusted.message(language: language))
+            if let runnerError = error as? WingmanRunnerError {
+                switch runnerError {
+                case .cliUntrusted, .cleanupFailed:
+                    cliExecutable = nil
+                    cliState = .unavailable(runnerError.message(language: language))
+                default:
+                    break
+                }
             }
         }
         performPendingReload()
@@ -1521,7 +1747,12 @@ final class WingmanFeatureModel: ObservableObject {
         cliExecutable = nil
         cliState = .checking
         let runner = self.runner
-        runner.prepareInvocation()
+        guard runner.prepareInvocation() else {
+            cliState = .unavailable(
+                WingmanRunnerError.operationInProgress.message(language: language)
+            )
+            return
+        }
         probeQueue.async { [weak self] in
             let result = Result { try runner.probe() }
             DispatchQueue.main.async {

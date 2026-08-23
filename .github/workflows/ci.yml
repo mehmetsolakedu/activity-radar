@@ -36,6 +36,32 @@ jobs:
           REQUIRE_STANDARD_TESTS: "1"
         run: ./scripts/public-release-check.sh
 
+      - name: Run frozen continuity-policy benchmark
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/continuity-benchmark-${RUNNER_ARCH}.json"
+          swift run -c release AiWingmanResearchBenchmark \
+            --corpus Research/fixtures/continuity-policy-corpus-v1.json \
+            --output "$report"
+          REPORT="$report" python3 - <<'PY'
+          import json
+          import os
+
+          result = json.load(open(os.environ["REPORT"], encoding="utf-8"))
+          assert result["overallPassed"] is True
+          assert result["conformance"]["passedFixtureCount"] == 155
+          assert result["conformance"]["passed"] is True
+          assert result["conformance"]["failures"] == []
+          assert result["determinism"]["corpusOutputDigestSHA256"] == (
+              "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6"
+          )
+          print(
+              "Frozen policy PASS:",
+              result["environment"]["architecture"],
+              result["determinism"]["corpusOutputDigestSHA256"],
+          )
+          PY
+
       - name: Assert diagnostics are content-free
         shell: bash
         run: |
@@ -131,6 +157,32 @@ jobs:
             exit 1
           fi
           swift test
+
+      - name: Run frozen continuity-policy benchmark natively
+        shell: bash
+        run: |
+          report="$RUNNER_TEMP/continuity-benchmark-${RUNNER_ARCH}.json"
+          swift run -c release AiWingmanResearchBenchmark \
+            --corpus Research/fixtures/continuity-policy-corpus-v1.json \
+            --output "$report"
+          REPORT="$report" python3 - <<'PY'
+          import json
+          import os
+
+          result = json.load(open(os.environ["REPORT"], encoding="utf-8"))
+          assert result["overallPassed"] is True
+          assert result["conformance"]["passedFixtureCount"] == 155
+          assert result["conformance"]["passed"] is True
+          assert result["conformance"]["failures"] == []
+          assert result["determinism"]["corpusOutputDigestSHA256"] == (
+              "fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6"
+          )
+          print(
+              "Frozen policy PASS:",
+              result["environment"]["architecture"],
+              result["determinism"]["corpusOutputDigestSHA256"],
+          )
+          PY
 
       - name: Build application natively
         run: swift build -c release --product ActivityRadar
