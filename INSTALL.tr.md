@@ -2,11 +2,11 @@
 
 ## Sürüm durumu
 
-[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2), ücretsiz kaynak-öncelikli topluluk betasıdır. Hazır uygulama paketi içermez. GitHub’ın otomatik “Source code” arşivleri kaynak koddur; macOS yükleyicisi değildir.
+[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) yürürlükten kaldırılmıştır; derlenmemeli veya kullanılmamalıdır. İmzasız annotated tag şu anda, güvenlikle ilgili sonraki sertleştirmeleri içermeyen `5e212181ae177cd555ab6bb92f5f71ac8be9173a` commit’ine çözülür. Şu anda önerilen etiketli bir halka açık derleme bulunmuyor; beta2’nin yerini aldığını açıkça belirten sonraki sürümü bekleyin. GitHub’ın otomatik “Source code” arşivleri kaynak koddur; macOS yükleyicisi değildir.
 
 ## Gereksinimler
 
-- macOS 13 veya üzeri.
+- Paket macOS 13 dağıtım hedefi bildirir. Mevcut otomatik derleme ve testler daha yeni macOS sürümlerinde çalıştı; gerçek bir macOS 13 açılış veya çalışma zamanı sonucu henüz raporlanmadı.
 - Aynı macOS hesabında daha önce kullanılmış Codex Desktop veya Codex CLI.
 - Seçilen görevi yerel deep link ile açmak için Codex Desktop.
 - AiWingman hesabı, ayrı API anahtarı isteme/saklama, OAuth veya eklenti gerekmez.
@@ -14,29 +14,19 @@
   giriş yapılmış Codex CLI gerekir; dashboard onsuz çalışır. Uzak çağrı,
   kullanıcının mevcut Codex planından veya kotasından tüketebilir.
 
-## Güncel kaynak betasını derleme
+## Kaynaktan derleme beklemede
 
-Xcode veya macOS SDK içeren uyumlu Swift araç zincirini kurun; hareketli bir dal
-yerine exact release tag’ini derleyin:
-
-```sh
-git clone https://github.com/mehmetsolakedu/activity-radar.git
-cd activity-radar
-git switch --detach v1.2.0-beta.2
-swift test
-swift run ActivityRadarSelfTest
-./scripts/package-app.sh --mode local --output-app "$PWD/AiWingman.app"
-open "$PWD/AiWingman.app"
-```
-
-Bu yerel paket yalnız onu derleyen Mac içindir. Ortaya çıkan ad-hoc imzalı
-bundle’ı yayıncı tarafından imzalanmış indirme gibi yeniden dağıtmayın.
-AiWingman menü çubuğunda çalışır; radar simgesini kullanın veya `⌘⇧K` basın.
+`v1.2.0-beta.2` sürümünü derlemeyin ve yerine hareketli bir dal kullanmayın.
+Sertleştirilmiş `99faac3ef52d0da72d082706f64903a6aacd2c6d` checkpoint’i teknik
+denetim için açıktır; desteklenen bir kurulum sürümü değildir. Daha sonraki exact
+kaynak tag’i final kapısını geçtiğinde ve release sayfası beta2’nin yerini
+aldığını açıkça belirttiğinde kurulum adımları yeniden yayımlanacaktır.
 
 ## Gelecekteki imzalı indirmeler
 
 Aşağıdaki bölümler yalnız ilerideki bir release açıkça Developer ID ile imzalı
-ve Apple tarafından noterlenmiş uygulama içerirse geçerlidir. Güncel beta içermez.
+ve Apple tarafından noterlenmiş uygulama içerirse geçerlidir. Böyle bir güncel
+sürüm iddia edilmiyor.
 
 ## İndirmeyi doğrulama
 
@@ -84,9 +74,11 @@ olabilir. Ayrıntı
 **Bir Wingman Çağır** isteğe bağlı bir uzak eleştiri başlatabilir. AiWingman’in
 Codex CLI’a stdin üzerinden vermeyi amaçladığı tam JSON paketini önce
 gösterir ve her çağrı için tek kullanımlık açık onay ister; arka planda çağrı
-yapılmaz. Ham prompt örnekleri varsayılan olarak dışarıdadır. CLI’ın salt-okunur
-sandbox’ı yazmayı engeller, fakat child process’in başka yerel dosyaları
-okuyamayacağını garanti etmez. Dolayısıyla önizleme, paketin CLI’ın teknik olarak
+yapılmaz. Ham prompt örnekleri varsayılan olarak dışarıdadır. AiWingman, agent
+araçlarının workspace’e yazmasını engellemesi amaçlanan Codex CLI salt-okunur
+sandbox modunu ister. Bu, OS düzeyinde izolasyon veya sıfır dosya yazma garantisi
+değildir ve child process’in başka yerel dosyaları okuyamayacağını kanıtlamaz.
+Dolayısıyla önizleme, paketin CLI’ın teknik olarak
 erişebileceği tek bağlam olduğu iddiası değildir. Onay vermeden önce
 [PRIVACY.md](PRIVACY.md) dosyasını okuyun.
 
@@ -121,10 +113,13 @@ Uygulamayı değiştirmek, AiWingman’in ayrı yerel süreklilik verisini korur
   komutlarını doğrulayın; ardından Wingman ekranındaki **Codex CLI'yi yeniden
   denetle** düğmesini kullanın. Dashboard CLI olmadan çalışmaya devam eder.
 - İndirme özetini yeniden karşılaştırın ve release notlarındaki bilinen sınırlamaları okuyun.
-- Issue formu isterse yalnız içeriksiz tanılamayı veya kopyalanan destek bilgisini paylaşın.
+- Issue formu isterse yalnız görev metni ve ham görev kimliği içermediğini
+  doğruladığınız sabit şemalı tanılamayı veya kopyalanan destek bilgisini paylaşın.
 
-Doğrulanmamış bir indirmeyi çalıştırmak için Gatekeeper'ı kapatmayın, `xattr -dr` ile karantinayı kaldırmayın, `sudo` kullanmayın, uygulamayı yeniden imzalamayın veya özel Codex dosyalarını yüklemeyin. macOS desteklenen bir sürümü reddederse durun; yalnız public release etiketi ve içeriksiz hatayı bildirin.
+Doğrulanmamış bir indirmeyi çalıştırmak için Gatekeeper'ı kapatmayın, `xattr -dr` ile karantinayı kaldırmayın, `sudo` kullanmayın, uygulamayı yeniden imzalamayın veya özel Codex dosyalarını yüklemeyin. macOS desteklenen bir sürümü reddederse durun; yalnız public release etiketi ile görev metni ve ham görev kimliği içermeyen sabit şemalı hatayı bildirin.
 
 ## Kaynaktan derleme
 
-Kaynak derlemeleri, onları üreten makinede geliştirme içindir ve varsayılan olarak ad-hoc imza kullanır. [README.md](README.md) içindeki exact-tag adımlarını izleyin; yerel ad-hoc derleme desteklenen public binary sürüm değildir.
+Yeni güçlendirilmiş tag yayımlanana kadar desteklenen exact-tag kaynak talimatı
+yoktur. Hareketli bir daldan veya `v1.2.0-beta.2` etiketinden derlemeyin. Yerel
+ad-hoc derleme desteklenen public binary sürüm değildir.

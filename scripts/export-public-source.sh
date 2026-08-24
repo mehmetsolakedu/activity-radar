@@ -55,7 +55,6 @@ FORBIDDEN_FILES=(
   '.DS_Store'
   '*.app'
   '*.dmg'
-  '*.zip'
   '*.xcarchive'
   '*.mobileprovision'
   '*.p12'
@@ -67,6 +66,16 @@ for pattern in "${FORBIDDEN_FILES[@]}"; do
     exit 4
   fi
 done
+
+# The publication package contains one reviewed, deterministic, non-executable
+# research supplement. Keep the broader generated-archive boundary fail-closed:
+# no other ZIP path or name is accepted into a public-source export.
+ALLOWED_RESEARCH_ZIP="$STAGE/output/supplement/aiwingman-research-supplement-v1.zip"
+if find "$STAGE" -type f -name '*.zip' \
+  ! -path "$ALLOWED_RESEARCH_ZIP" -print -quit | grep -q .; then
+  print -u2 "Forbidden generated ZIP outside the reviewed research supplement path."
+  exit 4
+fi
 
 if find "$STAGE" -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) \
   ! -path "$STAGE/Assets/ActivityRadar-Source.png" -print -quit | grep -q .; then

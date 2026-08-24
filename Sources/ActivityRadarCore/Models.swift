@@ -32,6 +32,26 @@ public enum TerminalTurnState: String, Codable, Sendable {
     case aborted
 }
 
+public enum CodexDeepLink {
+    /// Builds the observed Codex Desktop thread route from exactly one UUID path segment.
+    ///
+    /// Codex currently stores thread identifiers as hyphenated UUID strings. Comparing the
+    /// parsed UUID with its normalized representation accepts hexadecimal case variants
+    /// but rejects whitespace, path traversal, query/fragment delimiters, encoded
+    /// separators, braces, and alternate UUID layouts before any URL is created.
+    public static func threadURL(for rawThreadID: String) -> URL? {
+        guard let uuid = UUID(uuidString: rawThreadID) else { return nil }
+        let canonicalThreadID = uuid.uuidString.lowercased()
+        guard rawThreadID.lowercased() == canonicalThreadID else { return nil }
+
+        var components = URLComponents()
+        components.scheme = "codex"
+        components.host = "threads"
+        components.path = "/\(canonicalThreadID)"
+        return components.url
+    }
+}
+
 public struct ActivityItem: Identifiable, Codable, Sendable {
     public let id: String
     public let title: String
@@ -121,7 +141,7 @@ public struct ActivityItem: Identifiable, Codable, Sendable {
     }
 
     public var codexDeepLink: URL? {
-        URL(string: "codex://threads/\(id)")
+        CodexDeepLink.threadURL(for: id)
     }
 }
 

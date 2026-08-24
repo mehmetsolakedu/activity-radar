@@ -82,7 +82,7 @@ Options:
 Public example (placeholder values only):
   ./scripts/package-app.sh --mode public \
     --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
-    --notary-profile "activity-radar-notary" \
+    --notary-profile "aiwingman-notary" \
     --release-tag "v1.2.0-beta.3" \
     --team-id "TEAMID1234" \
     --bundle-id "io.github.mehmetsolakedu.ActivityRadar"
@@ -239,7 +239,7 @@ if [[ "$MODE" == "public" ]]; then
     || fail "Release tag $RELEASE_TAG does not match CFBundleShortVersionString $VERSION"
 fi
 
-RELEASE_STEM="Activity-Radar-${RELEASE_LABEL}-macOS-universal2"
+RELEASE_STEM="AiWingman-${RELEASE_LABEL}-macOS-universal2"
 FINAL_RELEASE_DIR="$DIST_DIR/$RELEASE_STEM"
 
 if [[ "$MODE" == "public" ]]; then
@@ -513,7 +513,7 @@ ARM_BINARY="$(swift_build_arch arm64)"
 X86_BINARY="$(swift_build_arch x86_64)"
 require_exact_release_checkout
 
-STAGED_APP="$STAGE_DIR/Activity Radar.app"
+STAGED_APP="$STAGE_DIR/AiWingman.app"
 CONTENTS="$STAGED_APP/Contents"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
 lipo -create "$ARM_BINARY" "$X86_BINARY" -output "$CONTENTS/MacOS/ActivityRadar"
@@ -588,26 +588,26 @@ codesign --verify --deep --strict --verbose=2 "$STAGED_APP"
 
 RELEASE_STAGE="$STAGE_DIR/$RELEASE_STEM"
 mkdir -p "$RELEASE_STAGE"
-ditto --rsrc --extattr "$STAGED_APP" "$RELEASE_STAGE/Activity Radar.app"
-xcrun stapler validate -v "$RELEASE_STAGE/Activity Radar.app"
-codesign --verify --deep --strict --verbose=2 "$RELEASE_STAGE/Activity Radar.app"
+ditto --rsrc --extattr "$STAGED_APP" "$RELEASE_STAGE/AiWingman.app"
+xcrun stapler validate -v "$RELEASE_STAGE/AiWingman.app"
+codesign --verify --deep --strict --verbose=2 "$RELEASE_STAGE/AiWingman.app"
 
 ZIP_NAME="$RELEASE_STEM.zip"
 DMG_NAME="$RELEASE_STEM.dmg"
-archive_app_zip "$RELEASE_STAGE/Activity Radar.app" "$RELEASE_STAGE/$ZIP_NAME"
+archive_app_zip "$RELEASE_STAGE/AiWingman.app" "$RELEASE_STAGE/$ZIP_NAME"
 ZIP_VERIFY_DIR="$STAGE_DIR/zip-verify"
 mkdir -p "$ZIP_VERIFY_DIR"
 ditto -x -k "$RELEASE_STAGE/$ZIP_NAME" "$ZIP_VERIFY_DIR"
-xcrun stapler validate -v "$ZIP_VERIFY_DIR/Activity Radar.app"
-codesign --verify --deep --strict --verbose=2 "$ZIP_VERIFY_DIR/Activity Radar.app"
-spctl --assess --type execute --verbose=4 "$ZIP_VERIFY_DIR/Activity Radar.app"
+xcrun stapler validate -v "$ZIP_VERIFY_DIR/AiWingman.app"
+codesign --verify --deep --strict --verbose=2 "$ZIP_VERIFY_DIR/AiWingman.app"
+spctl --assess --type execute --verbose=4 "$ZIP_VERIFY_DIR/AiWingman.app"
 
 DMG_ROOT="$STAGE_DIR/dmg-root"
 mkdir -p "$DMG_ROOT"
-ditto --norsrc --noextattr --noacl "$STAGED_APP" "$DMG_ROOT/Activity Radar.app"
-xattr -cr "$DMG_ROOT/Activity Radar.app"
-codesign --verify --deep --strict --verbose=2 "$DMG_ROOT/Activity Radar.app"
-xcrun stapler validate -v "$DMG_ROOT/Activity Radar.app"
+ditto --norsrc --noextattr --noacl "$STAGED_APP" "$DMG_ROOT/AiWingman.app"
+xattr -cr "$DMG_ROOT/AiWingman.app"
+codesign --verify --deep --strict --verbose=2 "$DMG_ROOT/AiWingman.app"
+xcrun stapler validate -v "$DMG_ROOT/AiWingman.app"
 ln -s /Applications "$DMG_ROOT/Applications"
 verify_public_metadata_policy "$DMG_ROOT"
 normalize_tree_times "$DMG_ROOT"
@@ -615,7 +615,7 @@ normalize_tree_times "$DMG_ROOT"
 note "Creating compressed DMG"
 COPYFILE_DISABLE=1 hdiutil create \
   -srcfolder "$DMG_ROOT" \
-  -volname "Activity Radar" \
+  -volname "AiWingman" \
   -fs HFS+ \
   -format UDZO \
   -imagekey zlib-level=9 \
@@ -639,7 +639,7 @@ spctl --assess --type open --context context:primary-signature --verbose=4 "$REL
 require_exact_release_checkout
 
 cat >"$RELEASE_STAGE/RELEASE-MANIFEST.txt" <<MANIFEST
-Product: Activity Radar
+Product: AiWingman
 Version: $VERSION
 Build: $BUILD_NUMBER
 Release tag: $RELEASE_TAG
@@ -668,7 +668,7 @@ require_exact_release_checkout
 
 if [[ -e "$FINAL_RELEASE_DIR" ]]; then
   (( OVERWRITE )) || fail "Release directory exists; pass --overwrite to replace: $FINAL_RELEASE_DIR"
-  [[ "$FINAL_RELEASE_DIR" == "$DIST_DIR"/Activity-Radar-*-macOS-universal2 ]] || fail "Refusing unsafe release replacement: $FINAL_RELEASE_DIR"
+  [[ "$FINAL_RELEASE_DIR" == "$DIST_DIR"/AiWingman-*-macOS-universal2 ]] || fail "Refusing unsafe release replacement: $FINAL_RELEASE_DIR"
   rm -rf -- "$FINAL_RELEASE_DIR"
 fi
 mkdir -p "$DIST_DIR"
@@ -676,9 +676,9 @@ mv "$RELEASE_STAGE" "$FINAL_RELEASE_DIR"
 
 # Verify the actual delivered paths too. This catches a cross-volume move that
 # failed to preserve a signature or stapled ticket.
-codesign --verify --deep --strict --verbose=2 "$FINAL_RELEASE_DIR/Activity Radar.app"
-xcrun stapler validate -v "$FINAL_RELEASE_DIR/Activity Radar.app"
-spctl --assess --type execute --verbose=4 "$FINAL_RELEASE_DIR/Activity Radar.app"
+codesign --verify --deep --strict --verbose=2 "$FINAL_RELEASE_DIR/AiWingman.app"
+xcrun stapler validate -v "$FINAL_RELEASE_DIR/AiWingman.app"
+spctl --assess --type execute --verbose=4 "$FINAL_RELEASE_DIR/AiWingman.app"
 codesign --verify --strict --verbose=2 "$FINAL_RELEASE_DIR/$DMG_NAME"
 xcrun stapler validate -v "$FINAL_RELEASE_DIR/$DMG_NAME"
 hdiutil verify "$FINAL_RELEASE_DIR/$DMG_NAME" >/dev/null

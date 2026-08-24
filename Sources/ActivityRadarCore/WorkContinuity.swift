@@ -155,7 +155,8 @@ public struct WorkTriageResult: Codable, Equatable, Sendable {
 }
 
 /// A deterministic and deliberately conservative portfolio ranker. It never
-/// reads or mutates Codex state and it never uses free text as a ranking input.
+/// reads or mutates Codex state. It does not inspect lexical text content, but
+/// it does use the trimmed presence of next-action and waiting text.
 public enum WorkContinuityRanker {
     private static let day: TimeInterval = 24 * 60 * 60
     private static let minimumRecommendationScore = 30

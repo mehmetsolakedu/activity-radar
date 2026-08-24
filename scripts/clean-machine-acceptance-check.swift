@@ -275,7 +275,7 @@ guard
     matches(expectedReleaseID, #"^[1-9][0-9]*$"#),
     matches(expectedReleaseCreatedAt, #"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"#),
     parseCanonicalUTC(expectedReleaseCreatedAt) != nil,
-    matches(expectedDMGName, #"^Activity-Radar-[0-9A-Za-z.-]+-macOS-universal2\.dmg$"#),
+    matches(expectedDMGName, #"^AiWingman-[0-9A-Za-z.-]+-macOS-universal2\.dmg$"#),
     matches(expectedDMGSHA256, #"^[0-9a-f]{64}$"#)
 else {
     fail("invalid expected release parameters")

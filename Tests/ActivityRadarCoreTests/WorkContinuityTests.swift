@@ -132,8 +132,169 @@ func lowScoreAbstentionDoesNotExposeRankedCandidates() {
     #expect(result.rankedCandidates.isEmpty)
 }
 
+// These post-freeze engineering tests expose rule outputs that are hidden by
+// the V1 corpus whenever the complete candidate score remains below the
+// recommendation threshold. They are regression evidence, not an amendment to
+// the frozen V1 corpus or its archived result.
 @Test
-func dueSnoozeIsAcknowledgedByOpeningAfterDueDate() {
+func postFreezeObservabilityDeadlineWithinWeek() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let deadline = now.addingTimeInterval(6 * 24 * 60 * 60)
+    let result = WorkContinuityRanker.rank(
+        [
+            WorkTriageInput(
+                item: continuityFixture(id: "deadline-week", now: now),
+                metadata: WorkContinuityMetadata(
+                    deadline: deadline,
+                    nextAction: "Continue"
+                )
+            )
+        ],
+        now: now
+    )
+
+    #expect(result.recommendedActivityID == "deadline-week")
+    #expect(result.abstentionReason == nil)
+    #expect(
+        try #require(result.rankedCandidates.first) == WorkTriageCandidate(
+            activityID: "deadline-week",
+            score: 30,
+            reasons: [
+                WorkTriageReason(code: .deadlineWithinWeek, weight: 20, evidenceAt: deadline),
+                WorkTriageReason(code: .nextActionRecorded, weight: 10)
+            ]
+        )
+    )
+}
+
+@Test
+func postFreezeObservabilityLowImportance() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let result = WorkContinuityRanker.rank(
+        [
+            WorkTriageInput(
+                item: continuityFixture(id: "low", now: now, attention: .explicitInput),
+                metadata: WorkContinuityMetadata(importance: .low)
+            )
+        ],
+        now: now
+    )
+
+    #expect(result.recommendedActivityID == "low")
+    #expect(
+        try #require(result.rankedCandidates.first) == WorkTriageCandidate(
+            activityID: "low",
+            score: 90,
+            reasons: [
+                WorkTriageReason(code: .explicitInput, weight: 100, evidenceAt: now),
+                WorkTriageReason(code: .lowImportance, weight: -10)
+            ]
+        )
+    )
+}
+
+@Test
+func postFreezeObservabilityAgingWithoutPlanSevenToThirtyDays() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let activityAt = now.addingTimeInterval(-8 * 24 * 60 * 60)
+    let result = WorkContinuityRanker.rank(
+        [
+            WorkTriageInput(
+                item: continuityFixture(id: "aging-eight", now: activityAt),
+                metadata: WorkContinuityMetadata(importance: .high)
+            )
+        ],
+        now: now
+    )
+
+    #expect(result.recommendedActivityID == "aging-eight")
+    #expect(
+        try #require(result.rankedCandidates.first) == WorkTriageCandidate(
+            activityID: "aging-eight",
+            score: 32,
+            reasons: [
+                WorkTriageReason(code: .highImportance, weight: 20),
+                WorkTriageReason(code: .agingWithoutPlan, weight: 12, evidenceAt: activityAt)
+            ]
+        )
+    )
+}
+
+@Test
+func postFreezeObservabilityAgingWithoutPlanThirtyDaysOrMore() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let activityAt = now.addingTimeInterval(-31 * 24 * 60 * 60)
+    let result = WorkContinuityRanker.rank(
+        [
+            WorkTriageInput(
+                item: continuityFixture(id: "aging-thirty-one", now: activityAt),
+                metadata: WorkContinuityMetadata(importance: .high)
+            )
+        ],
+        now: now
+    )
+
+    #expect(result.recommendedActivityID == "aging-thirty-one")
+    #expect(
+        try #require(result.rankedCandidates.first) == WorkTriageCandidate(
+            activityID: "aging-thirty-one",
+            score: 38,
+            reasons: [
+                WorkTriageReason(code: .highImportance, weight: 20),
+                WorkTriageReason(code: .agingWithoutPlan, weight: 18, evidenceAt: activityAt)
+            ]
+        )
+    )
+}
+
+@Test
+func postFreezeObservabilityRecentlyActive() throws {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let result = WorkContinuityRanker.rank(
+        [
+            WorkTriageInput(
+                item: continuityFixture(
+                    id: "recently-active",
+                    now: now,
+                    executionState: .recentlyActive
+                ),
+                metadata: WorkContinuityMetadata(
+                    importance: .high,
+                    nextAction: "Continue"
+                )
+            )
+        ],
+        now: now
+    )
+
+    #expect(result.recommendedActivityID == "recently-active")
+    #expect(
+        try #require(result.rankedCandidates.first) == WorkTriageCandidate(
+            activityID: "recently-active",
+            score: 38,
+            reasons: [
+                WorkTriageReason(code: .highImportance, weight: 20),
+                WorkTriageReason(code: .nextActionRecorded, weight: 10),
+                WorkTriageReason(code: .recentlyActive, weight: 8, evidenceAt: now)
+            ]
+        )
+    )
+}
+
+@Test
+func postFreezeObservabilityEmptyPortfolio() {
+    let now = Date(timeIntervalSince1970: 2_000_000_000)
+    let result = WorkContinuityRanker.rank([], now: now)
+
+    #expect(result.evaluatedAt == now)
+    #expect(result.recommendedActivityID == nil)
+    #expect(result.abstentionReason == .insufficientEvidence)
+    #expect(result.rankedCandidates.isEmpty)
+    #expect(result.deferred.isEmpty)
+}
+
+@Test
+func dueSnoozeIsAcknowledgedByAcceptedOpenRequestAfterDueDate() {
     let now = Date(timeIntervalSince1970: 2_000_000_000)
     let snoozeUntil = now.addingTimeInterval(-60)
     let item = continuityFixture(id: "due", now: now)

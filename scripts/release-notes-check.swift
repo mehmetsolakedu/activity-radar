@@ -22,9 +22,9 @@ let acceptanceName = CommandLine.arguments[6]
 guard
     repository.range(of: #"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"#, options: .regularExpression) != nil,
     tag.range(of: #"^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"#, options: .regularExpression) != nil,
-    zipName.range(of: #"^Activity-Radar-[0-9A-Za-z.-]+-macOS-universal2\.zip$"#, options: .regularExpression) != nil,
-    dmgName.range(of: #"^Activity-Radar-[0-9A-Za-z.-]+-macOS-universal2\.dmg$"#, options: .regularExpression) != nil,
-    acceptanceName.range(of: #"^Activity-Radar-[0-9A-Za-z.-]+-CLEAN-MACHINE-ACCEPTANCE\.json$"#, options: .regularExpression) != nil
+    zipName.range(of: #"^AiWingman-[0-9A-Za-z.-]+-macOS-universal2\.zip$"#, options: .regularExpression) != nil,
+    dmgName.range(of: #"^AiWingman-[0-9A-Za-z.-]+-macOS-universal2\.dmg$"#, options: .regularExpression) != nil,
+    acceptanceName.range(of: #"^AiWingman-[0-9A-Za-z.-]+-CLEAN-MACHINE-ACCEPTANCE\.json$"#, options: .regularExpression) != nil
 else {
     fail("invalid expected release-notes parameters")
 }
@@ -56,7 +56,7 @@ do {
         fail("release notes are not UTF-8")
     }
     let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-    guard lines.first == "# Activity Radar \(tag)" else {
+    guard lines.first == "# AiWingman \(tag)" else {
         fail("release notes H1 must exactly match the release tag")
     }
     guard lines.dropFirst().allSatisfy({ !$0.hasPrefix("# ") }) else {
@@ -157,7 +157,7 @@ do {
 
     requirePhrases([
         "DMG is the recommended download",
-        "drag Activity Radar to Applications",
+        "drag AiWingman to Applications",
     ], in: "## Install")
     requirePhrases([
         "SHA256SUMS",

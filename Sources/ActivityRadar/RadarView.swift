@@ -118,14 +118,14 @@ struct RadarView: View {
             Button(l10n.text("Vazgeç", "Cancel"), role: .cancel) {}
         } message: {
             Text(l10n.text(
-                "Bu işlem yalnızca AiWingman’in içeriksiz araştırma günlüğünü temizler; Codex görevlerine ve park planlarına dokunmaz.",
-                "This clears only AiWingman's content-free research log; it does not touch Codex tasks or parked plans."
+                "Bu işlem yalnızca AiWingman’in sabit şemalı, görev metni içermeyen araştırma günlüğünü temizler; Codex görevlerine ve park planlarına dokunmaz.",
+                "This clears only AiWingman's fixed-schema, task-text-free research log; it does not touch Codex tasks or parked plans."
             ))
         }
         .alert(
             l10n.text(
-                "İçeriksiz araştırma kaydı dışa aktarılsın mı?",
-                "Export the content-free research log?"
+                "Görev metni içermeyen araştırma kaydı dışa aktarılsın mı?",
+                "Export the task-text-free research log?"
             ),
             isPresented: Binding(
                 get: { model.researchExportPreview != nil },
@@ -206,7 +206,7 @@ struct RadarView: View {
 
             Menu {
                 Toggle(
-                    l10n.text("İçeriksiz yerel araştırma kaydı", "Content-free local research log"),
+                    l10n.text("Sabit şemalı, görev metni içermeyen yerel araştırma kaydı", "Fixed-schema, task-text-free local research log"),
                     isOn: Binding(
                         get: { model.researchLoggingEnabled },
                         set: { model.setResearchLoggingEnabled($0) }
@@ -748,7 +748,7 @@ private struct RadarTaskRow: View {
                                 .lineLimit(1)
 
                             if isLastOpened {
-                                Text(l10n.text("Son döndüğün", "Last opened"))
+                                Text(l10n.text("Son açma isteği", "Last open request"))
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(RadarColors.blue)
                                     .padding(.horizontal, 8)

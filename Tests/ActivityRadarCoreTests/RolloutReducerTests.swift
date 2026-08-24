@@ -53,8 +53,46 @@ func abortedTurn() {
 
 @Test
 func codexDeepLinkContract() throws {
-    let url = try #require(CodexActivityReader.deepLink(for: "123e4567-e89b-42d3-a456-426614174000"))
+    let threadID = "123e4567-e89b-42d3-a456-426614174000"
+    let url = try #require(CodexDeepLink.threadURL(for: threadID))
     #expect(url.absoluteString == "codex://threads/123e4567-e89b-42d3-a456-426614174000")
+    #expect(CodexActivityReader.deepLink(for: threadID) == url)
+}
+
+@Test
+func codexDeepLinkUsesOneCanonicalThreadPathSegment() throws {
+    let url = try #require(
+        CodexDeepLink.threadURL(for: "123E4567-E89B-42D3-A456-426614174000")
+    )
+    let components = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
+
+    #expect(url.absoluteString == "codex://threads/123e4567-e89b-42d3-a456-426614174000")
+    #expect(components.scheme == "codex")
+    #expect(components.host == "threads")
+    #expect(components.path == "/123e4567-e89b-42d3-a456-426614174000")
+    #expect(components.query == nil)
+    #expect(components.fragment == nil)
+}
+
+@Test
+func codexDeepLinkRejectsNonThreadIdentifiers() {
+    let valid = "123e4567-e89b-42d3-a456-426614174000"
+    let invalidIDs = [
+        "\(valid)?window=other",
+        "\(valid)#fragment",
+        "../\(valid)",
+        "\(valid)/../another-task",
+        "\(valid)%2Fanother-task",
+        "\(valid)%2fanother-task",
+        "\(valid)/another-task",
+        "{\(valid)}",
+        " \(valid)"
+    ]
+
+    for threadID in invalidIDs {
+        #expect(CodexDeepLink.threadURL(for: threadID) == nil)
+        #expect(CodexActivityReader.deepLink(for: threadID) == nil)
+    }
 }
 
 @Test

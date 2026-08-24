@@ -391,10 +391,211 @@ func dashboardBoundsUnterminatedCarryAndRecoversAfterNewline() throws {
     #expect(recovered.items.first?.checkpoint == "Recovered checkpoint")
 }
 
+@Test
+func dashboardCapsGoalDrivenInclusionsAndTotalRows() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    let rows = (0..<250).map { index in
+        ReaderRow(
+            id: String(format: "00000000-0000-4000-8000-%012d", index),
+            title: "Goal fixture \(index)",
+            rolloutPath: fixture.codex.appendingPathComponent("missing-\(index).jsonl").path
+        )
+    }
+    try createReaderState(in: fixture.codex, rows: rows)
+    try createGoalState(
+        in: fixture.codex,
+        rows: rows.enumerated().map { index, row in
+            GoalRow(threadID: row.id, status: "active", updatedAtMS: Int64(index + 1))
+        }
+    )
+
+    let reader = CodexActivityReader(homeDirectory: fixture.home)
+    let fullPage = try reader.load(limit: 200)
+    #expect(fullPage.items.count == CodexActivityReader.maximumThreadLoadCount)
+    #expect(fullPage.hasMore)
+
+    let goalOnly = try reader.load(
+        limit: 200,
+        updatedAfter: Date(timeIntervalSince1970: 2_000_000_000)
+    )
+    #expect(goalOnly.items.count == CodexActivityReader.maximumIncludedThreadCount)
+    #expect(goalOnly.hasMore)
+    #expect(goalOnly.items.allSatisfy { $0.goalStatus == .active })
+}
+
+@Test
+func dashboardSignalsWhenGoalDrivenInclusionsAloneExceedTheirCap() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    let rows = (0..<100).map { index in
+        ReaderRow(
+            id: String(format: "22222222-2222-4222-8222-%012d", index),
+            title: "Bounded goal fixture \(index)",
+            rolloutPath: fixture.codex.appendingPathComponent("missing-bounded-\(index).jsonl").path
+        )
+    }
+    try createReaderState(in: fixture.codex, rows: rows)
+    try createGoalState(
+        in: fixture.codex,
+        rows: rows.enumerated().map { index, row in
+            GoalRow(threadID: row.id, status: "active", updatedAtMS: Int64(index + 1))
+        }
+    )
+
+    let snapshot = try CodexActivityReader(homeDirectory: fixture.home).load(
+        limit: 200,
+        updatedAfter: Date(timeIntervalSince1970: 2_000_000_000)
+    )
+
+    #expect(snapshot.items.count == CodexActivityReader.maximumIncludedThreadCount)
+    #expect(snapshot.hasMore)
+    #expect(snapshot.items.allSatisfy { $0.goalStatus == .active })
+}
+
+@Test
+func dashboardLoadsGoalMetadataForSelectedRowsOutsideTheInclusionWindow() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    let selectedID = String(format: "11111111-1111-4111-8111-%012d", 1)
+    try createReaderState(
+        in: fixture.codex,
+        rows: [
+            ReaderRow(
+                id: selectedID,
+                title: "Selected old goal",
+                rolloutPath: fixture.codex.appendingPathComponent("missing-selected.jsonl").path
+            )
+        ]
+    )
+    var goals = (0..<250).map { index in
+        GoalRow(
+            threadID: String(format: "22222222-2222-4222-8222-%012d", index),
+            status: "complete",
+            updatedAtMS: Int64(index + 10)
+        )
+    }
+    goals.append(GoalRow(threadID: selectedID, status: "blocked", updatedAtMS: 1))
+    try createGoalState(in: fixture.codex, rows: goals)
+
+    let item = try #require(
+        CodexActivityReader(homeDirectory: fixture.home).load(limit: 1).items.first
+    )
+    #expect(item.id == selectedID)
+    #expect(item.goalStatus == .blocked)
+}
+
+@Test
+func dashboardRejectsOversizedOrdinaryThreadText() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    try createReaderState(
+        in: fixture.codex,
+        rows: [
+            ReaderRow(
+                id: String(format: "33333333-3333-4333-8333-%012d", 3),
+                title: "Oversized preview",
+                preview: String(repeating: "x", count: 64 * 1_024 + 1),
+                rolloutPath: fixture.codex.appendingPathComponent("missing.jsonl").path
+            )
+        ]
+    )
+
+    do {
+        _ = try CodexActivityReader(homeDirectory: fixture.home).load()
+        #expect(Bool(false), "Expected oversized ordinary thread text to fail closed")
+    } catch let error as ActivityReaderError {
+        guard case .incompatibleSchema = error else {
+            #expect(Bool(false), "Expected an incompatibleSchema error")
+            return
+        }
+    }
+}
+
+@Test
+func dashboardRejectsOversizedAggregateOrdinaryThreadText() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    let rows = (0..<150).map { index in
+        ReaderRow(
+            id: String(format: "44444444-4444-4444-8444-%012d", index),
+            title: String(repeating: "t", count: 16 * 1_024),
+            preview: String(repeating: "p", count: 64 * 1_024),
+            cwd: String(repeating: "c", count: 16 * 1_024),
+            rolloutPath: String(repeating: "r", count: 16 * 1_024)
+        )
+    }
+    try createReaderState(in: fixture.codex, rows: rows)
+
+    do {
+        _ = try CodexActivityReader(homeDirectory: fixture.home).load(limit: 200)
+        #expect(Bool(false), "Expected aggregate ordinary thread text to fail closed")
+    } catch let error as ActivityReaderError {
+        guard case .incompatibleSchema = error else {
+            #expect(Bool(false), "Expected an incompatibleSchema error")
+            return
+        }
+    }
+}
+
+@Test
+func dashboardRejectsOversizedAggregateGoalText() throws {
+    let fixture = try makeReaderFixture()
+    defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+    try createReaderState(in: fixture.codex, rows: [])
+    let goals = (0..<200).map { index in
+        let prefix = String(format: "%04d-", index)
+        return GoalRow(
+            threadID: prefix + String(repeating: "g", count: 1_024 - prefix.utf8.count),
+            status: "active",
+            updatedAtMS: Int64(index)
+        )
+    }
+    try createGoalState(in: fixture.codex, rows: goals)
+
+    do {
+        _ = try CodexActivityReader(homeDirectory: fixture.home).load()
+        #expect(Bool(false), "Expected aggregate goal text to fail closed")
+    } catch let error as ActivityReaderError {
+        guard case .incompatibleSchema = error else {
+            #expect(Bool(false), "Expected an incompatibleSchema error")
+            return
+        }
+    }
+}
+
 private struct ReaderRow {
     let id: String
     let title: String
+    let preview: String
+    let cwd: String
     let rolloutPath: String
+
+    init(
+        id: String,
+        title: String,
+        preview: String = "Preview",
+        cwd: String = "/tmp/project",
+        rolloutPath: String
+    ) {
+        self.id = id
+        self.title = title
+        self.preview = preview
+        self.cwd = cwd
+        self.rolloutPath = rolloutPath
+    }
+}
+
+private struct GoalRow {
+    let threadID: String
+    let status: String
+    let updatedAtMS: Int64
 }
 
 private func makeReaderFixture() throws -> (home: URL, codex: URL) {
@@ -449,9 +650,33 @@ private func createReaderState(at state: URL, rows: [ReaderRow]) throws {
         let timestamp = 1_787_486_400_000 + index
         try executeReaderSQL(database, """
             INSERT INTO threads VALUES (
-              '\(sqlLiteral(row.id))', '\(sqlLiteral(row.title))', 'Preview', '/tmp/project',
+              '\(sqlLiteral(row.id))', '\(sqlLiteral(row.title))',
+              '\(sqlLiteral(row.preview))', '\(sqlLiteral(row.cwd))',
               '\(sqlLiteral(row.rolloutPath))', 1787486400, 1787486400,
               1787486400000, \(timestamp), 0, 'user', \(timestamp)
+            );
+            """)
+    }
+}
+
+private func createGoalState(in codex: URL, rows: [GoalRow]) throws {
+    let state = codex.appendingPathComponent("goals_1.sqlite")
+    var database: OpaquePointer?
+    guard sqlite3_open(state.path, &database) == SQLITE_OK, let database else {
+        if let database { sqlite3_close(database) }
+        throw ReaderSecurityTestFailure(message: "Goal SQLite fixture could not be opened")
+    }
+    defer { sqlite3_close(database) }
+
+    try executeReaderSQL(database, """
+        CREATE TABLE thread_goals (
+          thread_id TEXT, status TEXT, updated_at_ms INTEGER
+        );
+        """)
+    for row in rows {
+        try executeReaderSQL(database, """
+            INSERT INTO thread_goals VALUES (
+              '\(sqlLiteral(row.threadID))', '\(sqlLiteral(row.status))', \(row.updatedAtMS)
             );
             """)
     }

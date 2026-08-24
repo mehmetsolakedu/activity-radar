@@ -1,6 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
+SCRIPT_DIR="${0:A:h}"
 ROOT="${1:-}"
 [[ -n "$ROOT" && -d "$ROOT" ]] || {
   print -u2 "Usage: $0 /path/to/public-tree"
@@ -14,6 +15,15 @@ shift
 }
 command -v rg >/dev/null 2>&1 || {
   print -u2 "Required tool not found: rg (ripgrep)"
+  exit 2
+}
+command -v python3 >/dev/null 2>&1 || {
+  print -u2 "Required tool not found: python3"
+  exit 2
+}
+COMPRESSED_ARTIFACT_SCANNER="$SCRIPT_DIR/compressed-artifact-privacy-scan.py"
+[[ -f "$COMPRESSED_ARTIFACT_SCANNER" && ! -L "$COMPRESSED_ARTIFACT_SCANNER" ]] || {
+  print -u2 "Compressed artifact privacy scanner is missing or unsafe."
   exit 2
 }
 
@@ -112,3 +122,5 @@ if (( UNSAFE_UUID_FOUND )); then
   print -u2 "Public privacy scan found a non-synthetic raw UUID."
   exit 5
 fi
+
+python3 "$COMPRESSED_ARTIFACT_SCANNER" "$ROOT"

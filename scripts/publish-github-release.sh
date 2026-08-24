@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Verify an already signed/notarized release directory and upload its exact
 # public files to a new draft GitHub Release. In explicit finalization mode it
-# requires a release-bound, content-free clean-machine acceptance record, then
+# requires a release-bound, fixed-schema clean-machine acceptance record with no task text or raw identifiers, then
 # re-runs every gate and publishes that exact draft. This script never receives
 # or exports signing credentials.
 
@@ -27,16 +27,16 @@ Usage:
   ./scripts/publish-github-release.sh \
     --tag v1.2.0-beta.3 \
     --team-id TEAMID1234 \
-    --release-dir ./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2 \
+    --release-dir ./dist/AiWingman-1.2.0-beta.3-macOS-universal2 \
     --notes-file /absolute/path/to/release-notes.md \
     [--repo owner/repository] [--title "Release title"] \
     [--finalize-existing-draft \
-      --acceptance-file /absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json]
+      --acceptance-file /absolute/path/to/AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json]
 
 The command re-verifies the exact tag, source commit, successful CI, app/DMG
 signatures, stapled tickets, Gatekeeper assessments, ZIP/DMG integrity, and
 SHA256SUMS before creating a draft release. Finalization is a separate explicit
-mode that requires a content-free clean-machine acceptance record, re-verifies
+mode that requires a fixed-schema clean-machine acceptance record without task text or raw identifiers, re-verifies
 the same local snapshot and remote draft, uploads that record as the fifth
 asset, and only then publishes.
 USAGE
@@ -536,17 +536,17 @@ for required_job in "macOS verification" "Intel runtime"; do
 done
 
 RELEASE_DIR="${RELEASE_DIR:A}"
-EXPECTED_DIR_NAME="Activity-Radar-${RELEASE_LABEL}-macOS-universal2"
+EXPECTED_DIR_NAME="AiWingman-${RELEASE_LABEL}-macOS-universal2"
 [[ -d "$RELEASE_DIR" && "${RELEASE_DIR:t}" == "$EXPECTED_DIR_NAME" ]] \
   || fail "Release directory name does not match tag: $EXPECTED_DIR_NAME"
 NOTES_FILE="${NOTES_FILE:A}"
 [[ -f "$NOTES_FILE" && -s "$NOTES_FILE" && ! -L "$NOTES_FILE" ]] \
   || fail "Release notes file is missing, empty, or is a symlink"
-[[ -n "$TITLE" ]] || TITLE="Activity Radar $TAG"
+[[ -n "$TITLE" ]] || TITLE="AiWingman $TAG"
 
 ZIP_NAME="$EXPECTED_DIR_NAME.zip"
 DMG_NAME="$EXPECTED_DIR_NAME.dmg"
-ACCEPTANCE_NAME="Activity-Radar-${RELEASE_LABEL}-CLEAN-MACHINE-ACCEPTANCE.json"
+ACCEPTANCE_NAME="AiWingman-${RELEASE_LABEL}-CLEAN-MACHINE-ACCEPTANCE.json"
 if (( FINALIZE_EXISTING )); then
   ACCEPTANCE_FILE="${ACCEPTANCE_FILE:A}"
   [[ -f "$ACCEPTANCE_FILE" && -s "$ACCEPTANCE_FILE" && ! -L "$ACCEPTANCE_FILE" ]] \
@@ -556,7 +556,7 @@ if (( FINALIZE_EXISTING )); then
   (( $(stat -f %z "$ACCEPTANCE_FILE") <= 65536 )) \
     || fail "Clean-machine acceptance file exceeds 64 KiB"
 fi
-ORIGINAL_APP="$RELEASE_DIR/Activity Radar.app"
+ORIGINAL_APP="$RELEASE_DIR/AiWingman.app"
 ORIGINAL_ZIP="$RELEASE_DIR/$ZIP_NAME"
 ORIGINAL_DMG="$RELEASE_DIR/$DMG_NAME"
 ORIGINAL_CHECKSUMS="$RELEASE_DIR/SHA256SUMS"
@@ -591,7 +591,7 @@ note "Freezing release artifacts and notes into a private verification snapshot"
 SNAPSHOT_DIR="$VERIFY_ROOT/snapshot"
 mkdir -p "$SNAPSHOT_DIR"
 chmod 700 "$VERIFY_ROOT" "$SNAPSHOT_DIR"
-ditto --rsrc --extattr "$ORIGINAL_APP" "$SNAPSHOT_DIR/Activity Radar.app"
+ditto --rsrc --extattr "$ORIGINAL_APP" "$SNAPSHOT_DIR/AiWingman.app"
 ditto --noqtn --noextattr --norsrc "$ORIGINAL_ZIP" "$SNAPSHOT_DIR/$ZIP_NAME"
 ditto --noqtn --noextattr --norsrc "$ORIGINAL_DMG" "$SNAPSHOT_DIR/$DMG_NAME"
 ditto --noqtn --noextattr --norsrc "$ORIGINAL_CHECKSUMS" "$SNAPSHOT_DIR/SHA256SUMS"
@@ -604,13 +604,13 @@ print -rn -- "$TITLE" > "$SNAPSHOT_DIR/release-title.txt"
 CANONICAL_ZIP="$VERIFY_ROOT/canonical-$ZIP_NAME"
 (
   cd "$SNAPSHOT_DIR"
-  /usr/bin/zip -X -q -r "$CANONICAL_ZIP" "Activity Radar.app"
+  /usr/bin/zip -X -q -r "$CANONICAL_ZIP" "AiWingman.app"
 )
 cmp -s "$CANONICAL_ZIP" "$SNAPSHOT_DIR/$ZIP_NAME" \
   || fail "Release ZIP is not the canonical metadata-free archive of the frozen app"
 
 RELEASE_DIR="$SNAPSHOT_DIR"
-APP="$SNAPSHOT_DIR/Activity Radar.app"
+APP="$SNAPSHOT_DIR/AiWingman.app"
 ZIP="$SNAPSHOT_DIR/$ZIP_NAME"
 DMG="$SNAPSHOT_DIR/$DMG_NAME"
 CHECKSUMS="$SNAPSHOT_DIR/SHA256SUMS"
@@ -665,7 +665,7 @@ for manifest_key in \
   [[ "$(grep -c "^${manifest_key}: " "$MANIFEST")" == "1" ]] \
     || fail "Release manifest field is missing or duplicated: $manifest_key"
 done
-grep -Fxq "Product: Activity Radar" "$MANIFEST" || fail "Manifest product mismatch"
+grep -Fxq "Product: AiWingman" "$MANIFEST" || fail "Manifest product mismatch"
 grep -Fxq "Release tag: $TAG" "$MANIFEST" || fail "Manifest release tag mismatch"
 grep -Fxq "Source revision: $SOURCE_REVISION" "$MANIFEST" || fail "Manifest source revision mismatch"
 grep -Fxq "Source state: clean exact-tag checkout" "$MANIFEST" || fail "Manifest source state mismatch"
@@ -697,8 +697,8 @@ ZIP_ENTRIES="$(unzip -Z1 "$ZIP")"
 ZIP_UNSAFE_ENTRY="$(
   print -r -- "$ZIP_ENTRIES" | awk '
     index($0, "\\") > 0 || $0 ~ /^\// || $0 ~ /(^|\/)\.\.($|\/)/ { print "unsafe"; exit }
-    $0 == "Activity Radar.app/" { next }
-    index($0, "Activity Radar.app/") == 1 { next }
+    $0 == "AiWingman.app/" { next }
+    index($0, "AiWingman.app/") == 1 { next }
     { print "unsafe"; exit }
   '
 )"
@@ -736,7 +736,7 @@ mkdir -p "$ZIP_VERIFY_ROOT"
 ditto -x -k "$ZIP" "$ZIP_VERIFY_ROOT"
 [[ "$(find "$ZIP_VERIFY_ROOT" -mindepth 1 -maxdepth 1 -print | wc -l | tr -d '[:space:]')" == "1" ]] \
   || fail "ZIP contains unexpected top-level payloads"
-ZIP_APP="$ZIP_VERIFY_ROOT/Activity Radar.app"
+ZIP_APP="$ZIP_VERIFY_ROOT/AiWingman.app"
 verify_release_app "$ZIP_APP" "ZIP application"
 [[ "$(code_directory_hashes "$ZIP_APP")" == "$REFERENCE_CDHASHES" ]] \
   || fail "ZIP application CodeDirectory hashes do not match the loose release app"
@@ -768,7 +768,7 @@ verify_public_metadata_policy "$DMG_MOUNT" "DMG filesystem"
   || fail "DMG contains unexpected top-level payloads"
 [[ -L "$DMG_MOUNT/Applications" && "$(readlink "$DMG_MOUNT/Applications")" == "/Applications" ]] \
   || fail "DMG Applications link is missing or unsafe"
-DMG_APP="$DMG_MOUNT/Activity Radar.app"
+DMG_APP="$DMG_MOUNT/AiWingman.app"
 verify_release_app "$DMG_APP" "DMG application"
 [[ "$(code_directory_hashes "$DMG_APP")" == "$REFERENCE_CDHASHES" ]] \
   || fail "DMG application CodeDirectory hashes do not match the loose release app"
@@ -918,7 +918,7 @@ if (( FINALIZE_EXISTING )); then
         || fail "Remote release tag changed before acceptance upload"
       [[ "$(release_id_for_tag)" == "$REMOTE_RELEASE_ID" ]] \
         || fail "GitHub tag no longer resolves to the verified draft release ID"
-      note "Uploading the verified content-free clean-machine acceptance record"
+      note "Uploading the verified fixed-schema clean-machine acceptance record"
       if ! gh release upload "$TAG" "$ACCEPTANCE" --repo "$REPOSITORY"; then
         fail_acceptance_asset_recovery "GitHub did not confirm a complete clean-machine acceptance upload"
       fi

@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "dmgAssetName": {
-      "pattern": "^Activity-Radar-[0-9A-Za-z.-]+-macOS-universal2\\.dmg$",
+      "pattern": "^AiWingman-[0-9A-Za-z.-]+-macOS-universal2\\.dmg$",
       "type": "string"
     },
     "dmgSHA256": {
@@ -68,7 +68,7 @@
     "repository",
     "schemaVersion"
   ],
-  "title": "Activity Radar clean-machine acceptance",
+  "title": "AiWingman clean-machine acceptance",
   "type": "object",
   "$defs": {
     "arm64Record": {

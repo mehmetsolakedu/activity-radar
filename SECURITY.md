@@ -7,9 +7,10 @@ are treated as security issues.
 
 | Target | Security support |
 | --- | --- |
-| Current default branch | Supported |
-| Latest tagged release | Supported |
-| Older revisions and releases | Best effort |
+| Hardened checkpoint `99faac3...` and later review-branch revisions | Security-review candidate; not yet a supported installation release |
+| Current `main` at `2248203...` | Supersession documentation over unsupported beta2 application source; do not build or use |
+| Tag `v1.2.0-beta.2` at `5e212181...` | Superseded; do not build or use |
+| Older revisions and releases | Unsupported |
 
 This policy does not promise a response or remediation SLA.
 
@@ -47,11 +48,19 @@ Changes should preserve these constraints:
 - Dashboard, diagnostics, and research-ledger paths transmit no Codex content
   and never start a background agent call.
 - The sole optional Wingman transmission remains user-triggered, bounded,
-  redacted, schema-validated, preceded by the exact intended JSON packet preview,
+  redacted, schema-validated, preceded by access to the exact intended JSON packet preview,
   and protected by one-shot consent. Prompt excerpts, prompt-derived themes, and
-  local text signals remain separately opt-in; with that option off the packet
-  contains task titles and numeric measurements only. User-authored continuity
-  text is never included.
+  local text signals remain separately opt-in. With that option off,
+  task-derived free text is limited to sanitized titles; prompt excerpts,
+  prompt-derived themes, local review signals, and next-move text are omitted.
+  The packet still contains timestamps and the activity cutoff,
+  status/enumeration fields, booleans, counts, numeric measurements,
+  schema/language metadata, and a fixed method-boundary string. User-authored
+  continuity text is never included.
+- Opening the Wingman sheet does not invoke Codex CLI. The authenticated
+  compatibility/login-status probe requires a separate explicit user action,
+  starts no agent turn, and sends no AiWingman task packet. It still uses the
+  documented private temporary authentication-copy lifecycle.
 - Wingman packets exclude raw task identifiers, full paths, working and rollout
   paths, git and account metadata, system and developer instructions, tool
   outputs, and authentication-file contents. Allowed titles and separately
@@ -68,8 +77,10 @@ Changes should preserve these constraints:
   `ActivityRadar-CLI-Probe-` directory. Quit the app, inspect only immediate
   children of the current user's macOS temporary directory with either exact
   prefix, remove only those residue directories, and then reopen; never delete
-  a broader temporary path. The read-only child sandbox prevents writes but is
-  not treated as proof that other local files cannot be read.
+  a broader temporary path. AiWingman requests Codex CLI read-only sandbox mode,
+  intended to deny agent-tool writes to the workspace. This is neither OS-level
+  isolation nor a zero-filesystem-write guarantee, and it does not prove that
+  other local files cannot be read.
 - Research logging is disabled by default and its export excludes task content
   and raw task identifiers.
 - High-impact lifecycle decisions require an explicit, reversible user action.

@@ -1,7 +1,17 @@
 # Publication blueprint
 
-Status: `ARTIFACT_ROUTE` and `HUMAN_EFFICACY_UNTESTED` as of 23 August
-2026.
+Status: `HISTORICAL_PLANNING_DOCUMENT_SUPERSEDED`, retained for development
+provenance. It is not a preregistration, final protocol, current evidence ledger,
+or submission plan. The canonical current claim boundary is the manuscript in
+`paper/aiwingman_technical_report.md`; the frozen policy contract is
+`Research/protocol/SPECIFICATION_V1.md`.
+
+This document records an earlier intended route and deliberately preserves
+future-tense and `NOT_YET_FROZEN` entries as historical planning text. They must
+not be read as the present state of the project. In particular, the later
+specification-derived oracle was produced by the same project and is not an
+independent oracle, and the selected preprint route is not the earlier Zenodo
+archive plan.
 
 AiWingman is a working open-source software artifact. This blueprint defines a
 publishable technical evaluation that requires no participant recruitment,

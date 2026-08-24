@@ -22,6 +22,11 @@ public final class CodexActivityReader: @unchecked Sendable {
         let updatedAt: Date
     }
 
+    private struct GoalRecordPage {
+        let records: [String: GoalRecord]
+        let hasMore: Bool
+    }
+
     private struct RolloutCacheEntry {
         var identity: CodexFileIdentity
         var processedOffset: UInt64
@@ -42,6 +47,11 @@ public final class CodexActivityReader: @unchecked Sendable {
     private let safeFiles: CodexSafeFileAccess
     private let initialRolloutReadLimit: UInt64 = 4 * 1_024 * 1_024
     private let maximumRolloutLineBytes = 1 * 1_024 * 1_024
+    static let maximumThreadLoadCount = 200
+    static let maximumIncludedThreadCount = 64
+    static let maximumGoalInclusionRecordCount = 200
+    private static let maximumThreadTextBytes = 16 * 1_024 * 1_024
+    private static let maximumGoalTextBytes = 128 * 1_024
     static let sessionIndexReadLimit: UInt64 = 4 * 1_024 * 1_024
     private let loadLock = NSLock()
     private var rolloutCache: [String: RolloutCacheEntry] = [:]
@@ -72,22 +82,43 @@ public final class CodexActivityReader: @unchecked Sendable {
             throw ActivityReaderError.missingCodexState(stateDatabaseURL.path)
         }
 
-        let goalRecords = try readGoalRecords()
-        let includedGoalIDs = Set(
-            goalRecords.compactMap { threadID, record in
-                switch record.status {
-                case .active, .blocked, .usageLimited, .budgetLimited:
-                    return threadID
-                case .paused, .complete, .unknown:
-                    return nil
-                }
-            }
+        let inclusionGoalPage = try readGoalRecords(
+            limit: Self.maximumGoalInclusionRecordCount
         )
+        let inclusionGoalRecords = inclusionGoalPage.records
+        var includedGoalCandidates: [(threadID: String, updatedAt: Date)] = []
+        for (threadID, record) in inclusionGoalRecords {
+            switch record.status {
+            case .active, .blocked, .usageLimited, .budgetLimited:
+                includedGoalCandidates.append((threadID, record.updatedAt))
+            case .paused, .complete, .unknown:
+                continue
+            }
+        }
+        let includedGoalIDs = includedGoalCandidates
+            .sorted { lhs, rhs in
+                lhs.updatedAt == rhs.updatedAt
+                    ? lhs.threadID < rhs.threadID
+                    : lhs.updatedAt > rhs.updatedAt
+            }
+            .map(\.threadID)
+        var includedThreadIDs: [String] = []
+        var seenIncludedThreadIDs = Set<String>()
+        var includedThreadIDsWereTruncated = false
+        for threadID in priorityThreadIDs.sorted() + includedGoalIDs {
+            guard seenIncludedThreadIDs.insert(threadID).inserted else { continue }
+            guard includedThreadIDs.count < Self.maximumIncludedThreadCount else {
+                includedThreadIDsWereTruncated = true
+                break
+            }
+            includedThreadIDs.append(threadID)
+        }
         let threadPage = try readThreads(
             limit: limit,
-            includedThreadIDs: priorityThreadIDs.union(includedGoalIDs),
+            includedThreadIDs: includedThreadIDs,
             updatedAfter: updatedAfter
         )
+        let goalRecords = try readGoalRecords(threadIDs: Set(threadPage.rows.map(\.id)))
         let sessionNames = readSessionNames()
 
         return makeSnapshot(
@@ -98,6 +129,8 @@ public final class CodexActivityReader: @unchecked Sendable {
             lastViewedAt: lastViewedAt,
             unviewedResultsAfter: unviewedResultsAfter,
             hasMore: threadPage.hasMore
+                || inclusionGoalPage.hasMore
+                || includedThreadIDsWereTruncated
         )
     }
 
@@ -121,21 +154,20 @@ public final class CodexActivityReader: @unchecked Sendable {
             return ActivitySnapshot(generatedAt: now, items: [])
         }
 
-        let goalRecords = try readGoalRecords()
         let sessionNames = readSessionNames()
         let normalized = Self.normalizedSearchText(trimmed)
-        let matchingSessionIDs = Set(
-            sessionNames.compactMap { threadID, name in
+        let matchingSessionIDs = sessionNames.compactMap { threadID, name in
                 Self.normalizedSearchText(name).contains(normalized) ? threadID : nil
             }
-            .prefix(max(1, min(limit, 200)))
-        )
+            .sorted()
+            .prefix(Self.maximumIncludedThreadCount)
         let threadPage = try readMatchingThreads(
             query: trimmed,
             limit: limit,
-            includedThreadIDs: matchingSessionIDs,
+            includedThreadIDs: Array(matchingSessionIDs),
             updatedAfter: updatedAfter
         )
+        let goalRecords = try readGoalRecords(threadIDs: Set(threadPage.rows.map(\.id)))
 
         return makeSnapshot(
             threadRows: threadPage.rows,
@@ -209,12 +241,12 @@ public final class CodexActivityReader: @unchecked Sendable {
     }
 
     public static func deepLink(for threadID: String) -> URL? {
-        URL(string: "codex://threads/\(threadID)")
+        CodexDeepLink.threadURL(for: threadID)
     }
 
     private func readThreads(
         limit: Int,
-        includedThreadIDs: Set<String>,
+        includedThreadIDs: [String],
         updatedAfter: Date?
     ) throws -> ThreadPage {
         let database = try SQLiteReadOnly(path: stateDatabaseURL.path)
@@ -233,7 +265,25 @@ public final class CodexActivityReader: @unchecked Sendable {
 
         var rows: [ThreadRow] = []
         var seen = Set<String>()
-        func appendRow(_ statement: OpaquePointer) {
+        var totalTextBytes = 0
+        func appendRow(_ statement: OpaquePointer) throws {
+            let limits = [1_024, 16 * 1_024, 64 * 1_024, 16 * 1_024, 16 * 1_024]
+            var rowBytes = 0
+            for (index, maximum) in limits.enumerated() {
+                let count = SQLiteReadOnly.byteCount(statement, index: Int32(index))
+                guard count <= maximum else {
+                    throw ActivityReaderError.incompatibleSchema(
+                        "threads metin alanı güvenli okuma sınırını aşıyor"
+                    )
+                }
+                rowBytes += count
+            }
+            guard totalTextBytes <= Self.maximumThreadTextBytes - rowBytes else {
+                throw ActivityReaderError.incompatibleSchema(
+                    "threads toplam metni güvenli okuma sınırını aşıyor"
+                )
+            }
+            totalTextBytes += rowBytes
             let id = SQLiteReadOnly.text(statement, index: 0)
             guard seen.insert(id).inserted else { return }
             let createdAt = Date(timeIntervalSince1970: Double(SQLiteReadOnly.int64(statement, index: 5)) / 1_000)
@@ -284,7 +334,7 @@ public final class CodexActivityReader: @unchecked Sendable {
         LIMIT ?;
         """
 
-        let pageLimit = max(1, min(limit, 200))
+        let pageLimit = max(1, min(limit, Self.maximumThreadLoadCount))
         try database.rows(
             sql: sql,
             bind: { statement in
@@ -300,16 +350,29 @@ public final class CodexActivityReader: @unchecked Sendable {
                 sqlite3_bind_int(statement, index, Int32(pageLimit + 1))
             }
         ) { statement in
-            appendRow(statement)
+            try appendRow(statement)
         }
 
-        let hasMore = rows.count > pageLimit
+        var hasMore = rows.count > pageLimit
         if hasMore {
             rows = Array(rows.prefix(pageLimit))
             seen = Set(rows.map(\.id))
         }
 
-        let requiredIDs = includedThreadIDs.subtracting(seen)
+        var requiredIDs: [String] = []
+        var requiredSeen = seen
+        for threadID in includedThreadIDs {
+            guard requiredSeen.insert(threadID).inserted else { continue }
+            requiredIDs.append(threadID)
+        }
+        let inclusionCapacity = min(
+            Self.maximumIncludedThreadCount,
+            max(0, Self.maximumThreadLoadCount - rows.count)
+        )
+        if requiredIDs.count > inclusionCapacity {
+            hasMore = true
+            requiredIDs = Array(requiredIDs.prefix(inclusionCapacity))
+        }
         let requiredSQL = """
         SELECT
             t.id,
@@ -340,7 +403,7 @@ public final class CodexActivityReader: @unchecked Sendable {
                     }
                 }
             ) { statement in
-                appendRow(statement)
+                try appendRow(statement)
             }
         }
         return ThreadPage(rows: rows, hasMore: hasMore)
@@ -349,7 +412,7 @@ public final class CodexActivityReader: @unchecked Sendable {
     private func readMatchingThreads(
         query: String,
         limit: Int,
-        includedThreadIDs: Set<String>,
+        includedThreadIDs: [String],
         updatedAfter: Date?
     ) throws -> ThreadPage {
         let database = try SQLiteReadOnly(path: stateDatabaseURL.path)
@@ -368,7 +431,25 @@ public final class CodexActivityReader: @unchecked Sendable {
 
         var rows: [ThreadRow] = []
         var seen = Set<String>()
-        func appendRow(_ statement: OpaquePointer) {
+        var totalTextBytes = 0
+        func appendRow(_ statement: OpaquePointer) throws {
+            let limits = [1_024, 16 * 1_024, 64 * 1_024, 16 * 1_024, 16 * 1_024]
+            var rowBytes = 0
+            for (index, maximum) in limits.enumerated() {
+                let count = SQLiteReadOnly.byteCount(statement, index: Int32(index))
+                guard count <= maximum else {
+                    throw ActivityReaderError.incompatibleSchema(
+                        "threads metin alanı güvenli okuma sınırını aşıyor"
+                    )
+                }
+                rowBytes += count
+            }
+            guard totalTextBytes <= Self.maximumThreadTextBytes - rowBytes else {
+                throw ActivityReaderError.incompatibleSchema(
+                    "threads toplam metni güvenli okuma sınırını aşıyor"
+                )
+            }
+            totalTextBytes += rowBytes
             let id = SQLiteReadOnly.text(statement, index: 0)
             guard seen.insert(id).inserted else { return }
             rows.append(
@@ -429,7 +510,7 @@ public final class CodexActivityReader: @unchecked Sendable {
         """
         let pattern = "%\(query)%"
         let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-        let pageLimit = max(1, min(limit, 200))
+        let pageLimit = max(1, min(limit, Self.maximumThreadLoadCount))
         try database.rows(
             sql: sql,
             bind: { statement in
@@ -450,10 +531,10 @@ public final class CodexActivityReader: @unchecked Sendable {
                 sqlite3_bind_int(statement, index, Int32(pageLimit + 1))
             }
         ) { statement in
-            appendRow(statement)
+            try appendRow(statement)
         }
 
-        let hasMore = rows.count > pageLimit
+        var hasMore = rows.count > pageLimit
         if hasMore {
             rows = Array(rows.prefix(pageLimit))
             seen = Set(rows.map(\.id))
@@ -479,7 +560,21 @@ public final class CodexActivityReader: @unchecked Sendable {
           )
         LIMIT 1;
         """
-        for threadID in includedThreadIDs.subtracting(seen).sorted() {
+        var requiredIDs: [String] = []
+        var requiredSeen = seen
+        for threadID in includedThreadIDs {
+            guard requiredSeen.insert(threadID).inserted else { continue }
+            requiredIDs.append(threadID)
+        }
+        let inclusionCapacity = min(
+            Self.maximumIncludedThreadCount,
+            max(0, Self.maximumThreadLoadCount - rows.count)
+        )
+        if requiredIDs.count > inclusionCapacity {
+            hasMore = true
+            requiredIDs = Array(requiredIDs.prefix(inclusionCapacity))
+        }
+        for threadID in requiredIDs {
             try database.rows(
                 sql: requiredSQL,
                 bind: { statement in
@@ -488,15 +583,15 @@ public final class CodexActivityReader: @unchecked Sendable {
                     }
                 }
             ) { statement in
-                appendRow(statement)
+                try appendRow(statement)
             }
         }
         return ThreadPage(rows: rows, hasMore: hasMore)
     }
 
-    private func readGoalRecords() throws -> [String: GoalRecord] {
+    private func readGoalRecords(limit: Int) throws -> GoalRecordPage {
         guard FileManager.default.fileExists(atPath: goalsDatabaseURL.path) else {
-            return [:]
+            return GoalRecordPage(records: [:], hasMore: false)
         }
         let database = try SQLiteReadOnly(path: goalsDatabaseURL.path)
         let columns = try database.tableColumns("thread_goals")
@@ -507,8 +602,99 @@ public final class CodexActivityReader: @unchecked Sendable {
         }
 
         var records: [String: GoalRecord] = [:]
-        try database.rows(sql: "SELECT thread_id, status, updated_at_ms FROM thread_goals;") { statement in
+        var totalTextBytes = 0
+        var rowCount = 0
+        let cappedLimit = max(1, min(limit, Self.maximumGoalInclusionRecordCount))
+        try database.rows(
+            sql: """
+            SELECT thread_id, status, updated_at_ms
+            FROM thread_goals
+            ORDER BY rowid DESC
+            LIMIT ?;
+            """,
+            bind: { statement in
+                sqlite3_bind_int(statement, 1, Int32(cappedLimit + 1))
+            }
+        ) { statement in
+            rowCount += 1
+            guard rowCount <= cappedLimit else { return }
+            let rowBytes = SQLiteReadOnly.byteCount(statement, index: 0)
+                + SQLiteReadOnly.byteCount(statement, index: 1)
+            guard SQLiteReadOnly.byteCount(statement, index: 0) <= 1_024,
+                  SQLiteReadOnly.byteCount(statement, index: 1) <= 64,
+                  totalTextBytes <= Self.maximumGoalTextBytes - rowBytes else {
+                throw ActivityReaderError.incompatibleSchema(
+                    "thread_goals metni güvenli okuma sınırını aşıyor"
+                )
+            }
+            totalTextBytes += rowBytes
             let threadID = SQLiteReadOnly.text(statement, index: 0)
+            let rawStatus = SQLiteReadOnly.text(statement, index: 1)
+            let status = ActivityGoalStatus(rawValue: rawStatus) ?? .unknown
+            let updatedAt = Date(
+                timeIntervalSince1970: Double(SQLiteReadOnly.int64(statement, index: 2)) / 1_000
+            )
+            if records[threadID] == nil {
+                records[threadID] = GoalRecord(status: status, updatedAt: updatedAt)
+            }
+        }
+        return GoalRecordPage(records: records, hasMore: rowCount > cappedLimit)
+    }
+
+    private func readGoalRecords(threadIDs: Set<String>) throws -> [String: GoalRecord] {
+        guard !threadIDs.isEmpty,
+              FileManager.default.fileExists(atPath: goalsDatabaseURL.path) else {
+            return [:]
+        }
+        let database = try SQLiteReadOnly(path: goalsDatabaseURL.path)
+        let columns = try database.tableColumns("thread_goals")
+        guard columns.contains("thread_id"),
+              columns.contains("status"),
+              columns.contains("updated_at_ms") else {
+            throw ActivityReaderError.incompatibleSchema("thread_goals alanları eksik")
+        }
+
+        let orderedIDs = Array(
+            threadIDs.sorted().prefix(Self.maximumThreadLoadCount)
+        )
+        let placeholders = Array(repeating: "?", count: orderedIDs.count).joined(separator: ",")
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        var records: [String: GoalRecord] = [:]
+        var totalTextBytes = 0
+        try database.rows(
+            sql: """
+            SELECT thread_id, status, updated_at_ms
+            FROM thread_goals
+            WHERE thread_id IN (\(placeholders))
+            ORDER BY updated_at_ms DESC, thread_id ASC;
+            """,
+            bind: { statement in
+                for (offset, threadID) in orderedIDs.enumerated() {
+                    threadID.withCString { pointer in
+                        _ = sqlite3_bind_text(
+                            statement,
+                            Int32(offset + 1),
+                            pointer,
+                            -1,
+                            transient
+                        )
+                    }
+                }
+            }
+        ) { statement in
+            let idBytes = SQLiteReadOnly.byteCount(statement, index: 0)
+            let statusBytes = SQLiteReadOnly.byteCount(statement, index: 1)
+            let rowBytes = idBytes + statusBytes
+            guard idBytes <= 1_024,
+                  statusBytes <= 64,
+                  totalTextBytes <= Self.maximumGoalTextBytes - rowBytes else {
+                throw ActivityReaderError.incompatibleSchema(
+                    "thread_goals metni güvenli okuma sınırını aşıyor"
+                )
+            }
+            totalTextBytes += rowBytes
+            let threadID = SQLiteReadOnly.text(statement, index: 0)
+            guard records[threadID] == nil else { return }
             let rawStatus = SQLiteReadOnly.text(statement, index: 1)
             let status = ActivityGoalStatus(rawValue: rawStatus) ?? .unknown
             let updatedAt = Date(

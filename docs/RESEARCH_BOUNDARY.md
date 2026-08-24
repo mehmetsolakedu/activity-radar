@@ -7,8 +7,13 @@ sessions.
 
 The software alone does not establish effectiveness, scientific novelty, reduced cognitive load, faster resumption, or superiority over another tool. Those claims require an external comparative study with a preregistered protocol, an appropriate sample, declared outcomes, and transparent reporting of false-alert and missed-task tradeoffs.
 
-The optional local research ledger is measurement infrastructure, not evidence of benefit. It is off by default, content-free, pseudonymous, and never uploaded automatically.
+The optional local research ledger is measurement infrastructure, not evidence
+of benefit. It is off by default, fixed-schema, pseudonymous, excludes task text
+and raw task identifiers, and is never uploaded automatically.
 
-The frozen research question, prior-art boundary, preregistered-study outline,
-ethics gates, and falsification rules are maintained in the
-[publication blueprint](PUBLICATION_BLUEPRINT.md).
+The current technical claim boundary is maintained in
+[`paper/aiwingman_technical_report.md`](../paper/aiwingman_technical_report.md),
+and the frozen policy contract is maintained in
+[`Research/protocol/SPECIFICATION_V1.md`](../Research/protocol/SPECIFICATION_V1.md).
+The [publication blueprint](PUBLICATION_BLUEPRINT.md) is a superseded historical
+planning document, not a preregistration or current evidence ledger.

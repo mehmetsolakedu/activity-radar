@@ -26,6 +26,7 @@ xcuserdata/
 # Built distribution artifacts
 *.app/
 *.zip
+!output/supplement/aiwingman-research-supplement-v1.zip
 *.dmg
 *.tar.gz
 dist/
@@ -51,3 +52,8 @@ private-fixtures/
 /native-*.jpeg
 /design-qa.md
 /VERIFICATION.md
+
+# Local manuscript build intermediates
+/tmp/
+/paper/__pycache__/
+*.pyc

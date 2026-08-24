@@ -89,6 +89,13 @@ public enum WingmanAgentPacketBuilder {
         includePromptExcerpts: Bool,
         responseLanguage: String = "tr"
     ) -> WingmanAgentPacket {
+        let normalizedResponseLanguage = responseLanguage == "en" ? "en" : "tr"
+        let untitledTask = normalizedResponseLanguage == "en"
+            ? "Untitled work window"
+            : "Adsız çalışma penceresi"
+        let methodBoundary = normalizedResponseLanguage == "en"
+            ? "Date selection brings task trees into scope by recent activity. Spawned rollouts may share cumulative token-counter history, so root and child counters are not assumed additive; only the largest observed cumulative counter per tree is used. This value is a comparison proxy, not exact billed tokens, period tokens, or a waste total. The packet carries details for only the first 12 selected busiest trees; the difference between selectedTreeCount and detailedTreeCount reports trees whose details were omitted. Rollout event counts are only observed lower bounds from the scanned root and child tails."
+            : "Tarih seçimi görev ağaçlarını son etkinlik zamanına göre kapsama alır. Spawn edilen rolloutlar kümülatif token sayaç geçmişini paylaşabilir; bu nedenle kök ve alt görev sayaçları toplamsal varsayılmaz ve her ağaç için yalnız en büyük gözlenen kümülatif sayaç kullanılır. Bu değer karşılaştırma vekilidir; exact billed token, dönem tokenı veya israf toplamı değildir. Paket yalnız seçilen en yoğun ağaçların ilk 12 tanesinin ayrıntısını taşır; selectedTreeCount ile detailedTreeCount farkı ayrıntısı kesilen ağaç sayısını gösterir. Rollout olay sayıları yalnız taranan kök ve alt görev kuyruklarının gözlenen alt sınırıdır."
         let tasks = analysis.tasks.prefix(12).enumerated().map { index, task in
             let excerpts = includePromptExcerpts
                 ? Array(task.evidence.promptSamples.prefix(12).compactMap {
@@ -100,7 +107,7 @@ public enum WingmanAgentPacketBuilder {
                 title: CodexWingmanEvidenceReader.sanitizeHumanText(
                     task.evidence.title,
                     limit: 240
-                ) ?? "Adsız çalışma penceresi",
+                ) ?? untitledTask,
                 observedCumulativeTokenProxy: task.evidence.observedCumulativeTokenProxy,
                 measuredDirectTokens: task.evidence.directTokenUsage.total,
                 childCount: task.evidence.childCount,
@@ -136,8 +143,8 @@ public enum WingmanAgentPacketBuilder {
             selectedTreeCount: analysis.tasks.count,
             detailedTreeCount: tasks.count,
             omittedDetailedTreeCount: max(0, analysis.tasks.count - tasks.count),
-            methodBoundary: "Tarih seçimi görev ağaçlarını son etkinlik zamanına göre kapsama alır. Spawn edilen rolloutlar aynı kümülatif token sayaç geçmişini taşıdığı için kök ve alt görev sayaçları toplanmaz; her ağaç için yalnız en büyük gözlenen kümülatif sayaç kullanılır. Bu değer karşılaştırma vekilidir; exact billed token, dönem tokenı veya israf toplamı değildir. Paket yalnız seçilen en yoğun ağaçların ilk 12 tanesinin ayrıntısını taşır; selectedTreeCount ile detailedTreeCount farkı ayrıntısı kesilen ağaç sayısını gösterir. Rollout olay sayıları yalnız taranan kök ve alt görev kuyruklarının gözlenen alt sınırıdır.",
-            responseLanguage: responseLanguage == "en" ? "en" : "tr",
+            methodBoundary: methodBoundary,
+            responseLanguage: normalizedResponseLanguage,
             promptExcerptsIncluded: includePromptExcerpts,
             tokenSummary: WingmanAgentPacket.TokenSummary(
                 candidateTreesObservedCumulativeTokenProxyTotal: analysis.scopeObservedCumulativeTokenProxyTotal,

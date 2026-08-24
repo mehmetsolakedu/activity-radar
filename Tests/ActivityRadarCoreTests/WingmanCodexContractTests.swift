@@ -86,6 +86,8 @@ func wingmanPacketNamesTokenProxyAndRelativeMetricsHonestly() throws {
     #expect(text.contains("omittedDetailedTreeCount"))
     #expect(text.contains(#""schemaVersion" : 6"#))
     #expect(text.contains(#""responseLanguage" : "en""#))
+    #expect(text.contains("Date selection brings task trees into scope"))
+    #expect(!text.contains("Tarih seçimi görev ağaçlarını"))
     #expect(!text.lowercased().contains("book"))
     #expect(!text.contains("activityIndexLowerBound"))
     #expect(!text.contains("measuredRecursiveTokens"))

@@ -1,4 +1,4 @@
-# Activity Radar REPLACE_WITH_RELEASE_TAG
+# AiWingman REPLACE_WITH_RELEASE_TAG
 
 ## Release status
 
@@ -8,7 +8,9 @@ Historical note: v1.2.0-beta.1 is source-only and contains no installable binary
 
 ## Requirements
 
-- macOS 13 or newer.
+- The package declares macOS 13 as its deployment target. State the exact tested
+  runtime versions in each release; do not imply real macOS 13 runtime evidence
+  unless clean-machine acceptance actually records it.
 - Codex Desktop or Codex CLI previously used by the same macOS account.
 - Codex Desktop for return-to-task links.
 - A compatible, separately installed and signed-in Codex CLI only for the
@@ -16,7 +18,7 @@ Historical note: v1.2.0-beta.1 is source-only and contains no installable binary
 
 ## Install
 
-The DMG is the recommended download. Verify it, open it, drag Activity Radar to Applications, eject the disk image, and launch the copy in Applications. The ZIP is an alternative transport for the same signed app.
+The DMG is the recommended download. Verify it, open it, drag AiWingman to Applications, eject the disk image, and launch the copy in Applications. The ZIP is an alternative transport for the same signed app.
 
 ## Verify
 
@@ -28,10 +30,10 @@ For a published release, the clean-machine acceptance asset listed below is mand
 
 ## First launch
 
-Activity Radar appears in the menu bar, not the Dock. Use the radar item or press `⌘⇧K` to show the panel.
+AiWingman appears in the menu bar, not the Dock. Use the radar item or press `⌘⇧K` to show the panel.
 
-The optional remote Wingman critique displays the exact JSON packet Activity
-Radar intends to supply and requires one-shot consent before every call; no call
+The optional remote Wingman critique makes the exact JSON packet AiWingman
+intends to supply available for inspection and requires one-shot consent before every call; no call
 runs in the background and prompt excerpts are off by default.
 
 ## Changes
@@ -45,7 +47,7 @@ runs in the background and prompt excerpts are off by default.
 
 ## Privacy, support, update, and removal
 
-Full Disk Access is not required. Activity Radar has no telemetry and never writes to `~/.codex`; its dashboard makes no network request. The optional remote critique uses the separately installed, signed-in Codex CLI only after the exact intended JSON preview and one-shot consent. Activity Radar copies the saved CLI authentication file opaquely into a private temporary home and removes it after the attempt. The read-only child sandbox prevents writes but does not guarantee that other local files cannot be read, so the previewed packet is not a sole-context guarantee. Follow the pinned installation document for safe updates and removal; never attach Codex databases, rollout files, preview packets, `auth.json`, or real-task screenshots to an issue.
+Full Disk Access is not required. AiWingman has no telemetry; its dashboard makes no network request and issues no SQL write to Codex records or schema. SQLite WAL coordination may nevertheless create or update an auxiliary `-shm` file under `~/.codex`. Opening Wingman does not invoke Codex CLI; a separate explicit compatibility check uses a private temporary opaque copy of saved CLI authentication without starting an agent turn or sending a task packet. The optional remote critique uses the separately installed, signed-in Codex CLI only after access to the exact intended JSON preview and one-shot consent. Normal completion and error paths attempt cleanup and verify absence; a crash or forced termination can leave a prefixed temporary directory that must be handled as documented in the pinned security guidance. AiWingman requests Codex CLI read-only sandbox mode, intended to deny agent-tool writes to the workspace. This is neither OS-level isolation nor a zero-filesystem-write guarantee, and it does not prove that other local files cannot be read, so the previewed packet is not a sole-context guarantee. Follow the pinned installation document for safe updates and removal; never attach Codex databases, rollout files, preview packets, `auth.json`, or real-task screenshots to an issue.
 
 - Installation: https://github.com/mehmetsolakedu/activity-radar/blob/REPLACE_WITH_RELEASE_TAG/INSTALL.md
 - Privacy: https://github.com/mehmetsolakedu/activity-radar/blob/REPLACE_WITH_RELEASE_TAG/PRIVACY.md

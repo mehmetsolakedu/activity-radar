@@ -1,0 +1,77 @@
+{
+  "evidenceClass": "post-freeze supplementary engineering regression",
+  "frozenV1CorpusModified": false,
+  "generatedAtUTC": "2026-08-23T22:52:53.903026Z",
+  "interpretationBoundary": "The six focused tests expose four previously hidden triage reason codes, with separate cases for both aging weights, plus the zero-input abstention result. This does not amend V1, establish exhaustive policy coverage, or validate human utility.",
+  "mutations": [
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityDeadlineWithinWeek",
+      "id": "deadline-within-week-weight",
+      "killed": true,
+      "rule": "deadlineWithinWeek weight 20",
+      "targetTestNamedInFailureOutput": true
+    },
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityLowImportance",
+      "id": "low-importance-weight",
+      "killed": true,
+      "rule": "lowImportance weight -10",
+      "targetTestNamedInFailureOutput": true
+    },
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityAgingWithoutPlanSevenToThirtyDays",
+      "id": "aging-seven-to-thirty-weight",
+      "killed": true,
+      "rule": "agingWithoutPlan weight 12",
+      "targetTestNamedInFailureOutput": true
+    },
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityAgingWithoutPlanThirtyDaysOrMore",
+      "id": "aging-thirty-or-more-weight",
+      "killed": true,
+      "rule": "agingWithoutPlan weight 18",
+      "targetTestNamedInFailureOutput": true
+    },
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityRecentlyActive",
+      "id": "recently-active-weight",
+      "killed": true,
+      "rule": "recentlyActive weight 8",
+      "targetTestNamedInFailureOutput": true
+    },
+    {
+      "exitStatus": 1,
+      "focusedTest": "postFreezeObservabilityEmptyPortfolio",
+      "id": "empty-portfolio-abstention",
+      "killed": true,
+      "rule": "empty portfolio insufficientEvidence result",
+      "targetTestNamedInFailureOutput": true
+    }
+  ],
+  "repositoryWorkingTreeMutated": false,
+  "schemaVersion": 1,
+  "source": {
+    "path": "Sources/ActivityRadarCore/WorkContinuity.swift",
+    "sha256": "f83f33bcf29cb4574aa6a8695590305a43bfcc2a428910cfd41791c1e556652e"
+  },
+  "status": "PASS",
+  "summary": {
+    "killedCount": 6,
+    "mutationCount": 6,
+    "survivedCount": 0
+  },
+  "swiftVersion": "swift-driver version: 1.148.6 Apple Swift version 6.3.3 (swiftlang-6.3.3.1.3 clang-2100.1.1.101)\nTarget: arm64-apple-macosx26.0",
+  "testDiscoveryMode": "command-line-tools-fallback",
+  "tests": {
+    "filter": "postFreezeObservability",
+    "passedCount": 6,
+    "path": "Tests/ActivityRadarCoreTests/WorkContinuityTests.swift",
+    "requiredCount": 6,
+    "sha256": "04c41c8d3e7c92a74b297a1f904c2014a96b65c7d959e396c2f08cfb88a6adee"
+  }
+}

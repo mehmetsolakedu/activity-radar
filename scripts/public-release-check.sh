@@ -160,27 +160,27 @@ fi
 RELEASE_NOTES_VALID="$TEMP_ROOT/release-notes-valid.md"
 sed \
   -e 's/REPLACE_WITH_RELEASE_TAG/v1.2.0-beta.3/g' \
-  -e 's/REPLACE_WITH_CONCISE_USER_VISIBLE_CHANGE/Content-free acceptance evidence is now required./g' \
+  -e 's/REPLACE_WITH_CONCISE_USER_VISIBLE_CHANGE/Fixed-schema acceptance evidence without task text or raw task identifiers is now required./g' \
   -e 's/REPLACE_WITH_RELEASE_SPECIFIC_LIMITATION/Native macOS file-panel chrome follows the system language./g' \
-  -e 's/REPLACE_WITH_DMG_ASSET_NAME/Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg/g' \
-  -e 's/REPLACE_WITH_ZIP_ASSET_NAME/Activity-Radar-1.2.0-beta.3-macOS-universal2.zip/g' \
-  -e 's/REPLACE_WITH_ACCEPTANCE_ASSET_NAME/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json/g' \
+  -e 's/REPLACE_WITH_DMG_ASSET_NAME/AiWingman-1.2.0-beta.3-macOS-universal2.dmg/g' \
+  -e 's/REPLACE_WITH_ZIP_ASSET_NAME/AiWingman-1.2.0-beta.3-macOS-universal2.zip/g' \
+  -e 's/REPLACE_WITH_ACCEPTANCE_ASSET_NAME/AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json/g' \
   Packaging/RELEASE_NOTES_TEMPLATE.md > "$RELEASE_NOTES_VALID"
 swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_VALID" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json \
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json \
   || fail "Canonical release-notes fixture was rejected"
 if swift scripts/release-notes-check.swift \
   Packaging/RELEASE_NOTES_TEMPLATE.md \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted unresolved placeholders"
 fi
 RELEASE_NOTES_MISSING_HEADING="$TEMP_ROOT/release-notes-missing-heading.md"
@@ -189,24 +189,24 @@ if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_MISSING_HEADING" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted a missing required heading"
 fi
 
 RELEASE_NOTES_EMPTY_CHANGES="$TEMP_ROOT/release-notes-empty-changes.md"
 sed \
-  -e '/^- Content-free acceptance evidence is now required\.$/d' \
+  -e '/^- Fixed-schema acceptance evidence without task text or raw task identifiers is now required\.$/d' \
   -e '/^- The dashboard and status menu can switch instantly between Turkish and English, and the selection persists across launches\.$/d' \
   "$RELEASE_NOTES_VALID" > "$RELEASE_NOTES_EMPTY_CHANGES"
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_EMPTY_CHANGES" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted an empty Changes section"
 fi
 
@@ -217,32 +217,32 @@ if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_EMPTY_LIMITATIONS" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted an empty Known limitations section"
 fi
 
 RELEASE_NOTES_FIXME="$TEMP_ROOT/release-notes-fixme.md"
-sed 's/Content-free acceptance evidence is now required\./FIXME/g' \
+sed 's/Fixed-schema acceptance evidence without task text or raw task identifiers is now required\./FIXME/g' \
   "$RELEASE_NOTES_VALID" > "$RELEASE_NOTES_FIXME"
 if swift scripts/release-notes-check.swift \
   "$RELEASE_NOTES_FIXME" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.zip \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
-  Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
+  AiWingman-1.2.0-beta.3-macOS-universal2.zip \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json >/dev/null 2>&1; then
   fail "Release-notes checker accepted a FIXME placeholder"
 fi
 
 ACCEPTANCE_WORKING="$TEMP_ROOT/acceptance-working.json"
-ACCEPTANCE_VALID="$TEMP_ROOT/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
+ACCEPTANCE_VALID="$TEMP_ROOT/AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ditto --noqtn --noextattr --norsrc \
   Packaging/CLEAN_MACHINE_ACCEPTANCE.template.json \
   "$ACCEPTANCE_WORKING"
 plutil -replace dmgAssetName \
-  -string Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  -string AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   "$ACCEPTANCE_WORKING"
 plutil -replace dmgSHA256 \
   -string 0000000000000000000000000000000000000000000000000000000000000000 \
@@ -297,7 +297,7 @@ swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 \
   > "$ACCEPTANCE_VALID"
 swift scripts/clean-machine-acceptance-check.swift \
@@ -306,7 +306,7 @@ swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 \
   || fail "Canonical clean-machine acceptance fixture was rejected"
 ACCEPTANCE_PRIVACY_ROOT="$TEMP_ROOT/acceptance-privacy"
@@ -314,14 +314,14 @@ mkdir -p "$ACCEPTANCE_PRIVACY_ROOT"
 ditto --noqtn --noextattr --norsrc \
   "$ACCEPTANCE_VALID" "$ACCEPTANCE_PRIVACY_ROOT/${ACCEPTANCE_VALID:t}"
 zsh scripts/public-privacy-scan.sh "$ACCEPTANCE_PRIVACY_ROOT" \
-  || fail "Content-free clean-machine acceptance fixture failed the privacy scan"
+  || fail "Fixed-schema clean-machine acceptance fixture failed the privacy scan"
 if swift scripts/clean-machine-acceptance-check.swift \
   "$ACCEPTANCE_VALID" \
   mehmetsolakedu/activity-radar \
   v1.2.0-beta.3 \
   987654321 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted the wrong release ID"
 fi
@@ -331,7 +331,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:58:59Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted the wrong release creation time"
 fi
@@ -345,7 +345,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a failed Gatekeeper test"
 fi
@@ -359,7 +359,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted no macOS 13.x runtime result"
 fi
@@ -373,7 +373,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a free-text tester field"
 fi
@@ -388,7 +388,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a test before draft creation"
 fi
@@ -403,7 +403,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer normalized an invalid 24:00 timestamp"
 fi
@@ -420,7 +420,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-02-28T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer normalized an invalid calendar date"
 fi
@@ -439,7 +439,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance checker accepted a duplicate JSON key"
 fi
@@ -450,7 +450,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer accepted conflicting duplicate keys"
 fi
@@ -470,7 +470,7 @@ if swift scripts/clean-machine-acceptance-check.swift \
   v1.2.0-beta.3 \
   123456789 \
   2026-08-19T23:59:00Z \
-  Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg \
+  AiWingman-1.2.0-beta.3-macOS-universal2.dmg \
   0000000000000000000000000000000000000000000000000000000000000000 >/dev/null 2>&1; then
   fail "Clean-machine acceptance canonicalizer accepted an escaped duplicate key"
 fi
@@ -480,12 +480,12 @@ swiftc -typecheck scripts/dmg-topology-check.swift
 TOPOLOGY_ROOT="$TEMP_ROOT/dmg-topology"
 TOPOLOGY_SOURCE="$TOPOLOGY_ROOT/source"
 TOPOLOGY_MOUNT="$TOPOLOGY_ROOT/mount"
-TOPOLOGY_DMG="$TOPOLOGY_ROOT/Activity-Radar-test.dmg"
-mkdir -p "$TOPOLOGY_SOURCE/Activity Radar.app" "$TOPOLOGY_MOUNT"
+TOPOLOGY_DMG="$TOPOLOGY_ROOT/AiWingman-test.dmg"
+mkdir -p "$TOPOLOGY_SOURCE/AiWingman.app" "$TOPOLOGY_MOUNT"
 ln -s /Applications "$TOPOLOGY_SOURCE/Applications"
 COPYFILE_DISABLE=1 hdiutil create \
   -quiet \
-  -volname "Activity Radar" \
+  -volname "AiWingman" \
   -fs HFS+ \
   -format UDZO \
   -srcfolder "$TOPOLOGY_SOURCE" \
@@ -620,6 +620,139 @@ if zsh scripts/public-privacy-scan.sh "$PRIVACY_RAW_UUID_ROOT" >/dev/null 2>&1; 
   fail "Privacy scanner missed a raw UUID"
 fi
 
+note "Checking compressed artifact privacy fixtures"
+COMPRESSED_PRIVACY_ROOT="$TEMP_ROOT/privacy-compressed"
+python3 - "$COMPRESSED_PRIVACY_ROOT" <<'PY'
+import base64
+import sys
+import zipfile
+import zlib
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+root = Path(sys.argv[1])
+root.mkdir(parents=True)
+
+synthetic_uuid = "123e4567-e89b-42d3-a456-426614174000"
+synthetic_payload = (
+    "/" + "Users/example/project "
+    + "codex://threads/" + synthetic_uuid + " "
+    + synthetic_uuid
+).encode("utf-8")
+private_uuid = "aaaaaaaa-bbbb-" + "4ccc-8ddd-eeeeeeeeeeee"
+private_payloads = {
+    "private-path": ("/" + "Users/private-fixture/project").encode("utf-8"),
+    "task-uri": ("codex://threads/" + private_uuid).encode("utf-8"),
+    "credential": ("ghp_" + "A" * 30).encode("utf-8"),
+    "uuid": private_uuid.encode("utf-8"),
+}
+
+
+def fixture_directory(name):
+    directory = root / name
+    directory.mkdir()
+    return directory
+
+
+def write_docx(directory, payload):
+    document = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<document><text>' + escape(payload.decode("utf-8")) + '</text></document>'
+    ).encode("utf-8")
+    content_types = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<Types><Default Extension="xml" ContentType="application/xml"/></Types>'
+    ).encode("utf-8")
+    with zipfile.ZipFile(
+        directory / "fixture.docx", "w", zipfile.ZIP_DEFLATED, compresslevel=9
+    ) as archive:
+        archive.writestr("[Content_Types].xml", content_types)
+        archive.writestr("word/document.xml", document)
+
+
+def write_pdf(directory, payload, use_ascii85=False, filter_name=None):
+    if filter_name is not None:
+        encoded = payload
+        filter_declaration = b"/" + filter_name
+    else:
+        encoded = zlib.compress(payload, level=9)
+        filter_declaration = b"/FlateDecode"
+        if use_ascii85:
+            encoded = base64.a85encode(encoded, adobe=False) + b"~>"
+            filter_declaration = b"[ /ASCII85Decode /FlateDecode ]"
+    pdf = (
+        b"%PDF-1.4\n1 0 obj\n<< /Filter "
+        + filter_declaration
+        + b" /Length "
+        + str(len(encoded)).encode("ascii")
+        + b" >>\nstream\n"
+        + encoded
+        + b"\nendstream\nendobj\n%%EOF\n"
+    )
+    (directory / "fixture.pdf").write_bytes(pdf)
+
+
+clean = fixture_directory("clean")
+write_docx(clean, synthetic_payload)
+write_pdf(clean, synthetic_payload, use_ascii85=True)
+
+for index, (name, payload) in enumerate(private_payloads.items()):
+    write_docx(fixture_directory("docx-" + name), payload)
+    write_pdf(
+        fixture_directory("pdf-" + name),
+        payload,
+        use_ascii85=bool(index % 2),
+    )
+
+malformed_docx = fixture_directory("malformed-docx")
+(malformed_docx / "fixture.docx").write_bytes(zlib.compress(b"not a ZIP archive"))
+write_pdf(
+    fixture_directory("unsupported-pdf-filter"),
+    b"content-free fixture",
+    filter_name=b"LZWDecode",
+)
+PY
+
+zsh scripts/public-privacy-scan.sh "$COMPRESSED_PRIVACY_ROOT/clean" \
+  || fail "Privacy scanner rejected clean compressed artifacts with synthetic identifiers"
+for compressed_private_fixture in \
+  docx-private-path \
+  docx-task-uri \
+  docx-credential \
+  docx-uuid \
+  pdf-private-path \
+  pdf-task-uri \
+  pdf-credential \
+  pdf-uuid; do
+  COMPRESSED_FIXTURE_LOG="$TEMP_ROOT/${compressed_private_fixture}.log"
+  if zsh scripts/public-privacy-scan.sh \
+    "$COMPRESSED_PRIVACY_ROOT/$compressed_private_fixture" \
+    >"$COMPRESSED_FIXTURE_LOG" 2>&1; then
+    fail "Privacy scanner accepted a private pattern inside a compressed artifact"
+  fi
+  grep -Fq 'Compressed artifact privacy scan found' "$COMPRESSED_FIXTURE_LOG" \
+    || fail "Compressed privacy fixture failed outside the decoded-content gate"
+  if rg -Fq \
+    -e "$PRIVATE_HOME_FIXTURE" \
+    -e "$PRIVATE_TASK_LINK" \
+    -e "$PRIVATE_CREDENTIAL_FIXTURE" \
+    -e "$PRIVATE_TASK_UUID" \
+    "$COMPRESSED_FIXTURE_LOG"; then
+    fail "Compressed privacy scanner echoed matched private content"
+  fi
+done
+
+for malformed_compressed_fixture in malformed-docx unsupported-pdf-filter; do
+  COMPRESSED_FIXTURE_LOG="$TEMP_ROOT/${malformed_compressed_fixture}.log"
+  if zsh scripts/public-privacy-scan.sh \
+    "$COMPRESSED_PRIVACY_ROOT/$malformed_compressed_fixture" \
+    >"$COMPRESSED_FIXTURE_LOG" 2>&1; then
+    fail "Privacy scanner accepted an unscannable compressed artifact"
+  fi
+  grep -Fq 'Compressed artifact privacy scan failed closed' "$COMPRESSED_FIXTURE_LOG" \
+    || fail "Malformed compressed artifact did not fail at the compressed scanner"
+done
+
 note "Checking manifest regular-file boundary"
 MANIFEST_FIXTURE_ROOT="$TEMP_ROOT/manifest-fixture"
 mkdir -p "$MANIFEST_FIXTURE_ROOT/scripts" "$MANIFEST_FIXTURE_ROOT/docs"
@@ -634,6 +767,16 @@ if zsh "$MANIFEST_FIXTURE_ROOT/scripts/export-public-source.sh" \
 fi
 grep -Fq 'Public manifest entry is not a regular non-symlink file: docs' "$MANIFEST_FIXTURE_LOG" \
   || fail "Public exporter fixture failed for a reason other than the regular-file boundary"
+printf '%s\n' 'synthetic unexpected archive' > "$MANIFEST_FIXTURE_ROOT/unexpected.zip"
+printf '%s\n' 'unexpected.zip' > "$MANIFEST_FIXTURE_ROOT/PUBLIC_SOURCE_MANIFEST.txt"
+UNEXPECTED_ZIP_LOG="$TEMP_ROOT/unexpected-zip.log"
+if zsh "$MANIFEST_FIXTURE_ROOT/scripts/export-public-source.sh" \
+  "$TEMP_ROOT/unexpected-zip-export" >"$UNEXPECTED_ZIP_LOG" 2>&1; then
+  fail "Public exporter accepted an unreviewed ZIP path"
+fi
+grep -Fq 'Forbidden generated ZIP outside the reviewed research supplement path.' \
+  "$UNEXPECTED_ZIP_LOG" \
+  || fail "Unreviewed ZIP fixture failed for a reason other than the ZIP allowlist"
 MISSING_TAG_LOG="$TEMP_ROOT/missing-release-tag.log"
 if ./scripts/package-app.sh \
   --mode public \
@@ -742,7 +885,7 @@ note "Building release products"
 swift build -c release --product ActivityRadar
 swift build -c release --product ActivityRadarDiagnostics
 
-note "Verifying content-free diagnostics"
+note "Verifying fixed-schema diagnostics without task text or raw task identifiers"
 DIAGNOSTIC_HOME="$TEMP_ROOT/activity-radar-diagnostic-home"
 DIAGNOSTIC_STATE="$DIAGNOSTIC_HOME/.codex/state_5.sqlite"
 DIAGNOSTIC_ROLLOUT="$DIAGNOSTIC_HOME/.codex/PRIVATE-PATH-SENTINEL.jsonl"
@@ -810,18 +953,18 @@ done
 PRIVATE_HOME_PREFIX='/'"Users/"
 TASK_LINK_PREFIX='codex://threads/'
 if rg -q "(${PRIVATE_HOME_PREFIX}|${TASK_LINK_PREFIX}|\"title\"[[:space:]]*:|\"cwd\"[[:space:]]*:|\"checkpoint\"[[:space:]]*:|\"id\"[[:space:]]*:)" "$DIAGNOSTIC_JSON"; then
-  fail "Content-free diagnostics exposed a forbidden task-level field"
+  fail "Fixed-schema diagnostics exposed a forbidden task-level field"
 else
   DIAGNOSTIC_FIELD_SCAN_STATUS=$?
   [[ "$DIAGNOSTIC_FIELD_SCAN_STATUS" == "1" ]] \
-    || fail "Content-free diagnostic field scan did not complete"
+    || fail "Fixed-schema diagnostic field scan did not complete"
 fi
 if rg -q 'PRIVATE-' "$DIAGNOSTIC_JSON"; then
-  fail "Content-free diagnostics exposed synthetic private content"
+  fail "Fixed-schema diagnostics exposed synthetic private content"
 else
   DIAGNOSTIC_SENTINEL_SCAN_STATUS=$?
   [[ "$DIAGNOSTIC_SENTINEL_SCAN_STATUS" == "1" ]] \
-    || fail "Content-free diagnostic sentinel scan did not complete"
+    || fail "Fixed-schema diagnostic sentinel scan did not complete"
 fi
 
 note "Rejecting network-capable application source"
@@ -842,7 +985,7 @@ fi
 swift package --package-path "$PUBLIC_SOURCE" dump-package >/dev/null
 
 note "Building and verifying a local Universal 2 bundle from the public source"
-LOCAL_APP="$TEMP_ROOT/Activity Radar.app"
+LOCAL_APP="$TEMP_ROOT/AiWingman.app"
 ACTIVITY_RADAR_BUNDLE_ID=io.github.mehmetsolakedu.ActivityRadar \
   "$PUBLIC_SOURCE/scripts/package-app.sh" \
   --mode local \
@@ -855,7 +998,7 @@ codesign --verify --deep --strict --verbose=2 "$LOCAL_APP"
 note "Rejecting newline-confusable bundle payloads"
 swift "$PUBLIC_SOURCE/scripts/dmg-topology-check.swift" bundle "$LOCAL_APP" \
   || fail "Canonical local bundle was rejected by the exact topology gate"
-TAMPERED_APP="$TEMP_ROOT/Tampered Activity Radar.app"
+TAMPERED_APP="$TEMP_ROOT/Tampered AiWingman.app"
 ditto --norsrc --noextattr --noacl "$LOCAL_APP" "$TAMPERED_APP"
 touch "$TAMPERED_APP/Contents/Resources/ActivityRadar.icns"$'\n'
 codesign --force --deep --sign - "$TAMPERED_APP" >/dev/null
@@ -870,8 +1013,8 @@ CANONICAL_ZIP_A="$TEMP_ROOT/canonical-a.zip"
 CANONICAL_ZIP_B="$TEMP_ROOT/canonical-b.zip"
 (
   cd "$TEMP_ROOT"
-  /usr/bin/zip -X -q -r "$CANONICAL_ZIP_A" "Activity Radar.app"
-  /usr/bin/zip -X -q -r "$CANONICAL_ZIP_B" "Activity Radar.app"
+  /usr/bin/zip -X -q -r "$CANONICAL_ZIP_A" "AiWingman.app"
+  /usr/bin/zip -X -q -r "$CANONICAL_ZIP_B" "AiWingman.app"
 )
 cmp -s "$CANONICAL_ZIP_A" "$CANONICAL_ZIP_B" \
   || fail "Canonical ZIP creation was not byte-for-byte stable"
@@ -885,4 +1028,4 @@ ZIP_ZERO_COMMENT_COUNT="$(unzip -Z -v "$CANONICAL_ZIP_A" | grep -Ec 'length of f
   || fail "Canonical ZIP contains per-entry extra fields or comments"
 
 note "Public-source preparation checks passed"
-print "PASS  Activity Radar public-source preparation"
+print "PASS  AiWingman public-source preparation"

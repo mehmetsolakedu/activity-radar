@@ -174,6 +174,28 @@ func wingmanCLIReadyBadgeNeverIncludesTheExecutablePath() {
 
 @MainActor
 @Test
+func openingWingmanDoesNotProbeCLIUntilExplicitlyRequested() {
+    let blockedWorkQueue = DispatchQueue(label: "ActivityRadarTests.prepare-blocked-work")
+    let workStarted = DispatchSemaphore(value: 0)
+    let releaseWork = DispatchSemaphore(value: 0)
+    blockedWorkQueue.async {
+        workStarted.signal()
+        releaseWork.wait()
+    }
+    #expect(workStarted.wait(timeout: .now() + 1) == .success)
+    defer { releaseWork.signal() }
+
+    let runner = FakeWingmanRunner(probe: fakeWingmanProbe)
+    let model = WingmanFeatureModel(runner: runner, queue: blockedWorkQueue)
+
+    model.prepare()
+
+    #expect(model.cliState == .unchecked)
+    #expect(runner.probeCount == 0)
+}
+
+@MainActor
+@Test
 func wingmanProbeUsesDedicatedQueueAndIgnoresLateResultAfterDismissal() {
     let blockedWorkQueue = DispatchQueue(label: "ActivityRadarTests.blocked-work")
     let workStarted = DispatchSemaphore(value: 0)
@@ -214,7 +236,7 @@ func wingmanProbeUsesDedicatedQueueAndIgnoresLateResultAfterDismissal() {
     #expect(!model.transmissionConsent)
     #expect(probeFinished.wait(timeout: .now() + 1) == .success)
     RunLoop.current.run(until: Date().addingTimeInterval(0.05))
-    #expect(model.cliState == .checking)
+    #expect(model.cliState == .unchecked)
 }
 
 @MainActor
@@ -261,6 +283,7 @@ private final class FakeWingmanRunner: WingmanRunning, @unchecked Sendable {
     private let probeHandler: () throws -> WingmanCLIProbe
     private let cancelHandler: () -> Void
     private var storedCancelCount = 0
+    private var storedProbeCount = 0
 
     init(
         probe: @escaping () throws -> WingmanCLIProbe,
@@ -276,10 +299,19 @@ private final class FakeWingmanRunner: WingmanRunning, @unchecked Sendable {
         return storedCancelCount
     }
 
+    var probeCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedProbeCount
+    }
+
     func prepareInvocation() -> Bool { true }
 
     func probe() throws -> WingmanCLIProbe {
-        try probeHandler()
+        lock.lock()
+        storedProbeCount += 1
+        lock.unlock()
+        return try probeHandler()
     }
 
     func invoke(

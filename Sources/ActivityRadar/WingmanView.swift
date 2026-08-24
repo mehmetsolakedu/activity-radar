@@ -121,8 +121,8 @@ struct WingmanView: View {
                 Text(copy.text("İnceleme kapsamı", "Review scope"))
                     .font(.system(size: 13, weight: .semibold))
                 Text(copy.text(
-                    "Son etkinliğe göre seçilen en yoğun 20 üst düzey pencere ve alt ajan dalları",
-                    "Up to 20 busiest top-level windows and sub-agent branches by recent activity"
+                    "Son etkinliğe göre seçilen en fazla 20 görev ağacı ve gözlenen alt ajan dalları",
+                    "Up to 20 selected task trees and observed sub-agent branches by recent activity"
                 ))
                     .font(.system(size: 12))
                     .foregroundStyle(WingmanColors.muted)
@@ -197,8 +197,8 @@ struct WingmanView: View {
                     .lineLimit(2)
             }
             Text(copy.text(
-                "\(analysis.candidateTaskCount) kapsamda → \(analysis.tasks.count) yerel analizde. Alt ajan rolloutları aynı kümülatif sayaç geçmişini taşıdığı için düğümler toplanmaz; her ağaçta yalnız en büyük gözlenen sayaç kullanılır. Bu kesin maliyet, israf, dönem, süre veya emek ölçümü değildir.",
-                "\(analysis.candidateTaskCount) in scope → \(analysis.tasks.count) in local analysis. Sub-agent rollouts share cumulative counter history, so nodes are not added; only the largest observed counter per tree is used. This is not an exact cost, waste, period, time, or effort measure."
+                "\(analysis.candidateTaskCount) kapsamda → \(analysis.tasks.count) yerel analizde. Alt ajan rolloutları kümülatif sayaç geçmişini paylaşabilir; bu nedenle düğümler toplamsal varsayılmaz ve her ağaçta yalnız en büyük gözlenen sayaç kullanılır. Bu yalnız karşılaştırma vekilidir; kesin maliyet, israf, dönem, süre veya emek ölçümü değildir.",
+                "\(analysis.candidateTaskCount) in scope → \(analysis.tasks.count) in local analysis. Sub-agent rollouts may share cumulative counter history, so nodes are not assumed additive; only the largest observed counter per tree is used. This is only a comparison proxy, not an exact cost, waste, period, time, or effort measure."
             ))
                 .font(.system(size: 11))
                 .foregroundStyle(WingmanColors.muted)
@@ -222,8 +222,8 @@ struct WingmanView: View {
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(WingmanColors.secondary)
             Text(copy.text(
-                "Onaydan sonra aşağıda tamamı gösterilen kullanıcı-türevi JSON paketi, uygulamayla gelen sabit inceleme talimatı ve çıktı şemasıyla birlikte Codex/OpenAI üzerinden işlenir. Sabit metinler görev verisi içermez. Prompt içeriği kapalıyken JSON paketi yalnız görev başlıkları ve sayısal ölçümler taşır. `--ephemeral` yalnız yerel rollout kaydını önler; hizmet tarafı saklama davranışı anlamına gelmez. Salt-okunur sandbox yazmayı engeller fakat ajanın başka yerel dosyaları okumamasını matematiksel olarak garanti etmez; araç olayı görülürse sonuç atılır.",
-                "After consent, the complete user-derived JSON packet shown below is processed through Codex/OpenAI together with the fixed review instruction and output schema shipped with the app. Those fixed texts contain no task data. With prompt content off, the JSON packet contains only task titles and numeric measurements. `--ephemeral` only prevents a local rollout record; it does not define service-side retention. The read-only sandbox prevents writes but cannot mathematically guarantee that the agent reads no other local files; the result is discarded if a tool event is observed."
+                "Onaydan sonra aşağıdaki açılır bölümde incelemeye sunulan kullanıcı-türevi JSON paketi, uygulamayla gelen sabit inceleme talimatı ve çıktı şemasıyla birlikte Codex/OpenAI üzerinden işlenir. Sabit metinler görev verisi içermez. Prompt içeriği kapalıyken görevden türetilen serbest metin yalnız temizlenmiş başlıklarla sınırlıdır; prompt örnekleri, prompt-türevi temalar, yerel inceleme sinyalleri ve sonraki adım metinleri pakete alınmaz. Paket yine zaman damgalarını ve etkinlik kesimini, durum/enum alanlarını, boolean değerleri, sayımları, sayısal ölçümleri, şema/dil meta verisini ve sabit yöntem-sınırı metnini taşır. `--ephemeral`, yerel rollout kaydı bırakmaması amaçlanan bir tur ister; hiçbir yerel artifact oluşmadığını kanıtlamaz ve hizmet tarafı saklama davranışını tanımlamaz. AiWingman, agent araçlarının workspace’e yazmasını engellemesi amaçlanan Codex CLI salt-okunur sandbox modunu ister. Bu, OS düzeyinde izolasyon veya sıfır dosya yazma garantisi değildir ve ajanın başka yerel dosyaları okumadığını kanıtlamaz; araç olayı görülürse sonuç atılır.",
+                "After consent, the user-derived JSON packet made available for inspection in the expandable section below is processed through Codex/OpenAI together with the fixed review instruction and output schema shipped with the app. Those fixed texts contain no task data. With prompt content off, task-derived free text is limited to sanitized titles; prompt excerpts, prompt-derived themes, local review signals, and next-move text are omitted. The packet still contains timestamps and the activity cutoff, status/enumeration fields, booleans, counts, numeric measurements, schema/language metadata, and a fixed method-boundary string. `--ephemeral` requests a turn intended not to save a local rollout; it does not prove that no local artifact exists or define service-side retention. AiWingman requests Codex CLI read-only sandbox mode, intended to deny agent-tool writes to the workspace. This is neither OS-level isolation nor a zero-filesystem-write guarantee, and it does not prove that the agent reads no other local files; the result is discarded if a tool event is observed."
             ))
                 .font(.system(size: 11))
                 .foregroundStyle(WingmanColors.muted)
@@ -233,26 +233,7 @@ struct WingmanView: View {
             ))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(WingmanColors.secondary)
-            if case .unavailable(let message) = model.cliState {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(message, systemImage: "terminal.fill")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(WingmanColors.secondary)
-                        .textSelection(.enabled)
-                    Button(copy.text("Codex CLI'yi yeniden denetle", "Check Codex CLI again")) {
-                        model.retryCLIProbe()
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(model.isLoading || model.isCallingAgent)
-                    .accessibilityHint(copy.text(
-                        "Codex CLI kurulumu ve oturum durumunu yeniden kontrol eder",
-                        "Checks the Codex CLI installation and login status again"
-                    ))
-                }
-                .padding(11)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(WingmanColors.amberSoft, in: RoundedRectangle(cornerRadius: 10))
-            }
+            cliCheckBlock
             Toggle(
                 copy.text("Prompt içeriği, türetilmiş temalar ve yerel sinyalleri paylaş", "Share prompt content, derived themes, and local signals"),
                 isOn: $model.includePromptExcerptsForAgent
@@ -265,8 +246,8 @@ struct WingmanView: View {
                     "Prompt critique uses the bounded raw excerpts shown in the preview, their derived themes, and local signals."
                 )
                 : copy.text(
-                    "Ham örnekler kapalıyken Wingman yalnız başlık ve sayısal sinyalleri eleştirir; prompt cümlelerini görmez.",
-                    "With raw excerpts off, Wingman reviews only titles and numeric signals; it does not see prompt sentences."
+                    "Ham örnekler kapalıyken Wingman prompt cümlelerini ve prompt-türevi metni almaz; temizlenmiş başlıklar ile sınırlı meta veri, sayım ve sayısal sinyalleri inceler.",
+                    "With raw excerpts off, Wingman omits prompt sentences and prompt-derived text; it reviews sanitized titles with bounded metadata, counts, and numeric signals."
                 ))
                 .font(.system(size: 11))
                 .foregroundStyle(WingmanColors.muted)
@@ -402,8 +383,63 @@ struct WingmanView: View {
     }
 
     @ViewBuilder
+    private var cliCheckBlock: some View {
+        switch model.cliState {
+        case .unchecked:
+            VStack(alignment: .leading, spacing: 8) {
+                Label(
+                    copy.text(
+                        "Bu pencereyi açmak Codex CLI'yi çalıştırmaz. Uzak Wingman özelliği için denetimi siz başlatın.",
+                        "Opening this window does not run Codex CLI. Start the check yourself to use the remote Wingman feature."
+                    ),
+                    systemImage: "terminal"
+                )
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(WingmanColors.secondary)
+                Button(copy.text("Codex CLI'yi denetle", "Check Codex CLI")) {
+                    model.retryCLIProbe()
+                }
+                .buttonStyle(.bordered)
+                .disabled(model.isLoading || model.isCallingAgent)
+                .accessibilityHint(copy.text(
+                    "Ajan turu veya görev paketi göndermeden sürüm, komut uyumu ve oturum durumunu denetler; bunun için kayıtlı CLI kimlik doğrulamasının geçici özel bir kopyasını kullanır",
+                    "Checks version, command compatibility, and login status without starting an agent turn or sending a task packet; it uses a private temporary copy of the saved CLI authentication"
+                ))
+            }
+            .padding(11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(WingmanColors.amberSoft, in: RoundedRectangle(cornerRadius: 10))
+        case .unavailable(let message):
+            VStack(alignment: .leading, spacing: 8) {
+                Label(message, systemImage: "terminal.fill")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(WingmanColors.secondary)
+                    .textSelection(.enabled)
+                Button(copy.text("Codex CLI'yi yeniden denetle", "Check Codex CLI again")) {
+                    model.retryCLIProbe()
+                }
+                .buttonStyle(.bordered)
+                .disabled(model.isLoading || model.isCallingAgent)
+                .accessibilityHint(copy.text(
+                    "Codex CLI kurulumu ve oturum durumunu yeniden kontrol eder",
+                    "Checks the Codex CLI installation and login status again"
+                ))
+            }
+            .padding(11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(WingmanColors.amberSoft, in: RoundedRectangle(cornerRadius: 10))
+        case .checking, .ready:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
     private var cliBadge: some View {
         switch model.cliState {
+        case .unchecked:
+            Text(copy.text("CLI denetlenmedi", "CLI not checked"))
+                .foregroundStyle(WingmanColors.muted)
+                .lineLimit(1)
         case .checking:
             HStack(spacing: 6) {
                 ProgressView().controlSize(.mini)

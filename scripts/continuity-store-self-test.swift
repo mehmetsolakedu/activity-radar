@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 @main
@@ -151,6 +152,61 @@ struct ContinuityStoreSelfTest {
             try require(filePermissions == 0o600, "store file permissions are not 600")
         }
 
+        // A store file must be private before the atomic rename makes it
+        // visible. Refuse pathname-based chmod for regular files so this test
+        // fails if persistence ever returns to create/rename-then-chmod.
+        let secureCreationRoot = fileManager.temporaryDirectory
+            .appendingPathComponent(
+                "ActivityRadarSecureCreationSelfTest-\(UUID().uuidString)",
+                isDirectory: true
+            )
+        defer { try? fileManager.removeItem(at: secureCreationRoot) }
+        let noPostRenameChmod = NoRegularFileAttributeMutationManager()
+        let temporaryFileProbe = SecureTemporaryFileProbe()
+        let secureCreationStore = RadarContinuityStore(
+            rootDirectory: secureCreationRoot,
+            fileManager: noPostRenameChmod,
+            temporaryFileObserver: { url, phase in
+                try temporaryFileProbe.observe(url, phase: phase)
+            }
+        )
+        _ = try await secureCreationStore.save(
+            capsule: RadarContinuityCapsule(nextAction: "secure creation"),
+            metadata: RadarContinuityMetadata(),
+            forTaskID: "secure-creation-task",
+            at: now
+        )
+        for filename in ["continuity-v1.json", "pseudonym-salt-v1.bin"] {
+            let url = secureCreationRoot.appendingPathComponent(filename)
+            let filePermissions = try permissions(
+                at: url,
+                fileManager: noPostRenameChmod
+            )
+            try require(
+                filePermissions == 0o600,
+                "securely created store file permissions are not 600"
+            )
+        }
+        let temporaryObservations = temporaryFileProbe.observations
+        let openedObservations = temporaryObservations.filter { $0.phase == .opened }
+        let preparedObservations = temporaryObservations.filter { $0.phase == .preparedForWrite }
+        try require(
+            openedObservations.count == 2 && preparedObservations.count == 2,
+            "secure salt/continuity writes did not expose both temporary-file phases to the probe"
+        )
+        try require(
+            openedObservations.allSatisfy { ($0.permissions & ~0o600) == 0 },
+            "store temporary file had permissions broader than 600 when opened"
+        )
+        try require(
+            preparedObservations.allSatisfy { $0.permissions == 0o600 },
+            "store temporary file was not exactly 600 before writing and rename"
+        )
+        try require(
+            temporaryObservations.allSatisfy { $0.byteCount == 0 && $0.isRegularFile },
+            "store temporary path was not an empty regular file when prepared"
+        )
+
         let unsafeRoot = fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent(".codex/activity-radar-self-test-must-not-exist", isDirectory: true)
         let unsafeStore = RadarContinuityStore(rootDirectory: unsafeRoot)
@@ -235,5 +291,57 @@ private struct StoreSelfTestFailure: LocalizedError {
 
     var errorDescription: String? {
         "Continuity store self-test failed: \(message)"
+    }
+}
+
+private final class NoRegularFileAttributeMutationManager: FileManager, @unchecked Sendable {
+    override func setAttributes(
+        _ attributes: [FileAttributeKey: Any],
+        ofItemAtPath path: String
+    ) throws {
+        var isDirectory = ObjCBool(false)
+        if fileExists(atPath: path, isDirectory: &isDirectory), !isDirectory.boolValue {
+            throw StoreSelfTestFailure(
+                message: "store attempted a pathname-based permission change after file creation"
+            )
+        }
+        try super.setAttributes(attributes, ofItemAtPath: path)
+    }
+}
+
+private final class SecureTemporaryFileProbe: @unchecked Sendable {
+    struct Observation {
+        let byteCount: Int64
+        let isRegularFile: Bool
+        let permissions: Int
+        let phase: RadarSecureTemporaryFilePhase
+    }
+
+    private let lock = NSLock()
+    private var recorded: [Observation] = []
+
+    var observations: [Observation] {
+        lock.lock()
+        defer { lock.unlock() }
+        return recorded
+    }
+
+    func observe(_ url: URL, phase: RadarSecureTemporaryFilePhase) throws {
+        guard url.lastPathComponent.hasSuffix(".tmp") else {
+            throw StoreSelfTestFailure(message: "prepared store path was not a temporary file")
+        }
+        var metadata = stat()
+        guard lstat(url.path, &metadata) == 0 else {
+            throw StoreSelfTestFailure(message: "prepared temporary store file could not be inspected")
+        }
+        let observation = Observation(
+            byteCount: metadata.st_size,
+            isRegularFile: (metadata.st_mode & S_IFMT) == S_IFREG,
+            permissions: Int(metadata.st_mode & 0o777),
+            phase: phase
+        )
+        lock.lock()
+        recorded.append(observation)
+        lock.unlock()
     }
 }

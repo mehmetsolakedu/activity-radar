@@ -32,6 +32,7 @@ enum WingmanHistoryScope: String, CaseIterable, Identifiable {
 }
 
 enum WingmanCLIState: Equatable {
+    case unchecked
     case checking
     case ready(version: String)
     case unavailable(String)
@@ -1503,7 +1504,7 @@ final class WingmanFeatureModel: ObservableObject {
     @Published private(set) var analysis: WingmanPortfolioAnalysis?
     @Published private(set) var agentReview: WingmanAgentReview?
     @Published private(set) var agentUsage: WingmanAgentUsage?
-    @Published private(set) var cliState: WingmanCLIState = .checking
+    @Published private(set) var cliState: WingmanCLIState = .unchecked
     @Published private(set) var packetPreview: WingmanAgentPacketPreview?
     @Published private(set) var errorMessage: String?
     @Published private(set) var actionMessage: String?
@@ -1540,7 +1541,6 @@ final class WingmanFeatureModel: ObservableObject {
         guard !prepared else { return }
         prepared = true
         reload()
-        probeCLI()
     }
 
     func scopeDidChange() {
@@ -1571,12 +1571,14 @@ final class WingmanFeatureModel: ObservableObject {
 
     func cancelOutstandingWork() {
         transmissionConsent = false
+        let wasProbingCLI = cliState == .checking
         cliProbeGeneration += 1
         cliExecutable = nil
+        cliState = .unchecked
         prepared = false
         if isCallingAgent {
             cancelAgentCall()
-        } else {
+        } else if wasProbingCLI {
             runner.cancel()
         }
     }

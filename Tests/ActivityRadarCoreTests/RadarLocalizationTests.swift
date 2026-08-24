@@ -52,6 +52,68 @@ func radarViewModelChangesLanguageSynchronouslyWithoutTouchingExistingDataKeys()
 }
 
 @Test
+@MainActor
+func radarOpenRecordsOnlyAnAcceptedMacOSRequest() throws {
+    let suiteName = "ActivityRadar.AcceptedOpenRequestTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    var requestedURL: URL?
+    var refreshCount = 0
+    var handoffCount = 0
+    let model = RadarViewModel(
+        defaults: defaults,
+        openURL: { url in
+            requestedURL = url
+            return true
+        },
+        refreshAfterAcceptedOpenRequest: { refreshCount += 1 }
+    )
+    model.language = .english
+    model.didOpenThread = { handoffCount += 1 }
+    let item = radarOpenFixture()
+
+    model.open(item)
+
+    #expect(requestedURL?.absoluteString == "codex://threads/123e4567-e89b-42d3-a456-426614174000")
+    #expect(model.actionMessage == "Open requested in Codex: Open request fixture")
+    #expect(model.lastOpenedID == item.id)
+    #expect(model.lastOpenedAt != nil)
+    #expect(defaults.string(forKey: "ActivityRadar.lastOpenedThreadID.v1") == item.id)
+    #expect(defaults.double(forKey: "ActivityRadar.lastOpenedAt.v1") > 0)
+    #expect(refreshCount == 1)
+    #expect(handoffCount == 1)
+}
+
+@Test
+@MainActor
+func radarOpenDoesNotRecordARejectedMacOSRequest() {
+    let suiteName = "ActivityRadar.RejectedOpenRequestTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    var refreshCount = 0
+    var handoffCount = 0
+    let model = RadarViewModel(
+        defaults: defaults,
+        openURL: { _ in false },
+        refreshAfterAcceptedOpenRequest: { refreshCount += 1 }
+    )
+    model.language = .english
+    model.didOpenThread = { handoffCount += 1 }
+
+    model.open(radarOpenFixture())
+
+    #expect(model.actionMessage?.contains("open request was not accepted") == true)
+    #expect(model.lastOpenedID == nil)
+    #expect(model.lastOpenedAt == nil)
+    #expect(defaults.string(forKey: "ActivityRadar.lastOpenedThreadID.v1") == nil)
+    #expect(defaults.double(forKey: "ActivityRadar.lastOpenedAt.v1") == 0)
+    #expect(refreshCount == 0)
+    #expect(handoffCount == 0)
+}
+
+@Test
 func radarLocalizationCoversDashboardEnumsInBothLanguages() {
     let turkish = RadarL10n(language: .turkish)
     let english = RadarL10n(language: .english)
@@ -109,5 +171,32 @@ func radarLocalizationSwitchesRelativeDatesAndSupportTextWithoutCachedLocaleLeak
     #expect(englishSupport.contains("unassigned (local build)"))
     #expect(english.aboutText(information).contains("not an official OpenAI product"))
     #expect(!englishSupport.contains("destek bilgisi"))
+}
+
+private func radarOpenFixture() -> ActivityItem {
+    let now = Date(timeIntervalSince1970: 1_787_486_400)
+    return ActivityItem(
+        id: "123e4567-e89b-42d3-a456-426614174000",
+        title: "Open request fixture",
+        projectName: "Radar tests",
+        cwd: "/tmp/radar-tests",
+        rolloutPath: "/tmp/radar-tests/rollout.jsonl",
+        executionState: .idle,
+        attentionReason: nil,
+        goalStatus: nil,
+        goalUpdatedAt: nil,
+        createdAt: now,
+        startedAt: now,
+        updatedAt: now,
+        lastActivityAt: now,
+        lastUserMessageAt: now,
+        lastMeaningfulAgentAt: nil,
+        lastFinalAnswerAt: nil,
+        lastTerminalAt: nil,
+        lastTerminalState: nil,
+        lastViewedAt: nil,
+        checkpoint: "Fixture",
+        historyComplete: true
+    )
 }
 #endif

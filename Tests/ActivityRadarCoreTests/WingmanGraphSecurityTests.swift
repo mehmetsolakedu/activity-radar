@@ -203,6 +203,35 @@ func wingmanGraphStillFailsClosedForMissingNodesAndMultipleParents() throws {
 }
 
 @Test
+func wingmanGraphRejectsBlankSpawnEdgeEndpoints() throws {
+    let cases = [
+        (name: "BlankParent", parent: "", child: "child"),
+        (name: "BlankChild", parent: "parent", child: "")
+    ]
+
+    for testCase in cases {
+        let fixture = try makeWingmanGraphFixture(name: testCase.name)
+        defer { try? FileManager.default.removeItem(at: fixture.home) }
+
+        try withWingmanGraphDatabase(at: fixture.state) { database in
+            try createWingmanGraphSchema(database)
+            let edgeStatement = try prepareWingmanGraphStatement(
+                database,
+                sql: "INSERT INTO thread_spawn_edges VALUES (?, ?);"
+            )
+            defer { sqlite3_finalize(edgeStatement) }
+            try insertWingmanGraphEdge(
+                edgeStatement,
+                parent: testCase.parent,
+                child: testCase.child
+            )
+        }
+
+        #expect(try wingmanGraphErrorDetail(home: fixture.home) == "boş görev bağlantısı ucu")
+    }
+}
+
+@Test
 func wingmanRolloutReaderRejectsSymlinkAndFIFOWithoutReadingOrBlocking() throws {
     let fixture = try makeWingmanGraphFixture(name: "UnsafeRolloutKinds")
     defer { try? FileManager.default.removeItem(at: fixture.home) }

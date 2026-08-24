@@ -1,15 +1,14 @@
 cff-version: 1.2.0
-message: "If you use AiWingman in research, please cite this software release."
+message: "No supported tag currently exists; v1.2.0-beta.2 is superseded. Cite the exact hardened source checkpoint identified here."
 title: "AiWingman"
 type: software
-version: "1.2.0-beta.2"
-date-released: 2026-08-23
+version: "source-checkpoint-99faac3"
 authors:
   - family-names: "Solak"
     given-names: "Mehmet"
     orcid: "https://orcid.org/0000-0002-0800-0334"
 repository-code: "https://github.com/mehmetsolakedu/activity-radar"
-url: "https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2"
+url: "https://github.com/mehmetsolakedu/activity-radar/tree/99faac3ef52d0da72d082706f64903a6aacd2c6d"
 license: MIT
 abstract: >-
   A local-first macOS menu-bar application for evidence-aware work continuity

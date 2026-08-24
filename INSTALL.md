@@ -2,11 +2,11 @@
 
 ## Release status
 
-[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) is the current free, source-only community beta. It has no prebuilt app. GitHub's automatic “Source code” archives are source code, not macOS installers.
+[`v1.2.0-beta.2`](https://github.com/mehmetsolakedu/activity-radar/releases/tag/v1.2.0-beta.2) is superseded and must not be built or used. Its unsigned annotated tag currently resolves to `5e212181ae177cd555ab6bb92f5f71ac8be9173a`, where later security-relevant hardening is absent. No tagged public build is currently recommended; wait for a later release that explicitly supersedes beta2. GitHub's automatic “Source code” archives are source code, not macOS installers.
 
 ## Requirements
 
-- macOS 13 or newer.
+- The package declares macOS 13 as its deployment target. Current automated builds and tests ran on later macOS versions; no real macOS 13 launch or runtime result is reported yet.
 - Codex Desktop or Codex CLI previously used by the same macOS account.
 - Codex Desktop to open the selected task through the local deep link.
 - No AiWingman account, separate API-key request or storage, OAuth flow, or plugin.
@@ -14,29 +14,18 @@
   for the optional remote Wingman critique. The dashboard works without it.
   Remote calls can consume the user's existing Codex plan or quota.
 
-## Build the current source beta
+## Source-build hold
 
-Install Xcode or a compatible Swift toolchain with the macOS SDK, then build the
-exact release tag rather than a moving branch:
-
-```sh
-git clone https://github.com/mehmetsolakedu/activity-radar.git
-cd activity-radar
-git switch --detach v1.2.0-beta.2
-swift test
-swift run ActivityRadarSelfTest
-./scripts/package-app.sh --mode local --output-app "$PWD/AiWingman.app"
-open "$PWD/AiWingman.app"
-```
-
-This local build is for the Mac that built it. Do not redistribute the resulting
-ad-hoc-signed bundle as if it were a publisher-signed download. AiWingman is a
-menu-bar app; after launch use the radar icon or press `⌘⇧K`.
+Do not build `v1.2.0-beta.2` and do not substitute a moving branch. The hardened
+checkpoint `99faac3ef52d0da72d082706f64903a6aacd2c6d` is available for technical
+audit, not as a supported installation release. Installation instructions will
+resume when a later exact source tag has passed the final gate and its release
+page explicitly states that it supersedes beta2.
 
 ## Future signed downloads
 
 The sections below apply only if a later release explicitly includes a
-Developer ID-signed and Apple-notarized app. The current beta does not.
+Developer ID-signed and Apple-notarized app. No such current release is claimed.
 
 ## Verify the download
 
@@ -83,8 +72,10 @@ modify Codex records or rollouts. SQLite may create or update an auxiliary
 **Bir Wingman Çağır** can start an optional remote critique. It first displays
 the exact user-derived JSON packet that AiWingman intends to supply to the Codex CLI and
 requires one-shot consent; no call runs in the background. Prompt excerpts are
-excluded by default. The CLI's read-only sandbox prevents writes but does not
-guarantee that the child cannot read another local file, so the preview is not a
+excluded by default. AiWingman requests Codex CLI read-only sandbox mode,
+intended to deny agent-tool writes to the workspace. This is neither OS-level
+isolation nor a zero-filesystem-write guarantee, and it does not prove that the
+child cannot read another local file, so the preview is not a
 claim that the packet is the process's only technically accessible context. Read
 [PRIVACY.md](PRIVACY.md) before consenting.
 
@@ -119,10 +110,13 @@ Do not delete or edit `~/.codex`; it belongs to Codex, not AiWingman.
   `codex login status`, then use **Codex CLI'yi yeniden denetle** in the Wingman
   sheet. The dashboard remains available without the CLI.
 - Compare the downloaded checksum again and read the release's known limitations.
-- Share only the content-free diagnostics or copied support information requested by the issue form.
+- Share only the fixed-schema diagnostics or copied support information after
+  confirming that it contains no task text or raw task identifiers.
 
-Do not disable Gatekeeper, remove quarantine with `xattr -dr`, use `sudo`, re-sign the app, or upload private Codex files to make an unverified download run. If macOS rejects a supported release, stop and report the exact public release tag plus the content-free error.
+Do not disable Gatekeeper, remove quarantine with `xattr -dr`, use `sudo`, re-sign the app, or upload private Codex files to make an unverified download run. If macOS rejects a supported release, stop and report the exact public release tag plus the task-text-free, fixed-schema error.
 
 ## Build from source
 
-Source builds are for development on the machine that builds them and use an ad-hoc signature by default. Follow the exact-tag instructions in [README.md](README.md); an ad-hoc local build is not a supported public binary release.
+No supported exact-tag source instructions are available until a new hardened
+tag is published. Do not build from a moving branch or `v1.2.0-beta.2`. A local
+ad-hoc build is not a supported public binary release.

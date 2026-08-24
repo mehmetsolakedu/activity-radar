@@ -1,4 +1,5 @@
 import CryptoKit
+import Darwin
 import Foundation
 
 // This file deliberately has no dependency on ActivityRadarCore. The app can
@@ -217,6 +218,11 @@ enum RadarContinuityStoreError: LocalizedError {
     }
 }
 
+enum RadarSecureTemporaryFilePhase: Equatable, Sendable {
+    case opened
+    case preparedForWrite
+}
+
 actor RadarContinuityStore {
     private struct ContinuityDocument: Codable {
         static let currentSchemaVersion = 1
@@ -255,6 +261,7 @@ actor RadarContinuityStore {
     private let rootDirectory: URL
     private let policy: RadarContinuityStorePolicy
     private let nowProvider: @Sendable () -> Date
+    private let temporaryFileObserver: (@Sendable (URL, RadarSecureTemporaryFilePhase) throws -> Void)?
     private var cachedSalt: Data?
 
     private var continuityURL: URL {
@@ -273,13 +280,15 @@ actor RadarContinuityStore {
         rootDirectory: URL? = nil,
         policy: RadarContinuityStorePolicy = RadarContinuityStorePolicy(),
         fileManager: FileManager = .default,
-        nowProvider: @escaping @Sendable () -> Date = { Date() }
+        nowProvider: @escaping @Sendable () -> Date = { Date() },
+        temporaryFileObserver: (@Sendable (URL, RadarSecureTemporaryFilePhase) throws -> Void)? = nil
     ) {
         self.fileManager = fileManager
         self.rootDirectory = rootDirectory
             ?? Self.defaultRootDirectory(fileManager: fileManager)
         self.policy = policy
         self.nowProvider = nowProvider
+        self.temporaryFileObserver = temporaryFileObserver
     }
 
     // Raw task IDs are used only as ephemeral hash inputs. Neither this method
@@ -633,11 +642,177 @@ actor RadarContinuityStore {
 
     private func writeRawData(_ data: Data, to url: URL) throws {
         try ensureRootDirectory()
-        try data.write(to: url, options: .atomic)
-        try fileManager.setAttributes(
-            [.posixPermissions: 0o600],
-            ofItemAtPath: url.path
+        let openedTemporaryFile = try openSecureTemporaryFile(nextTo: url)
+        let temporaryURL = openedTemporaryFile.url
+        var descriptor = openedTemporaryFile.descriptor
+        var renamed = false
+
+        defer {
+            if descriptor >= 0 {
+                _ = Darwin.close(descriptor)
+            }
+            if !renamed {
+                _ = Darwin.unlink(temporaryURL.path)
+            }
+        }
+        try temporaryFileObserver?(temporaryURL, .opened)
+
+        // A restrictive process umask may remove bits from the requested mode,
+        // so set the exact private mode on the still-empty descriptor. The file
+        // is never broader than 0600 and no pathname-based post-rename chmod is
+        // required.
+        while Darwin.fchmod(descriptor, mode_t(0o600)) != 0 {
+            if errno == EINTR { continue }
+            throw posixWriteError(
+                operation: "set secure temporary-file permissions",
+                path: temporaryURL.path,
+                errorNumber: errno
+            )
+        }
+        try temporaryFileObserver?(temporaryURL, .preparedForWrite)
+
+        try data.withUnsafeBytes { bytes in
+            guard let baseAddress = bytes.baseAddress else { return }
+            var offset = 0
+            while offset < bytes.count {
+                let written = Darwin.write(
+                    descriptor,
+                    baseAddress.advanced(by: offset),
+                    bytes.count - offset
+                )
+                if written < 0 {
+                    if errno == EINTR { continue }
+                    throw posixWriteError(
+                        operation: "write secure temporary file",
+                        path: temporaryURL.path,
+                        errorNumber: errno
+                    )
+                }
+                guard written > 0 else {
+                    throw posixWriteError(
+                        operation: "write secure temporary file",
+                        path: temporaryURL.path,
+                        errorNumber: EIO
+                    )
+                }
+                offset += written
+            }
+        }
+
+        while Darwin.fsync(descriptor) != 0 {
+            if errno == EINTR { continue }
+            throw posixWriteError(
+                operation: "sync secure temporary file",
+                path: temporaryURL.path,
+                errorNumber: errno
+            )
+        }
+
+        let closeResult = Darwin.close(descriptor)
+        descriptor = -1
+        guard closeResult == 0 else {
+            throw posixWriteError(
+                operation: "close secure temporary file",
+                path: temporaryURL.path,
+                errorNumber: errno
+            )
+        }
+
+        guard Darwin.rename(temporaryURL.path, url.path) == 0 else {
+            throw posixWriteError(
+                operation: "atomically replace store file",
+                path: url.path,
+                errorNumber: errno
+            )
+        }
+        renamed = true
+        try syncContainingDirectory(of: url)
+    }
+
+    private func openSecureTemporaryFile(
+        nextTo url: URL
+    ) throws -> (url: URL, descriptor: Int32) {
+        let parent = url.deletingLastPathComponent()
+        for _ in 0..<16 {
+            let candidate = parent.appendingPathComponent(
+                ".\(url.lastPathComponent).\(UUID().uuidString).tmp",
+                isDirectory: false
+            )
+            let descriptor = Darwin.open(
+                candidate.path,
+                O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+                mode_t(0o600)
+            )
+            if descriptor >= 0 {
+                return (candidate, descriptor)
+            }
+            let errorNumber = errno
+            if errorNumber == EEXIST { continue }
+            throw posixWriteError(
+                operation: "create secure temporary file",
+                path: candidate.path,
+                errorNumber: errorNumber
+            )
+        }
+        throw posixWriteError(
+            operation: "create uniquely named secure temporary file",
+            path: parent.path,
+            errorNumber: EEXIST
         )
+    }
+
+    private func posixWriteError(
+        operation: String,
+        path: String,
+        errorNumber: Int32
+    ) -> NSError {
+        NSError(
+            domain: NSPOSIXErrorDomain,
+            code: Int(errorNumber),
+            userInfo: [
+                NSFilePathErrorKey: path,
+                NSLocalizedDescriptionKey: "Failed to \(operation): \(String(cString: strerror(errorNumber)))"
+            ]
+        )
+    }
+
+    private func syncContainingDirectory(of url: URL) throws {
+        let directoryURL = url.deletingLastPathComponent()
+        var descriptor = Darwin.open(
+            directoryURL.path,
+            O_RDONLY | O_DIRECTORY | O_CLOEXEC
+        )
+        guard descriptor >= 0 else {
+            throw posixWriteError(
+                operation: "open store directory for sync",
+                path: directoryURL.path,
+                errorNumber: errno
+            )
+        }
+        defer {
+            if descriptor >= 0 {
+                _ = Darwin.close(descriptor)
+            }
+        }
+
+        while Darwin.fsync(descriptor) != 0 {
+            if errno == EINTR { continue }
+            throw posixWriteError(
+                operation: "sync atomic store-file replacement",
+                path: directoryURL.path,
+                errorNumber: errno
+            )
+        }
+
+        let closeResult = Darwin.close(descriptor)
+        descriptor = -1
+        guard closeResult == 0 else {
+            throw posixWriteError(
+                operation: "close synced store directory",
+                path: directoryURL.path,
+                errorNumber: errno
+            )
+        }
     }
 
     private func encoder() -> JSONEncoder {

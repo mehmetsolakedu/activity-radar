@@ -218,7 +218,7 @@ private func checkDiskInfo(
         info["Content"] as? String == "Apple_HFS",
         info["FilesystemName"] as? String == "HFS+",
         info["FilesystemType"] as? String == "hfs",
-        info["VolumeName"] as? String == "Activity Radar",
+        info["VolumeName"] as? String == "AiWingman",
         info["DeviceNode"] as? String == leafDevice,
         info["DeviceIdentifier"] as? String == String(leafDevice.dropFirst("/dev/".count)),
         info["ParentWholeDisk"] as? String == String(wholeDevice.dropFirst("/dev/".count)),

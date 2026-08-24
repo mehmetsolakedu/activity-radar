@@ -11,9 +11,9 @@ Codex Desktop or CLI
         │ query-only SQL / bounded file reads
         ▼
 AiWingman
-        │ opens codex://threads/<thread-id>
+        │ requests codex://threads/<thread-id>
         ▼
-Codex opens the selected task
+Codex URL handler (final navigation is not observed by AiWingman)
 ```
 
 AiWingman issues no SQL writes to Codex records or schema and does not
@@ -25,10 +25,20 @@ described as making the entire `~/.codex` directory immutable.
 
 ## Requirements
 
-- macOS 13 or newer.
+- The package declares macOS 13 as its deployment target. Current automated builds and tests ran on later macOS versions; no real macOS 13 launch or runtime result is reported yet.
 - Codex Desktop or Codex CLI must have been used by the same macOS user.
 - `~/.codex/state_5.sqlite` must exist and use a schema supported by this AiWingman version.
 - The Codex desktop application must register the `codex://` URL scheme for “Return to task” navigation.
+
+AiWingman accepts a task-navigation identifier only when it has the standard
+hyphenated UUID layout, normalizes its hexadecimal case, and constructs the
+route as one URL path segment. Delimiters, path traversal, raw or
+percent-encoded slashes, and other UUID layouts are rejected before a URL-open
+request is made. A successful `NSWorkspace.open`
+return is shown as **Open requested in Codex**: it means macOS accepted the URL
+open request, not that AiWingman observed Codex render the selected task. The
+legacy fixed-schema research value `taskOpened` has this same request-accepted
+meaning and is not evidence of completed navigation.
 
 No separate API-key request or storage, OAuth flow, AiWingman account, plug-in,
 or background server is required. The optional review reuses the signed-in
@@ -55,18 +65,28 @@ new ephemeral Codex CLI turn
 in-memory structured result
 ```
 
-Before every invocation, AiWingman shows the exact user-derived JSON packet it
-intends to supply on stdin. The packet is processed together with the fixed
+Before every invocation, AiWingman makes the exact user-derived JSON packet it
+intends to supply on stdin available for inspection. The packet is processed together with the fixed
 reviewer instruction and output schema shipped in the source; those fixed texts
 contain no task data. Prompt excerpts, prompt-derived themes, and local text signals
-share one separate, off-by-default choice. With it off, the remote packet
-contains task titles and numeric measurements only.
+share one separate, off-by-default choice. With it off, task-derived free text is
+limited to sanitized titles; prompt excerpts, prompt-derived themes, local review
+signals, and next-move text are omitted. The packet still contains timestamps and
+the activity cutoff, status/enumeration fields, booleans, counts, numeric
+measurements, schema/language metadata, and a fixed method-boundary string.
 Changing the scope or prompt-sharing setting clears consent, and consent is
 cleared after the attempt. The local analysis can select up to 20 task trees;
 the remote packet carries detailed rows for at most the 12 busiest selected
 trees and states the selected, detailed, and omitted-detail counts.
 
-The CLI is launched with approval disabled, read-only sandboxing, an ephemeral
+Opening the Wingman view does not invoke Codex CLI. The user must separately
+choose **Check Codex CLI**. That compatibility action validates the executable
+and runs version, command-compatibility, and login-status checks. It starts no
+agent turn and sends no AiWingman task packet, but it uses a private temporary
+Codex home with an opaque copy of the validated saved authentication file. Its
+cleanup and residue boundary is the same one documented below.
+
+The CLI is launched with approval disabled, a request for read-only sandbox mode, an ephemeral
 turn, ignored user configuration, no shell, bounded input/output/time, and a
 strict output schema. Unknown or tool events fail closed. AiWingman
 validates the saved authentication file's metadata and copies it opaquely into
@@ -81,8 +101,10 @@ Credential contents are not parsed or
 added to the packet.
 
 These controls describe the intended invocation, not an isolation proof. A
-read-only sandbox prevents writes but does not guarantee that the child process
-cannot read another local file. The exact previewed packet is therefore not a
+requested read-only sandbox mode is intended to deny agent-tool writes to the
+workspace; it is neither OS-level isolation nor a zero-filesystem-write
+guarantee, and it does not prove that the child process cannot read another
+local file. The exact previewed packet is therefore not a
 claim that it is the CLI's only technically accessible context. `--ephemeral`
 requests a turn intended not to save a local rollout; it does not prove that no
 local artifact exists and does not define service-side retention. See
@@ -97,7 +119,8 @@ This is an unofficial local integration, not a stable OpenAI API contract. A fut
 1. Open Codex and create or open at least one task.
 2. Quit and reopen AiWingman.
 3. Run `swift run ActivityRadarDiagnostics` from a source checkout.
-4. Share only the content-free diagnostic JSON—not `~/.codex` files—in a public issue.
+4. Share only the fixed-schema diagnostic JSON after confirming that it contains
+   no task text or raw task identifiers—not `~/.codex` files—in a public issue.
 
 If tasks are visible but “Return to task” fails, verify that the current Codex desktop application is installed and can open a `codex://` link.
 

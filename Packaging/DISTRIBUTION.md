@@ -5,7 +5,7 @@
 ## Local build
 
 ```sh
-./scripts/package-app.sh --mode local --output-app "/tmp/Activity Radar.app"
+./scripts/package-app.sh --mode local --output-app "/tmp/AiWingman.app"
 ```
 
 The local mode always builds both `arm64` and `x86_64`, combines them as a
@@ -21,7 +21,7 @@ First store notarization credentials in Keychain. Do not put an Apple ID
 password or API private key in this repository or in the packaging command.
 
 ```sh
-xcrun notarytool store-credentials "activity-radar-notary"
+xcrun notarytool store-credentials "aiwingman-notary"
 ```
 
 Then run the release with values belonging to the publisher:
@@ -29,7 +29,7 @@ Then run the release with values belonging to the publisher:
 ```sh
 ./scripts/package-app.sh --mode public \
   --identity "Developer ID Application: Example Publisher (TEAMID1234)" \
-  --notary-profile "activity-radar-notary" \
+  --notary-profile "aiwingman-notary" \
   --release-tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
   --bundle-id "io.github.mehmetsolakedu.ActivityRadar" \
@@ -53,7 +53,7 @@ instead of falling back when any of these gates is missing or fails:
 - accepted app and DMG notarizations whose downloaded logs contain no reported
   issues, followed by ticket stapling;
 - a canonical metadata-free ZIP and an exact UDZO/GUID/HFS+ DMG topology with
-  one read-only `Activity Radar` volume and zero-data raw free regions;
+  one read-only `AiWingman` volume and zero-data raw free regions;
 - `codesign`, `stapler`, `spctl`, archive-content, and SHA-256 verification.
 
 Existing versioned release output is never silently merged. Use `--overwrite`
@@ -71,7 +71,7 @@ notes outside the release directory so the public artifact set remains exact:
 ./scripts/publish-github-release.sh \
   --tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
-  --release-dir "./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2" \
+  --release-dir "./dist/AiWingman-1.2.0-beta.3-macOS-universal2" \
   --notes-file "/absolute/path/to/release-notes.md"
 ```
 
@@ -122,7 +122,8 @@ holder of that team's Developer ID credentials hiding data in filesystem slack.
 Do not publish the draft binary until the actual GitHub draft DMG has been
 tested with browser quarantine on clean Macs that did not build it. Verify the
 checksum, read-only mount, copy to Applications, eject, Gatekeeper launch,
-menu-bar item, About identity, content-free support text, persistent instant
+menu-bar item, About identity, fixed-schema support text with no task text or raw
+task identifiers, persistent instant
 Turkish/English interface switching in the dashboard and status menu, synthetic
 Codex return-to-task, CLI-unavailable fallback, exact transfer preview and
 consent, one synthetic remote Wingman review, application replacement, and
@@ -137,7 +138,7 @@ machine, path, task title, task identifier, screenshot, or note in the JSON:
 1. Download the draft DMG through a browser, verify its SHA-256, open it, confirm
    the mounted volume is read-only, copy the app to Applications, eject the DMG,
    and launch only the Applications copy through Gatekeeper.
-2. Confirm the menu-bar item appears. In **Activity Radar Hakkında…**, compare
+2. Confirm the menu-bar item appears. In **AiWingman Hakkında…**, compare
    the version, build, release tag, and 12-character source prefix with
    `RELEASE-MANIFEST.txt`; also confirm the independent-community-project and
    unofficial-OpenAI-product notice is visible.
@@ -147,35 +148,37 @@ machine, path, task title, task identifier, screenshot, or note in the JSON:
    transcript text. Do not paste the result into the acceptance JSON.
 4. Use a dedicated clean macOS test account whose local Codex state contains no
    real task. In Codex, create a disposable task containing only the public phrase
-   `Activity Radar clean-machine synthetic task`. Refresh Activity Radar, select
+   `AiWingman clean-machine synthetic task`. Refresh AiWingman, select
    that task, and confirm the return-to-task action opens that same task in
    Codex. Do not record or publish its generated identifier or a screenshot.
 5. With the dashboard in Turkish, use the visible language control to switch to
    **EN**. Confirm the dashboard labels change immediately without a restart,
    then open the status-item menu and confirm its commands are also in English.
-   Quit and reopen Activity Radar and confirm English persisted. Switch back to
+   Quit and reopen AiWingman and confirm English persisted. Switch back to
    **TR** and confirm both the dashboard and status-item menu return to Turkish.
    Set `interfaceLanguageSwitchPersisted` to `true` only after this complete
    sequence passes.
-6. Open **Bir Wingman Çağır**. With the network disconnected and without a
-   compatible signed-in CLI, confirm the visible CLI-unavailable message and
-   **Codex CLI'yi yeniden denetle** action. Inspect the complete exact JSON packet
-   that Activity Radar intends to supply, then change scope and the prompt-sharing
+6. Open **Bir Wingman Çağır**. Confirm that opening the sheet performs no CLI
+   check and shows **Codex CLI'yi denetle**. With the network disconnected and
+   without a compatible signed-in CLI, invoke that explicit action and confirm
+   the visible CLI-unavailable message and **Codex CLI'yi yeniden denetle** action.
+   Inspect the complete exact JSON packet
+   that AiWingman intends to supply, then change scope and the prompt-sharing
    toggle and confirm consent resets each time. Install a compatible Codex CLI,
-   sign in, reconnect the network, keep prompt excerpts off, inspect the
-   regenerated packet, and grant one-shot consent for one synthetic remote
+   sign in, reconnect the network, explicitly check the CLI, keep prompt excerpts
+   off, inspect the regenerated packet, and grant one-shot consent for one synthetic remote
    review. Confirm all structured review sections render and that no
    later/background call starts. Change prompt sharing and confirm the prior
    review and consent are cleared. The read-only CLI sandbox is not a guarantee
    that other local files cannot be read, so use only the dedicated synthetic
    account. Do not put the packet, prompt, response, title, screenshot,
    identifier, or any free text in the acceptance JSON.
-7. Change Activity Radar's date range from **30 gün** to **7 gün**, quit the app,
+7. Change AiWingman's date range from **30 gün** to **7 gün**, quit the app,
    drag the same verified candidate from the DMG to Applications, choose
    **Replace**, reopen it, and confirm **7 gün** persisted. This exercises the
    replacement path for the first installable beta; it is not evidence of a
    migration from an older public binary.
-8. Quit, move the app to Trash, optionally remove only Activity Radar's own
+8. Quit, move the app to Trash, optionally remove only AiWingman's own
    local support data and preference file, and confirm Codex data was untouched.
 
 Copy `Packaging/CLEAN_MACHINE_ACCEPTANCE.template.json` to the exact versioned
@@ -199,7 +202,7 @@ temporary file, verify that file, and only then move it to the final name. This
 avoids truncating a previously valid record when validation fails:
 
 ```sh
-CANONICAL_ACCEPTANCE="$(mktemp -t activity-radar-acceptance)"
+CANONICAL_ACCEPTANCE="$(mktemp -t aiwingman-acceptance)"
 
 swift scripts/clean-machine-acceptance-check.swift \
   --canonicalize \
@@ -208,7 +211,7 @@ swift scripts/clean-machine-acceptance-check.swift \
   "v1.2.0-beta.3" \
   "123456789" \
   "2026-08-20T10:00:00Z" \
-  "Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg" \
+  "AiWingman-1.2.0-beta.3-macOS-universal2.dmg" \
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" \
   > "$CANONICAL_ACCEPTANCE"
 
@@ -218,17 +221,17 @@ swift scripts/clean-machine-acceptance-check.swift \
   "v1.2.0-beta.3" \
   "123456789" \
   "2026-08-20T10:00:00Z" \
-  "Activity-Radar-1.2.0-beta.3-macOS-universal2.dmg" \
+  "AiWingman-1.2.0-beta.3-macOS-universal2.dmg" \
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 mv "$CANONICAL_ACCEPTANCE" \
-  "/absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
+  "/absolute/path/to/AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ```
 
 Replace the example release ID, creation time, and digest with the verified
 values. The formal shape is in
 `Packaging/CLEAN_MACHINE_ACCEPTANCE.schema.json`. The validator requires an
-exact, canonical, content-free schema and all physical checks to be JSON
+exact, canonical, fixed schema with no task text or raw task identifiers and all physical checks to be JSON
 booleans equal to `true`. This record is structured human attestation; it binds
 what was recorded to the release but cannot cryptographically prove that a
 person performed the physical tests.
@@ -241,10 +244,10 @@ mode and canonical acceptance file:
 ./scripts/publish-github-release.sh \
   --tag "v1.2.0-beta.3" \
   --team-id "TEAMID1234" \
-  --release-dir "./dist/Activity-Radar-1.2.0-beta.3-macOS-universal2" \
+  --release-dir "./dist/AiWingman-1.2.0-beta.3-macOS-universal2" \
   --notes-file "/absolute/path/to/release-notes.md" \
   --finalize-existing-draft \
-  --acceptance-file "/absolute/path/to/Activity-Radar-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
+  --acceptance-file "/absolute/path/to/AiWingman-1.2.0-beta.3-CLEAN-MACHINE-ACCEPTANCE.json"
 ```
 
 This mode rebuilds the verification snapshot, rechecks the source tag, branch

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -16,6 +17,7 @@ from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_LINE_SPACING
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.shared import Inches, Pt, RGBColor
 
 
@@ -65,6 +67,13 @@ def set_repeat_table_header(row):
     tbl_header = OxmlElement("w:tblHeader")
     tbl_header.set(qn("w:val"), "true")
     tr_pr.append(tbl_header)
+
+
+def prevent_row_split(row):
+    tr_pr = row._tr.get_or_add_trPr()
+    cant_split = OxmlElement("w:cantSplit")
+    cant_split.set(qn("w:val"), "true")
+    tr_pr.append(cant_split)
 
 
 def set_cell_shading(cell, fill):
@@ -154,6 +163,28 @@ def add_bottom_border(paragraph, color=RULE, size="6", space="6"):
     p_bdr.append(bottom)
 
 
+def add_code_frame(style):
+    """Apply a restrained shaded frame to the dedicated code paragraph style."""
+    p_pr = style._element.get_or_add_pPr()
+    shd = p_pr.find(qn("w:shd"))
+    if shd is None:
+        shd = OxmlElement("w:shd")
+        p_pr.append(shd)
+    shd.set(qn("w:fill"), TABLE_HEADER)
+
+    p_bdr = p_pr.find(qn("w:pBdr"))
+    if p_bdr is None:
+        p_bdr = OxmlElement("w:pBdr")
+        p_pr.append(p_bdr)
+    for edge in ("top", "left", "bottom", "right"):
+        border = OxmlElement(f"w:{edge}")
+        border.set(qn("w:val"), "single")
+        border.set(qn("w:sz"), "4")
+        border.set(qn("w:space"), "4")
+        border.set(qn("w:color"), RULE)
+        p_bdr.append(border)
+
+
 def add_page_number(paragraph):
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run = paragraph.add_run()
@@ -177,7 +208,7 @@ def configure_styles(doc):
     normal._element.rPr.rFonts.set(qn("w:hAnsi"), "Calibri")
     normal.font.size = Pt(11)
     normal.font.color.rgb = RGBColor.from_string(INK)
-    normal.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    normal.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
     normal.paragraph_format.space_before = Pt(0)
     normal.paragraph_format.space_after = Pt(8)
     normal.paragraph_format.line_spacing = 1.333
@@ -200,13 +231,15 @@ def configure_styles(doc):
         style.paragraph_format.keep_together = True
 
     custom = {
-        "Manuscript Title": (23, INK, True, 0, 7, WD_ALIGN_PARAGRAPH.LEFT),
+        "Manuscript Title": (20.5, INK, True, 0, 5, WD_ALIGN_PARAGRAPH.LEFT),
         "Author": (11.5, INK, True, 0, 2, WD_ALIGN_PARAGRAPH.LEFT),
-        "Affiliation": (9, MUTED, False, 0, 1, WD_ALIGN_PARAGRAPH.LEFT),
-        "Draft Notice": (9, AMBER, True, 5, 11, WD_ALIGN_PARAGRAPH.LEFT),
-        "Keywords": (9, MUTED, False, 5, 8, WD_ALIGN_PARAGRAPH.LEFT),
+        "Affiliation": (8.7, MUTED, False, 0, 1, WD_ALIGN_PARAGRAPH.LEFT),
+        "Version Line": (8.5, MUTED, True, 3, 5, WD_ALIGN_PARAGRAPH.LEFT),
+        "Abstract Heading": (13, BLUE, True, 6, 3, WD_ALIGN_PARAGRAPH.LEFT),
+        "Abstract Text": (10, INK, False, 0, 3, WD_ALIGN_PARAGRAPH.LEFT),
+        "Keywords": (8.7, MUTED, False, 3, 6, WD_ALIGN_PARAGRAPH.LEFT),
         "Caption": (8.5, MUTED, False, 4, 8, WD_ALIGN_PARAGRAPH.LEFT),
-        "Reference": (9, INK, False, 0, 5, WD_ALIGN_PARAGRAPH.LEFT),
+        "Reference": (8.5, INK, False, 0, 3, WD_ALIGN_PARAGRAPH.LEFT),
         "URL": (8.5, BLUE, False, 0, 6, WD_ALIGN_PARAGRAPH.LEFT),
         "Table Text": (8.5, INK, False, 0, 0, WD_ALIGN_PARAGRAPH.LEFT),
         "Table Header": (8.5, INK, True, 0, 0, WD_ALIGN_PARAGRAPH.LEFT),
@@ -223,9 +256,34 @@ def configure_styles(doc):
         style.paragraph_format.space_after = Pt(after)
         style.paragraph_format.alignment = alignment
         style.paragraph_format.line_spacing = 1.15 if name != "Reference" else 1.1
+        if name == "Abstract Text":
+            style.paragraph_format.line_spacing = 1.1
+            style.paragraph_format.widow_control = True
         if name == "Reference":
             style.paragraph_format.left_indent = Inches(0.2)
             style.paragraph_format.first_line_indent = Inches(-0.2)
+            style.paragraph_format.keep_together = True
+            style.paragraph_format.widow_control = True
+
+    code_style = doc.styles.add_style("Code Block", WD_STYLE_TYPE.PARAGRAPH)
+    code_style.font.name = "DejaVu Sans Mono"
+    for attr in ("ascii", "hAnsi", "eastAsia", "cs"):
+        code_style._element.rPr.rFonts.set(qn(f"w:{attr}"), "DejaVu Sans Mono")
+    code_style.font.size = Pt(8.5)
+    code_style.font.color.rgb = RGBColor.from_string(INK)
+    code_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    code_style.paragraph_format.left_indent = Inches(0.12)
+    code_style.paragraph_format.right_indent = Inches(0.12)
+    code_style.paragraph_format.space_before = Pt(6)
+    code_style.paragraph_format.space_after = Pt(7)
+    code_style.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    code_style.paragraph_format.line_spacing = Pt(11)
+    # Fenced blocks are emitted as one paragraph with manual line breaks. Keep
+    # the paragraph on one page when it fits so a lone first line is not left
+    # at the bottom of the preceding page.
+    code_style.paragraph_format.keep_together = True
+    code_style.paragraph_format.widow_control = False
+    add_code_frame(code_style)
 
 
 def create_bullet_numbering(doc):
@@ -284,6 +342,51 @@ def create_bullet_numbering(doc):
     return num_id
 
 
+def create_decimal_numbering(doc):
+    numbering = doc.part.numbering_part.element
+    abstract_ids = [int(x.get(qn("w:abstractNumId"))) for x in numbering.findall(qn("w:abstractNum"))]
+    num_ids = [int(x.get(qn("w:numId"))) for x in numbering.findall(qn("w:num"))]
+    abstract_id = max(abstract_ids, default=0) + 1
+    num_id = max(num_ids, default=0) + 1
+
+    abstract = OxmlElement("w:abstractNum")
+    abstract.set(qn("w:abstractNumId"), str(abstract_id))
+    multi = OxmlElement("w:multiLevelType")
+    multi.set(qn("w:val"), "singleLevel")
+    abstract.append(multi)
+    lvl = OxmlElement("w:lvl")
+    lvl.set(qn("w:ilvl"), "0")
+    start = OxmlElement("w:start")
+    start.set(qn("w:val"), "1")
+    num_fmt = OxmlElement("w:numFmt")
+    num_fmt.set(qn("w:val"), "decimal")
+    lvl_text = OxmlElement("w:lvlText")
+    lvl_text.set(qn("w:val"), "%1.")
+    lvl_jc = OxmlElement("w:lvlJc")
+    lvl_jc.set(qn("w:val"), "right")
+    p_pr = OxmlElement("w:pPr")
+    tabs = OxmlElement("w:tabs")
+    tab = OxmlElement("w:tab")
+    tab.set(qn("w:val"), "num")
+    tab.set(qn("w:pos"), "600")
+    tabs.append(tab)
+    ind = OxmlElement("w:ind")
+    ind.set(qn("w:left"), "600")
+    ind.set(qn("w:hanging"), "360")
+    p_pr.extend([tabs, ind])
+    lvl.extend([start, num_fmt, lvl_text, lvl_jc, p_pr])
+    abstract.append(lvl)
+    numbering.append(abstract)
+
+    num = OxmlElement("w:num")
+    num.set(qn("w:numId"), str(num_id))
+    abstract_ref = OxmlElement("w:abstractNumId")
+    abstract_ref.set(qn("w:val"), str(abstract_id))
+    num.append(abstract_ref)
+    numbering.append(num)
+    return num_id
+
+
 def apply_bullet(paragraph, num_id):
     p_pr = paragraph._p.get_or_add_pPr()
     num_pr = OxmlElement("w:numPr")
@@ -295,15 +398,41 @@ def apply_bullet(paragraph, num_id):
     p_pr.append(num_pr)
 
 
+def add_hyperlink(paragraph, url, display_text, default_size):
+    relationship_id = paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), relationship_id)
+    run = paragraph.add_run(display_text)
+    set_run_font(run, size=default_size, color=BLUE)
+    run.font.underline = True
+    paragraph._p.remove(run._r)
+    hyperlink.append(run._r)
+    paragraph._p.append(hyperlink)
+
+
 def add_inline(paragraph, text, default_size=11):
-    pattern = re.compile(r"(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)")
+    pattern = re.compile(
+        r"(\[[^\]]+\]\(https?://[^)]+\)|`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|https?://\S+)"
+    )
     cursor = 0
     for match in pattern.finditer(text):
         if match.start() > cursor:
             run = paragraph.add_run(text[cursor : match.start()])
             set_run_font(run, size=default_size, color=INK)
         token = match.group(0)
-        if token.startswith("`"):
+        if token.startswith("["):
+            link_match = re.fullmatch(r"\[([^\]]+)\]\((https?://[^)]+)\)", token)
+            if link_match is None:
+                raise ValueError(f"Malformed Markdown link: {token}")
+            add_hyperlink(paragraph, link_match.group(2), link_match.group(1), default_size)
+        elif token.startswith("http"):
+            trailing = token[len(token.rstrip(".,;:")) :]
+            url = token[: len(token) - len(trailing)] if trailing else token
+            add_hyperlink(paragraph, url, url, default_size)
+            if trailing:
+                run = paragraph.add_run(trailing)
+                set_run_font(run, size=default_size, color=INK)
+        elif token.startswith("`"):
             run = paragraph.add_run(token[1:-1])
             set_run_font(run, name="DejaVu Sans Mono", size=max(8.5, default_size - 1), color=INK)
         elif token.startswith("**"):
@@ -363,7 +492,7 @@ def build_figure(kind, output):
 
     if kind == "architecture":
         draw.text((55, 48), "ORDINARY DASHBOARD PIPELINE", font=label, fill=f"#{TEAL}")
-        add_box(draw, (55, 135, 380, 185), PALE_BLUE, "Codex local state", ["top-level task rows", "each root rollout"], bold, small)
+        add_box(draw, (55, 135, 380, 185), PALE_BLUE, "Codex local state", ["candidate task rows", "each row's own rollout"], bold, small)
         add_box(draw, (535, 135, 380, 185), PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"], bold, small)
         add_box(draw, (1015, 135, 380, 185), PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"], bold, small)
         add_box(draw, (1495, 135, 390, 185), PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"], bold, small)
@@ -378,12 +507,12 @@ def build_figure(kind, output):
         draw_arrow(draw, (435, 517), (535, 517), AMBER, dashed=True)
         draw_arrow(draw, (915, 517), (1015, 517), AMBER, dashed=True)
         draw_arrow(draw, (1395, 517), (1495, 517), RED, dashed=True)
-        draw.text((55, 684), "The pipelines are separate. Read-only child sandboxing does not prove sole-context read isolation.", font=italic, fill=f"#{RED}")
+        draw.text((55, 684), "The pipelines are separate. Requested read-only CLI mode is not OS isolation or a sole-context proof.", font=italic, fill=f"#{RED}")
     else:
         add_box(draw, (55, 120, 390, 190), PALE_BLUE, "Eligibility", ["not deferred", "complete history"], bold, small)
         add_box(draw, (535, 120, 390, 190), PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"], bold, small)
-        add_box(draw, (1015, 120, 390, 190), PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10"], bold, small)
-        add_box(draw, (1495, 75, 390, 155), PALE_TEAL, "Recommend", ["up to 3 items", "show reasons"], bold, small)
+        add_box(draw, (1015, 120, 390, 190), PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10 if runner-up"], bold, small)
+        add_box(draw, (1495, 75, 390, 155), PALE_TEAL, "Recommend", ["bounded by input limit", "show reasons"], bold, small)
         add_box(draw, (1495, 290, 390, 155), PALE_AMBER, "Suppress ranking", ["no eligible item", "weak or close scores"], bold, small)
         draw_arrow(draw, (445, 215), (535, 215), TEAL)
         draw_arrow(draw, (925, 215), (1015, 215), TEAL)
@@ -411,12 +540,13 @@ def setup_document():
 
     configure_styles(doc)
     bullet_num_id = create_bullet_numbering(doc)
+    decimal_num_id = create_decimal_numbering(doc)
 
     header = section.header
     p = header.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.space_after = Pt(3)
-    run = p.add_run("AIWINGMAN TECHNICAL REPORT")
+    run = p.add_run("AIWINGMAN TECHNICAL NOTE")
     set_run_font(run, size=8, color=MUTED, bold=True)
     add_bottom_border(p, color=RULE, size="4", space="3")
 
@@ -425,7 +555,7 @@ def setup_document():
     set_repeat_table_header(table.rows[0])
     set_table_geometry(table, [7300, 2060])
     table.rows[0].cells[0].paragraphs[0].paragraph_format.space_after = Pt(0)
-    left_run = table.rows[0].cells[0].paragraphs[0].add_run("AiWingman v1.2.0-beta.2 | 23 August 2026")
+    left_run = table.rows[0].cells[0].paragraphs[0].add_run("AiWingman Technical Note | Submission version 1.0 | 24 August 2026")
     set_run_font(left_run, size=8, color=MUTED)
     add_page_number(table.rows[0].cells[1].paragraphs[0])
     for cell in table.rows[0].cells:
@@ -437,7 +567,7 @@ def setup_document():
             el.set(qn("w:val"), "nil")
             borders.append(el)
         tc_pr.append(borders)
-    return doc, bullet_num_id
+    return doc, bullet_num_id, decimal_num_id
 
 
 def add_table(doc, raw_lines):
@@ -456,7 +586,10 @@ def add_table(doc, raw_lines):
         else:
             widths = [2050, 2450, 2250, 2610]
     elif col_count == 3:
-        widths = [2450, 2250, 4660]
+        if rows[0][0].startswith("Pipeline"):
+            widths = [2050, 3000, 4310]
+        else:
+            widths = [2450, 2250, 4660]
     else:
         width = 9360 // col_count
         widths = [width] * (col_count - 1) + [9360 - width * (col_count - 1)]
@@ -464,6 +597,7 @@ def add_table(doc, raw_lines):
     set_repeat_table_header(table.rows[0])
 
     for row_idx, row in enumerate(rows):
+        prevent_row_split(table.rows[row_idx])
         for col_idx, value in enumerate(row):
             cell = table.rows[row_idx].cells[col_idx]
             cell.text = ""
@@ -485,31 +619,88 @@ def add_table(doc, raw_lines):
     after.paragraph_format.space_after = Pt(0)
 
 
-def parse_manuscript(doc, markdown, bullet_num_id, figure_dir):
+FENCE_OPEN_RE = re.compile(r"^(?P<marker>`{3,}|~{3,})(?:[ \t]*(?P<info>.*))?$")
+
+
+def fenced_code_start(line):
+    """Return the fence marker and optional info string for a Markdown code block."""
+    match = FENCE_OPEN_RE.fullmatch(line.strip())
+    if match is None:
+        return None
+    return match.group("marker"), (match.group("info") or "").strip()
+
+
+def fenced_code_end(line, marker):
+    """Recognize a closing fence of the same character and at least the same length."""
+    candidate = line.strip()
+    return (
+        len(candidate) >= len(marker)
+        and candidate[0] == marker[0]
+        and candidate == candidate[0] * len(candidate)
+    )
+
+
+def read_fenced_code(lines, start):
+    opening = fenced_code_start(lines[start])
+    if opening is None:
+        raise ValueError(f"Expected fenced code block at line {start + 1}")
+    marker, info = opening
+    code_lines = []
+    i = start + 1
+    while i < len(lines):
+        if fenced_code_end(lines[i], marker):
+            return code_lines, info, i + 1
+        code_lines.append(lines[i].expandtabs(4))
+        i += 1
+    raise ValueError(f"Unclosed fenced code block at line {start + 1}")
+
+
+def add_code_block(doc, code_lines):
+    """Add one preformatted, left-aligned paragraph while preserving source line breaks."""
+    paragraph = doc.add_paragraph(style="Code Block")
+    run = paragraph.add_run()
+    set_run_font(run, name="DejaVu Sans Mono", size=8.5, color=INK)
+    if not code_lines:
+        run.add_text(" ")
+        return
+    for index, code_line in enumerate(code_lines):
+        if index:
+            run.add_break(WD_BREAK.LINE)
+        run.add_text(code_line)
+
+
+def parse_manuscript(doc, markdown, bullet_num_id, decimal_num_id, figure_dir):
     lines = markdown.splitlines()
     nonempty = [idx for idx, line in enumerate(lines) if line.strip()]
     if len(nonempty) < 5 or not lines[nonempty[0]].startswith("# "):
         raise ValueError("Unexpected manuscript front matter")
     title_idx = nonempty[0]
-    author_idx, affiliation_idx, orcid_idx, draft_idx = nonempty[1:5]
+    author_idx, affiliation_idx, orcid_idx, version_idx = nonempty[1:5]
 
     p = doc.add_paragraph(style="Manuscript Title")
-    add_inline(p, lines[title_idx][2:].strip(), default_size=23)
+    add_inline(p, lines[title_idx][2:].strip(), default_size=20.5)
     for style_name, idx, size in (
         ("Author", author_idx, 11.5),
-        ("Affiliation", affiliation_idx, 9),
-        ("Affiliation", orcid_idx, 9),
-        ("Draft Notice", draft_idx, 9),
+        ("Affiliation", affiliation_idx, 8.7),
+        ("Affiliation", orcid_idx, 8.7),
+        ("Version Line", version_idx, 8.5),
     ):
         p = doc.add_paragraph(style=style_name)
         add_inline(p, lines[idx].strip(), default_size=size)
 
-    i = draft_idx + 1
+    i = version_idx + 1
     in_abstract = False
+    decimal_numbering_used = False
     while i < len(lines):
         line = lines[i].strip()
         if not line:
             i += 1
+            continue
+        if fenced_code_start(lines[i]) is not None:
+            code_lines, _language, i = read_fenced_code(lines, i)
+            if doc.paragraphs and doc.paragraphs[-1].text.rstrip().endswith(":"):
+                doc.paragraphs[-1].paragraph_format.keep_with_next = True
+            add_code_block(doc, code_lines)
             continue
         if line.startswith("<!-- FIGURE:"):
             kind = line[len("<!-- FIGURE:") :].split("-->")[0].strip()
@@ -528,7 +719,8 @@ def parse_manuscript(doc, markdown, bullet_num_id, figure_dir):
             continue
         if line.startswith("## "):
             heading = line[3:].strip()
-            p = doc.add_paragraph(heading, style="Heading 1")
+            style_name = "Abstract Heading" if heading == "Abstract" else "Heading 1"
+            p = doc.add_paragraph(heading, style=style_name)
             in_abstract = heading == "Abstract"
             i += 1
             continue
@@ -553,12 +745,35 @@ def parse_manuscript(doc, markdown, bullet_num_id, figure_dir):
                 add_inline(p, lines[i].strip()[2:].strip(), default_size=11)
                 i += 1
             continue
+        if re.match(r"^\d+\. ", line):
+            # A Word numbering instance continues across non-adjacent lists when
+            # the same numId is reused. Give every distinct Markdown list its
+            # own instance so each list visibly restarts at 1.
+            if decimal_numbering_used:
+                list_num_id = create_decimal_numbering(doc)
+            else:
+                list_num_id = decimal_num_id
+                decimal_numbering_used = True
+            while i < len(lines) and re.match(r"^\d+\. ", lines[i].strip()):
+                item = re.sub(r"^\d+\.\s+", "", lines[i].strip())
+                p = doc.add_paragraph()
+                p.paragraph_format.space_after = Pt(4)
+                p.paragraph_format.line_spacing = 1.208
+                apply_bullet(p, list_num_id)
+                add_inline(p, item, default_size=11)
+                i += 1
+            continue
 
         parts = [line]
         i += 1
         while i < len(lines):
             nxt = lines[i].strip()
-            if not nxt or nxt.startswith(("## ", "### ", "- ", "| ", "<!-- FIGURE:")):
+            if (
+                not nxt
+                or nxt.startswith(("## ", "### ", "- ", "| ", "<!-- FIGURE:"))
+                or re.match(r"^\d+\. ", nxt)
+                or fenced_code_start(lines[i]) is not None
+            ):
                 break
             parts.append(nxt)
             i += 1
@@ -569,36 +784,52 @@ def parse_manuscript(doc, markdown, bullet_num_id, figure_dir):
             add_inline(p, text, default_size=8.5)
         elif text.startswith("Keywords:"):
             p = doc.add_paragraph(style="Keywords")
-            add_inline(p, text, default_size=9)
+            add_inline(p, text, default_size=8.7)
+            in_abstract = False
         elif re.match(r"^\[\d+\] ", text):
             p = doc.add_paragraph(style="Reference")
-            add_inline(p, text, default_size=9)
+            add_inline(p, text, default_size=8.5)
         elif re.fullmatch(r"https?://\S+", text):
+            if doc.paragraphs and doc.paragraphs[-1].text.rstrip().endswith(":"):
+                doc.paragraphs[-1].paragraph_format.keep_with_next = True
             p = doc.add_paragraph(style="URL")
-            run = p.add_run(text)
-            set_run_font(run, name="DejaVu Sans Mono", size=8.5, color=BLUE)
+            add_inline(p, text, default_size=8.5)
         else:
-            p = doc.add_paragraph()
             if in_abstract:
-                p.paragraph_format.left_indent = Inches(0.16)
-                p.paragraph_format.right_indent = Inches(0.16)
-                p.paragraph_format.space_before = Pt(7)
-                p.paragraph_format.space_after = Pt(7)
-                p_pr = p._p.get_or_add_pPr()
-                shd = OxmlElement("w:shd")
-                shd.set(qn("w:fill"), PALE_BLUE)
-                p_pr.append(shd)
-                in_abstract = False
-            add_inline(p, text, default_size=11)
+                p = doc.add_paragraph(style="Abstract Text")
+                add_inline(p, text, default_size=10)
+            else:
+                p = doc.add_paragraph()
+                add_inline(p, text, default_size=11)
+                # Keep two semantically inseparable blocks intact in the final
+                # submission rendering: the research-question lead-in with the
+                # first numbered item, and the frozen-hash paragraph as a unit.
+                if text.startswith("The study asks four questions."):
+                    p.paragraph_format.keep_with_next = True
+                if text.startswith("The specification SHA-256 is"):
+                    p.paragraph_format.keep_together = True
 
 
 def set_core_properties(doc):
     props = doc.core_properties
-    props.title = "AiWingman: Design and Specification-Based Evaluation of a Local Continuity Overlay for Codex Task Portfolios"
-    props.subject = "AiWingman design and specification-based continuity-policy evaluation"
+    props.title = (
+        "AiWingman: A Local Continuity Overlay for Codex Task Portfolios with "
+        "Retrospective Specification-Conformance Testing of Its Policy Layer"
+    )
+    props.subject = "AiWingman local continuity overlay and retrospective policy-layer conformance study"
     props.author = "Mehmet Solak"
-    props.keywords = "coding agents; work continuity; local software; deterministic ranking suppression; software artifact"
-    props.comments = "Draft 0.3 - author confirmation required before public deposit"
+    props.keywords = "coding agents; work continuity; local-first software; deterministic ranking suppression; specification-based testing; human oversight"
+    props.comments = "AiWingman Technical Note - submission version 1.0"
+    artifact_date = datetime(2026, 8, 24, tzinfo=timezone.utc)
+    props.created = artifact_date
+    props.modified = artifact_date
+
+
+def remove_unused_custom_xml(doc):
+    """Drop the empty template bibliography part and its generated package UUID."""
+    for relationship_id, relationship in list(doc.part.rels.items()):
+        if relationship.reltype.endswith("/customXml"):
+            doc.part.drop_rel(relationship_id)
 
 
 def main():
@@ -607,14 +838,21 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "output/docx/aiwingman-technical-report-draft.docx",
+        default=Path(__file__).resolve().parents[1] / "output/docx/aiwingman-technical-note-v1.docx",
     )
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     figure_dir = Path(__file__).resolve().parents[1] / "tmp/docx-figures"
-    doc, bullet_num_id = setup_document()
+    doc, bullet_num_id, decimal_num_id = setup_document()
     set_core_properties(doc)
-    parse_manuscript(doc, args.source.read_text(encoding="utf-8"), bullet_num_id, figure_dir)
+    parse_manuscript(
+        doc,
+        args.source.read_text(encoding="utf-8"),
+        bullet_num_id,
+        decimal_num_id,
+        figure_dir,
+    )
+    remove_unused_custom_xml(doc)
     doc.save(args.output)
     print(args.output.resolve())
 

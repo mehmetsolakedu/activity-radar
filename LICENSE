@@ -1,6 +1,20 @@
+License map:
+
+- The MIT License below applies to AiWingman software source, tests, scripts,
+  executable build and research tooling, packaging files, and software
+  documentation. This includes Python builders and research drivers.
+- Creative Commons Attribution 4.0 International (CC BY 4.0) applies to the
+  non-executable scholarly and research materials identified file-by-file in
+  `paper/LICENSE_STATUS.md`, including the manuscript, generated manuscript
+  outputs, written protocol, synthetic fixture corpus, result data, manifests,
+  summaries, and errata.
+
+The CC BY 4.0 grant does not dual-license executable software or tooling. Third-
+party works remain subject to their own terms.
+
 MIT License
 
-Copyright (c) 2026 Activity Radar contributors
+Copyright (c) 2026 AiWingman contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

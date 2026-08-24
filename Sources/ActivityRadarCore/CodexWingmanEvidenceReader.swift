@@ -377,9 +377,10 @@ public final class CodexWingmanEvidenceReader: @unchecked Sendable {
 
             let parent = SQLiteReadOnly.text(statement, index: 0)
             let child = SQLiteReadOnly.text(statement, index: 1)
-            if !parent.isEmpty && !child.isEmpty {
-                edges.append((parent, child))
+            guard !parent.isEmpty, !child.isEmpty else {
+                throw WingmanEvidenceReaderError.incompatibleTaskGraph("boş görev bağlantısı ucu")
             }
+            edges.append((parent, child))
         }
         return edges
     }

@@ -1,6 +1,6 @@
 # Privacy
 
-AiWingman is a local, unofficial companion for Codex on macOS. It does not ask for, store, or manage a separate OpenAI API key; it reuses the saved authentication mechanism of the user's separately installed and signed-in Codex CLI without parsing it. AiWingman does not sign in to an AiWingman service, send analytics, or start an agent call in the background. The optional Wingman review uses that CLI only after explicit consent, as described below.
+AiWingman is a local, unofficial companion for Codex on macOS. It does not ask for, store, or manage a separate OpenAI API key; it reuses the saved authentication mechanism of the user's separately installed and signed-in Codex CLI without parsing it. AiWingman does not sign in to an AiWingman service, send analytics, or start an agent call in the background. The optional Wingman review sends its task packet only after explicit consent. A separate CLI compatibility check runs only after an explicit **Check Codex CLI** action, as described below.
 
 ## Data it reads
 
@@ -25,7 +25,8 @@ that the whole Codex state directory is immutable.
 
 AiWingman stores its own preferences outside `~/.codex`:
 
-- macOS `UserDefaults`: last-viewed timestamps, the last opened task identifier,
+- macOS `UserDefaults`: last-viewed timestamps, the identifier and timestamp of
+  the last task whose open request macOS accepted,
   date range, interface language, and explicit lifecycle choices.
 - `~/Library/Application Support/Activity Radar`: the legacy compatibility path for local continuity plans, a pseudonym salt, and—only when the user opts in—the research ledger.
 
@@ -40,13 +41,26 @@ application decides how to handle it and has its own privacy behavior.
 
 The optional **Codex Wingman review** is a separate, user-triggered boundary. It
 uses a compatible Codex CLI already installed and signed in by the same macOS
-user. Before every invocation, AiWingman displays the exact user-derived JSON
-packet it intends to supply on stdin, including task, theme, prompt-excerpt, and UTF-8 byte
-counts, and requires one-shot consent. Consent is cleared after the attempt and
+user. Before every invocation, AiWingman makes the exact user-derived JSON
+packet it intends to supply on stdin available for inspection, including task,
+theme, prompt-excerpt, and UTF-8 byte counts, and requires one-shot consent.
+Consent is cleared after the attempt and
 whenever the scope or prompt-sharing choice changes. Prompt excerpts,
 prompt-derived themes, and local text signals are all excluded by default and
-require the same separate toggle. With that toggle off, the packet contains task
-titles and numeric measurements only. No Wingman call runs in the background.
+require the same separate toggle. With that toggle off, task-derived free text
+is limited to sanitized titles; prompt excerpts, prompt-derived themes, local
+review signals, and next-move text are omitted. The packet still contains
+timestamps and the activity cutoff, status/enumeration fields, booleans, counts,
+numeric measurements, schema/language metadata, and a fixed method-boundary
+string. No Wingman call runs in the background.
+
+Opening the Wingman sheet does not invoke Codex CLI. The separate explicit
+**Check Codex CLI** action runs signed-executable, version, command-compatibility,
+and login-status checks. It does not start an agent turn or send an AiWingman
+task packet. The check does create a private temporary Codex home containing an
+opaque copy of the validated saved authentication file; the CLI's own behavior
+during these commands is not represented as network non-interference. The same
+cleanup, residue, and process-wide operation boundaries below apply.
 
 The packet excludes raw task identifiers, full paths, working and rollout paths,
 git and account metadata, system and developer instructions, and tool outputs.
@@ -56,12 +70,14 @@ selected, detailed, and omitted-detail counts.
 
 After consent, the packet is processed through Codex/OpenAI. AiWingman
 invokes the CLI directly without a shell, with approval disabled, an ephemeral
-turn, ignored user configuration, and read-only sandboxing. Only the validated
+turn, ignored user configuration, and a request for read-only sandbox mode. Only the validated
 authentication file is copied into the isolated Codex home; user rules and
 configuration files are not copied. It rejects unknown
 or tool events and bounds packet size, output, and execution time. These controls
-limit the intended invocation, but the read-only sandbox prevents writes rather
-than proving that the child process cannot read another local file. The exact
+limit the intended invocation. The requested read-only mode is intended to deny
+agent-tool writes to the workspace; it is neither OS-level isolation nor a zero-
+filesystem-write guarantee, and it does not prove that the child process cannot
+read another local file. The exact
 preview is exact for the user-derived stdin packet AiWingman intentionally
 supplies; the fixed instruction and schema are separately documented below. It
 is not a claim that this is the only context technically accessible to the CLI. Do not use
@@ -100,13 +116,18 @@ Research logging is off by default. If enabled, each local event contains only:
 - a timestamp;
 - a fixed experimental condition.
 
-The ledger is limited to 90 days or 10,000 events. Export is manual and requires a content-free preview followed by a separate confirmation. The export excludes task titles, prompts, messages, paths, checkpoints, next actions, and waiting-on text.
+The ledger is limited to 90 days or 10,000 events. Export is manual and requires
+a fixed-schema preview followed by a separate confirmation. The export contains
+pseudonyms, timestamps, event kinds, and condition values, but excludes task
+titles, prompts, messages, paths, raw task identifiers, checkpoints, next
+actions, and waiting-on text.
 
 ## Diagnostics
 
 `swift run ActivityRadarDiagnostics` emits aggregate compatibility counts only. It excludes task identifiers, titles, messages, paths, and checkpoints. Do not attach files from `~/.codex` to a public issue.
 
-The status menu's **Destek Bilgisini Kopyala** action is also content-free. It
+The status menu's **Destek Bilgisini Kopyala** action is fixed-schema and
+task-text-free. It
 contains only the app version/build, an allowlisted release tag, the first 12
 hex characters of the packaged source revision, the running architecture, and
 the macOS version/build. Unexpected or content-bearing bundle metadata is

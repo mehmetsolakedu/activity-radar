@@ -50,7 +50,7 @@ private func sanitizedDiagnosticError(_ error: Error) -> String {
 let arguments = Array(CommandLine.arguments.dropFirst())
 if arguments.contains("--help") || arguments.contains("-h") {
     write(
-        "ActivityRadarDiagnostics emits aggregate, content-free local compatibility data.\n",
+        "ActivityRadarDiagnostics emits aggregate, fixed-schema local compatibility data with no task text or raw task identifiers.\n",
         to: .standardOutput
     )
     exit(0)

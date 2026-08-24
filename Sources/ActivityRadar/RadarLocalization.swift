@@ -76,7 +76,7 @@ struct RadarL10n: Sendable {
 
     func focusSectionTitle(_ section: RadarFocusSection) -> String {
         switch section {
-        case .lastOpened: return text("Kaldığın yer", "Where you left off")
+        case .lastOpened: return text("Son açma isteği", "Last open request")
         case .attention: return text("Dikkat", "Attention")
         case .newResults: return text("Yeni sonuçlar", "New results")
         case .whyNow: return text("Şimdi bak", "Look now")

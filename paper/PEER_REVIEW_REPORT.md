@@ -1,5 +1,20 @@
 # Peer-review audit of the AiWingman technical report
 
+> **Historical internal audit of Draft 0.1.** Retained for correction provenance;
+> this is not the current submission decision and is not external peer review.
+> Later corrections are recorded in the V1 result errata, Draft 0.5 manuscript,
+> submission-readiness record, and later claim-and-artifact reviews.
+> The later evaluation did not satisfy every broader ledger proposed below: the
+> primary result archived summary counts and failures rather than passing
+> per-fixture rows, and no frozen G4-G6 or G8 ledger was added. The current paper
+> was therefore narrowed to the checks actually archived and labels those
+> omitted gates as unreported. This historical checklist must not be read as
+> completed evidence. A later bounded related-work audit also identified native
+> Codex Activity, goal, App Server, and review surfaces plus closer 2024-2026
+> trajectory interfaces. It supersedes the “potentially defensible”
+> Codex-specific novelty wording below; the current manuscript treats direct
+> SQLite and deep-link access as compatibility risk, not novelty.
+
 **Audit date:** 23 August 2026  
 **Manuscript reviewed:** `paper/aiwingman_technical_report.md`, draft 0.1  
 **Software release claimed by the manuscript:** `v1.2.0-beta.2`, commit `5e212181ae177cd555ab6bb92f5f71ac8be9173a`  
@@ -219,8 +234,8 @@ These gates are the minimum for the current technical-report scope. They do not 
 | --- | --- | --- | --- |
 | G0 — freeze integrity | Recompute SHA-256 for specification, generator, and corpus before build and before result packaging | Every hash matches `FREEZE_MANIFEST_V1.json`; working tree and result commit recorded | Any mismatch or post-hoc expected-output edit |
 | G1 — exact policy conformance | Run the standalone Swift benchmark against all 155 frozen fixtures and emit per-fixture actual/expected records | 155/155 exact matches; zero skipped; denominator and failures retained | Any mismatch, skip, crash, or timeout |
-| G2 — local determinism | Execute each fixture 100 times in fresh processes and compare canonical serialized outputs | 15,500/15,500 byte-identical outputs, with environment fixed and recorded | Any unexplained divergence |
-| G3 — content-free policy output | Seed the five frozen private sentinels and inspect every serialized result/log | Zero sentinel occurrences outside the private input corpus | Any sentinel escape |
+| G2 — local within-process repeatability | Evaluate each fixture 100 times in one benchmark process; use evaluation 1 as the baseline and compare evaluations 2-100 | One canonical output per fixture across 15,500 evaluations and 15,345 nontrivial comparisons, with environment fixed and recorded | Any unexplained divergence |
+| G3 — five-sentinel non-propagation | Seed the five frozen private sentinels and inspect the specified serialized policy-output surface | Zero exact sentinel occurrences in that bounded surface | Any exact sentinel occurrence |
 | G4 — metamorphic policy checks | Freeze and run input-permutation, stable tie-break, irrelevant-text substitution, and bounded-limit relations | Every predeclared relation holds on every applicable seed | Any post-hoc relation deletion or violation |
 | G5 — reader and compatibility robustness | Use isolated synthetic SQLite/JSONL roots for both readers; include malformed/truncated data, incompatible schema, partial tails, duplicate/cyclic edges, extreme sizes, missing files, symlinks, and path escapes | Complete ledger; no mutation, crash, hang, unsafe path read, or silent schema acceptance | Any unsafe read, mutation, crash, unbounded resource use, or unreported exclusion |
 | G6 — privacy and remote-boundary tests | Seed sentinels in identifiers, titles, paths, prompts, checkpoints, tool events, configuration, and auth fixtures; inspect preview, diagnostics, logs, child home, and cleanup outcome | Only explicitly allowed, previewed fields appear; unexpected events invalidate output; cleanup absence is verified or failure is surfaced | Forbidden sentinel, unpreviewed field, silent cleanup failure, or accepted forbidden event |
@@ -248,7 +263,7 @@ The package is eligible for one second review only when every item below has obj
 - [ ] 13. Validate every DOI/URL and archive mutable web-source access dates; use no placeholder DOI.
 - [ ] 14. Obtain explicit author confirmation for public name/ORCID, affiliation, funding, competing interests, contribution, AI assistance, and CC BY 4.0 authority.
 - [ ] 15. Rebuild DOCX and PDF; inspect every rendered page; verify links, text extraction, tables/figures, metadata, accessibility tags/reading order, and absence of private paths or task data.
-- [ ] 16. Conduct a second blind-style review against this report. The terminal decision is **SUBMISSION-READY** only if no P0 remains, every retained claim has a cited evidence row, and all applicable gates pass.
+- [ ] 16. Conduct a second internal claim-and-artifact audit against this report. The terminal decision is **SUBMISSION-READY** only if no P0 remains, every retained claim has a cited evidence row, and all applicable gates pass.
 
 ## Recommended second-round decision rule
 

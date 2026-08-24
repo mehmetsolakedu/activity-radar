@@ -27,16 +27,18 @@ Every contribution must preserve these project invariants:
 - Do not transmit user content from dashboard, diagnostics, research-ledger, or
   background paths. No background agent call is allowed.
 - Keep the sole optional Wingman boundary user-triggered, bounded, redacted,
-  schema-validated, preceded by the exact intended JSON packet preview, and
+  schema-validated, preceded by access to the exact intended JSON packet preview, and
   protected by one-shot consent. Prompt excerpts must remain separately opt-in.
 - Never include raw task identifiers, full paths, working or rollout paths, git
   or account metadata, system or developer instructions, tool outputs,
   credentials, checkpoints, or user-authored next actions in a Wingman packet.
 - Do not describe the previewed packet as the child process's sole possible
-  context: read-only sandboxing blocks writes but does not prove that other local
-  files cannot be read. Keep the opaque temporary-auth copy private and bounded
-  to the attempted invocation.
-- Keep research logging opt-in, local, content-free, and retention-bounded.
+  context. Requesting Codex CLI read-only sandbox mode is neither OS-level
+  isolation nor a zero-filesystem-write guarantee, and it does not prove that
+  other local files cannot be read. Keep the opaque temporary-auth copy private
+  and bounded to the attempted invocation.
+- Keep research logging opt-in, local, fixed-schema, task-text-free,
+  raw-identifier-free, and retention-bounded.
 - Do not infer abandonment or obsolescence from inactivity alone.
 - Keep high-impact lifecycle decisions explicit and reversible.
 - Preserve abstention when evidence is incomplete or user intent suppresses a
@@ -49,8 +51,16 @@ remove content, not merely blur or crop it.
 
 ## Development setup
 
-The package targets macOS 13 or later and uses Swift Package Manager. A recent
-Swift toolchain with the macOS SDK is required.
+Tag `v1.2.0-beta.2` at `5e212181...` is superseded and must not be used as a
+development base. Current `main` at `2248203...` adds the supersession hold but
+retains that unsupported application source. Until the hardened branch is promoted,
+base development-only work on `codex/aiwingman-technical-preprint` at or after
+checkpoint `99faac3ef52d0da72d082706f64903a6aacd2c6d`, and inspect the exact commit
+before changing it. This review branch is not a supported installation release.
+
+The package declares macOS 13 as its deployment target and uses Swift Package
+Manager. Recorded automated builds and tests ran on later macOS versions; a
+recent Swift toolchain with the macOS SDK is required.
 
 Clone your fork, create a focused branch, and make the smallest coherent
 change. Avoid mixing formatting-only changes with behavior changes.
@@ -62,7 +72,8 @@ Run the same deterministic gates used by CI:
 ~~~sh
 swift run ActivityRadarSelfTest
 
-swift test
+command -v rg sqlite3 python3
+./scripts/run-swift-tests.sh
 
 swiftc -parse-as-library \
   Sources/ActivityRadar/RadarContinuityStore.swift \
@@ -94,7 +105,7 @@ and checkpoints. Review the generated output before attaching it to an issue
 or pull request; if that contract appears to be violated, stop and use the
 private process in [SECURITY.md](SECURITY.md).
 
-The release check first uses normal Swift test discovery. On Apple's minimal
+The enforced test runner above first uses normal Swift test discovery. On Apple's minimal
 Command Line Tools installation, it can retry with that installation's bundled
 Testing framework in a temporary scratch directory without changing system
 settings. A successful empty `swift test` invocation is not test evidence and
@@ -125,5 +136,10 @@ A pull request should:
 - Update tests and public documentation when the contract changes.
 - Avoid personal names, machine paths, account data, and real task content.
 
-By contributing, you agree that your contribution is licensed under the MIT
-License in [LICENSE](LICENSE).
+By contributing software source, tests, scripts, executable tooling, packaging,
+or software documentation, you agree that the contribution is licensed under
+the MIT License in [LICENSE](LICENSE). By contributing to a non-executable
+scholarly or research file identified in [paper/LICENSE_STATUS.md](paper/LICENSE_STATUS.md),
+you agree that the contribution is licensed under CC BY 4.0. In either case,
+you confirm that you have the right to make that contribution under the stated
+license.

@@ -45,22 +45,31 @@ CLI and saved login with `codex --version` and `codex login status`, then use
 available without the CLI. AiWingman does not install the CLI, request an
 API key, or start a background call.
 
-Before every remote call, AiWingman displays the exact user-derived JSON packet
-it intends to supply on stdin and requires one-shot consent. The packet is
+Before every remote call, AiWingman makes the exact user-derived JSON packet
+it intends to supply on stdin available for inspection and requires one-shot consent. The packet is
 processed with the fixed reviewer instruction and output schema shipped in the
 source; those fixed texts contain no task data. Prompt excerpts, prompt-derived
-themes, and local text signals are off by default; with that option off the
-packet contains task titles and numeric measurements only. Scope or
+themes, and local text signals are off by default. With that option off,
+task-derived free text is limited to sanitized titles; prompt excerpts,
+prompt-derived themes, local review signals, and next-move text are omitted.
+The packet still contains timestamps and the activity cutoff,
+status/enumeration fields, booleans, counts, numeric measurements,
+schema/language metadata, and a fixed method-boundary string. Scope or
 prompt-sharing changes clear consent, and consent is also
-cleared after an attempt. The CLI's read-only sandbox blocks writes but does not
-prove that the child cannot read another local file; the previewed packet is not
-a sole-context guarantee.
+cleared after an attempt. AiWingman requests Codex CLI read-only sandbox mode,
+intended to deny agent-tool writes to the workspace. This is neither OS-level
+isolation nor a zero-filesystem-write guarantee, and it does not prove that the
+child cannot read another local file; the previewed packet is not a sole-context
+guarantee.
 
 AiWingman validates the saved CLI authentication file's metadata and makes
 an opaque, private temporary copy for the isolated child process. It does not
 parse or include credential contents in the packet, diagnostics, or logs,
-does not copy user rules or configuration, and removes the temporary copy after
-the attempt. A timeout, cancellation,
+and does not copy user rules or configuration. Normal completion and error paths
+attempt removal and verify absence. If absence cannot be verified, the result is
+rejected and later remote operations in that app process remain blocked until
+cleanup succeeds. A crash or forced termination can still leave a documented
+prefixed temporary directory. A timeout, cancellation,
 unknown or tool event, or invalid schema intentionally discards partial output.
 Never attach the JSON packet, `auth.json`, Codex databases, or rollout files to
 a public support request.
@@ -77,7 +86,11 @@ structured data.
 
 ## Current distribution boundary
 
-Source builds are the supported collaboration path. Availability of signed,
-notarized, architecture-specific, or package-manager binaries depends on the
-artifacts explicitly published by project maintainers. Do not treat an
-unpublished or locally built artifact as an official public release.
+Tag `v1.2.0-beta.2` at `5e212181...` is superseded; do not build or use it.
+Current `main` at `2248203...` adds the supersession documentation while
+retaining that unsupported application source. The hardened review branch is available for technical audit
+and contributions, but no current tag is a supported installation release.
+Availability of signed, notarized, architecture-specific, source-only, or
+package-manager releases depends on the artifacts explicitly published by
+project maintainers. Do not treat an unpublished branch or locally built artifact
+as an official public release.

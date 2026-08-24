@@ -1,40 +1,47 @@
-status: hold_major_revision_do_not_submit
+status: final_artifacts_verified_public_commit_pending
 platform: Preprints.org
 manuscript_type: Technical Note
 title: >-
-  AiWingman: Design and Specification-Based Evaluation of a Local Continuity
-  Overlay for Codex Task Portfolios
+  AiWingman: A Local Continuity Overlay for Codex Task Portfolios with
+  Retrospective Specification-Conformance Testing of Its Policy Layer
 abstract: >-
-  Persistent coding-agent tasks can leave a user with simultaneous requests for
-  input, completed results, blocked tasks, and quiet but unfinished work.
-  AiWingman is an open-source macOS menu-bar companion that presents continuity
-  cues from locally retained Codex task evidence. Its ordinary dashboard and
-  optional Wingman review are separate data pipelines. This report evaluates
-  only the pure continuity-policy layer using a written specification and 155
-  synthetic fixtures frozen before execution. A same-project Python oracle
-  generated expected outputs as a separate implementation at the language
-  boundary from the Swift policy. The Swift runner matched all 155 fixtures and
-  produced one canonical digest across 15,500 within-process evaluations. All
-  100 fresh benchmark processes produced the same corpus digest on one arm64
-  Mac. Five seeded content sentinels produced zero occurrences in serialized
-  policy outputs, and 70 unconfirmed lifecycle fixtures produced zero
-  confirmed-obsolete or confirmed-abandoned states. Two simplified technical
-  baselines agreed with 40/75 and 59/75 triage decisions and violated 35 and 16
-  frozen no-recommendation cases. These results establish only specification
-  conformance within the frozen synthetic scope; they do not establish external
-  validation, human benefit, comparative superiority, exact token cost or
-  waste, security isolation, cross-architecture determinism, reader validity,
-  or stable Codex compatibility.
+  Persistent coding-agent work can leave simultaneous input requests, completed
+  results, blockers, and quiet unfinished tasks.
+  AiWingman is an open-source macOS menu-bar companion that derives continuity
+  cues from locally retained Codex task evidence. Its dashboard and optional
+  Wingman review are separate; obsolete or abandoned labels require reversible
+  user confirmation, not silence or age. This Technical Note describes the
+  system but evaluates only its pure
+  continuity-policy layer, excluding both readers, the interface, graph signals,
+  token accounting, Codex compatibility, and remote-review quality. The
+  evaluation was retrospective and same-project: the Swift policy predated the
+  written specification and 155 expected-output fixtures. The post-implementation
+  specification and fixtures were frozen before the archived run, were not
+  preregistered, and may reflect implementation knowledge; repository chronology
+  does not exclude earlier exploratory or unarchived runs. A separately
+  implemented same-project Python oracle generated expected outputs from the
+  written rules. The Swift runner matched 155/155 fixtures. For each fixture,
+  evaluations 2-100 matched evaluation 1 (15,500 evaluations; 15,345 nontrivial
+  comparisons). A post-freeze supplementary driver launched 100 fresh processes
+  on one arm64 Mac; all returned the same corpus digest. Across 70 unconfirmed
+  lifecycle fixtures, none produced a confirmed-obsolete or confirmed-abandoned
+  state. Later exact-commit CI reproduced both the conformance result and digest
+  on hosted arm64 and native x86_64 macOS runners. The findings establish exact
+  agreement with the 155 frozen same-project specification-derived fixture
+  outputs, not general specification correctness. They do not establish external
+  validation, human benefit, superiority, exact token cost or waste, security
+  isolation, broad determinism, macOS 13 runtime compatibility, or stable Codex
+  compatibility.
 keywords:
   - coding agents
   - work continuity
-  - local software
+  - local-first software
   - deterministic ranking suppression
   - specification-based testing
   - human oversight
 subjects:
   primary: Computer Science and Mathematics
-  secondary: Artificial Intelligence and Machine Learning
+  secondary: Software
 authors:
   - given_name: Mehmet
     family_name: Solak
@@ -44,7 +51,11 @@ authors:
       University, Siirt, Türkiye
     email: mehmetsolak@siirt.edu.tr
     corresponding_author: true
+license_status: CONFIRMED
 license: CC BY 4.0
+research_package_license_status: CONFIRMED
+research_package_license: CC BY 4.0
+license_effective_date: 2026-08-24
 software:
   license: MIT
   repository: https://github.com/mehmetsolakedu/activity-radar
@@ -54,27 +65,60 @@ software:
   historical_ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32648392604
   policy_runner_commit: fa5186e5d04fedfd75daac72e533a1daf9dbfa89
   result_package_commit: e46686588793173d1b299b1829a92dbab7e9528d
-  current_revision_commit: PUBLIC_CHECKPOINT_PENDING
-  current_revision_ci_record: PUBLIC_CI_PENDING
+  evaluated_source_checkpoint: 99faac3ef52d0da72d082706f64903a6aacd2c6d
+  evaluated_source_ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32659669054
+  manuscript_revision: Submission version 1.0
+  manuscript_artifact_checkpoint: paper/PUBLICATION_ARTIFACT_MANIFEST.md
 declarations:
-  funding: AUTHOR_CONFIRMATION_REQUIRED
-  competing_interests: AUTHOR_CONFIRMATION_REQUIRED
-  author_contribution: AUTHOR_CONFIRMATION_REQUIRED
+  funding: This research received no external funding.
+  competing_interests: >-
+    The author is the creator and maintainer of AiWingman, the open-source
+    software evaluated in this manuscript; this relationship is disclosed. The
+    author declares no other financial or non-financial competing interests.
+  author_contribution: >-
+    Mehmet Solak conceived the product direction and study, defined the intended
+    use and policy, directed and reviewed iterative software and research-package
+    development, verified the reported claims, references, results, and
+    artifacts, wrote and revised the manuscript with the disclosed AI assistance,
+    and is the sole author. Mehmet Solak accepts full responsibility for the work.
+  corresponding_author_responsibilities: >-
+    Mehmet Solak accepts responsibility for answering questions or comments
+    about the preprint and for providing the reported data or materials when
+    reasonably requested and legally permitted.
   ai_assistance: >-
-    OpenAI Codex assisted with source discovery, manuscript structuring, initial
-    language drafting, code inspection, and document formatting. Before deposit,
-    the named author must verify every claim and reference, revise the prose as
-    needed, and assume full responsibility. AI is not listed as an author.
-  ai_assistance_status: AUTHOR_CONFIRMATION_REQUIRED
+    OpenAI Codex assisted with source discovery, code inspection, literature
+    organization, drafting and revising the specification, Python oracle,
+    synthetic fixtures, benchmark runner, tests, manuscript, document
+    formatting, and author-directed internal adversarial reviews of claims,
+    methods, security boundaries, and publication artifacts. Those same-project
+    reviews were not human or external peer review and were not independent validation.
+    The named author has reviewed and verified every claim, reference, result,
+    and generated artifact, revised the prose as needed, and accepts full
+    responsibility. AI is not listed as an author.
+  ai_assistance_status: CONFIRMED_BY_NAMED_AUTHOR_2026-08-24
   ethics_and_data: >-
-    This report describes software architecture and synthetic engineering
-    evaluation. It collected no human-participant, animal, survey, interview,
-    or private task-history data. No inference about user efficacy is made.
+    This report describes software architecture and a synthetic engineering
+    evaluation. The reported evaluation used only synthetic fixtures; it
+    recruited no participants and did not export or analyze private task
+    histories as research data. It involved no animal, plant, survey, or
+    interview data. No inference about user efficacy is made.
 submission_files:
-  editable_main: output/docx/aiwingman-technical-report-draft.docx
-  review_pdf: output/pdf/aiwingman-technical-report-draft.pdf
+  editable_main: output/docx/aiwingman-technical-note-v1.docx
+  author_reference_pdf: output/pdf/aiwingman-technical-note-v1.pdf
+  research_supplement: output/supplement/aiwingman-research-supplement-v1.zip
   canonical_source: paper/aiwingman_technical_report.md
 permanence_attestations:
-  distribution_license_to_preprints_org: AUTHOR_CONFIRMATION_REQUIRED
-  right_to_grant_license: AUTHOR_CONFIRMATION_REQUIRED
-  permanent_record_and_third_party_mirroring_understood: AUTHOR_CONFIRMATION_REQUIRED
+  distribution_license_to_preprints_org: true
+  right_to_grant_license: true
+  permanent_record_and_third_party_mirroring_understood: true
+rights_and_policy_attestations:
+  no_prior_formal_publication_or_acceptance: true
+  no_conflicting_duplicate_preprint: true
+  rights_to_all_included_materials: true
+  no_private_personal_credential_or_restricted_material: true
+  institution_funder_and_intended_journal_policies_permit_preprint: true
+  no_planned_patent_filing_is_prejudiced_by_disclosure: true
+author_confirmation:
+  status: CONFIRMED
+  date: 2026-08-24
+  phrase: YAZAR BEYANLARINI ONAYLIYORUM

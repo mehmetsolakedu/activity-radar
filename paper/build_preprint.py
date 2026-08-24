@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the AiWingman technical report as a searchable, submission-ready PDF."""
+"""Build the AiWingman technical report as a searchable review PDF."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     BaseDocTemplate,
+    CondPageBreak,
     Flowable,
     Frame,
     KeepTogether,
@@ -28,6 +29,7 @@ from reportlab.platypus import (
     PageBreak,
     PageTemplate,
     Paragraph,
+    Preformatted,
     Spacer,
     Table,
     TableStyle,
@@ -97,8 +99,8 @@ def styles():
             "Title",
             parent=base["Title"],
             fontName="SansBold",
-            fontSize=20.5,
-            leading=23.5,
+            fontSize=19,
+            leading=22,
             textColor=INK,
             alignment=TA_LEFT,
             spaceAfter=8,
@@ -119,12 +121,12 @@ def styles():
             textColor=MUTED,
             spaceAfter=1,
         ),
-        "draft": ParagraphStyle(
-            "Draft",
+        "version": ParagraphStyle(
+            "Version",
             fontName="SansBold",
             fontSize=8.1,
             leading=10.5,
-            textColor=AMBER,
+            textColor=MUTED,
             spaceBefore=5,
             spaceAfter=10,
         ),
@@ -134,8 +136,8 @@ def styles():
             fontSize=13.2,
             leading=16,
             textColor=INK,
-            spaceBefore=12,
-            spaceAfter=5,
+            spaceBefore=10,
+            spaceAfter=4.5,
             keepWithNext=True,
         ),
         "h2": ParagraphStyle(
@@ -144,20 +146,30 @@ def styles():
             fontSize=10.7,
             leading=13,
             textColor=BLUE,
-            spaceBefore=9,
-            spaceAfter=3.5,
+            spaceBefore=7.5,
+            spaceAfter=3,
             keepWithNext=True,
         ),
         "body": ParagraphStyle(
             "Body",
             fontName="Body",
             fontSize=9.35,
-            leading=12.05,
-            alignment=TA_JUSTIFY,
+            leading=11.9,
+            alignment=TA_LEFT,
             textColor=INK,
-            spaceAfter=5.5,
+            spaceAfter=5,
             allowWidows=0,
             allowOrphans=0,
+        ),
+        "code": ParagraphStyle(
+            "CodeBlock",
+            fontName="Courier",
+            fontSize=7.4,
+            leading=9.4,
+            alignment=TA_LEFT,
+            textColor=INK,
+            spaceBefore=0,
+            spaceAfter=0,
         ),
         "bullet": ParagraphStyle(
             "Bullet",
@@ -175,6 +187,7 @@ def styles():
             leading=12,
             alignment=TA_JUSTIFY,
             textColor=INK,
+            spaceAfter=5.5,
         ),
         "keywords": ParagraphStyle(
             "Keywords",
@@ -202,7 +215,7 @@ def styles():
             textColor=MUTED,
             spaceBefore=5,
             spaceAfter=4,
-            keepWithNext=True,
+            keepWithNext=False,
         ),
         "table": ParagraphStyle(
             "TableCell",
@@ -221,13 +234,13 @@ def styles():
         "reference": ParagraphStyle(
             "Reference",
             fontName="Body",
-            fontSize=8.15,
-            leading=10.3,
+            fontSize=7.3,
+            leading=8.55,
             alignment=TA_LEFT,
             leftIndent=12,
             firstLineIndent=-12,
             textColor=INK,
-            spaceAfter=4,
+            spaceAfter=0.5,
         ),
         "url": ParagraphStyle(
             "URL",
@@ -315,7 +328,7 @@ def architecture_figure(width: float) -> Drawing:
     d.add(String(14, 218, "ORDINARY DASHBOARD PIPELINE", fontName="SansBold", fontSize=7.3, fillColor=TEAL))
     d.add(String(14, 111, "OPTIONAL WINGMAN PIPELINE", fontName="SansBold", fontSize=7.3, fillColor=AMBER))
 
-    box(d, 14, 139, 102, 60, PALE_BLUE, "Codex local state", ["top-level task rows", "each root rollout"])
+    box(d, 14, 139, 102, 60, PALE_BLUE, "Codex local state", ["candidate task rows", "each row's own rollout"])
     box(d, 135, 139, 102, 60, PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"])
     box(d, 256, 139, 102, 60, PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"])
     box(d, 377, 139, 102, 60, PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"])
@@ -334,7 +347,7 @@ def architecture_figure(width: float) -> Drawing:
         String(
             14,
             13,
-            "The pipelines are separate. Read-only child sandboxing does not prove sole-context read isolation.",
+            "The pipelines are separate. Requested read-only CLI mode is not OS isolation or a sole-context proof.",
             fontName="SansItalic",
             fontSize=6.6,
             fillColor=RED,
@@ -349,15 +362,17 @@ def triage_figure(width: float) -> Drawing:
     d.add(Rect(0, 0, width, height, rx=10, ry=10, fillColor=PAPER, strokeColor=RULE))
     box(d, 14, 92, 105, 60, PALE_BLUE, "Eligibility", ["not deferred", "complete history"])
     box(d, 138, 92, 105, 60, PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"])
-    box(d, 262, 92, 105, 60, PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10"])
-    box(d, 386, 106, 93, 46, PALE_TEAL, "Recommend", ["up to 3 items", "show reasons"])
+    box(d, 262, 92, 105, 60, PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10 if runner-up"])
+    box(d, 386, 106, 93, 46, PALE_TEAL, "Recommend", ["bounded by input limit", "show reasons"])
     box(d, 386, 40, 93, 46, PALE_AMBER, "Suppress ranking", ["no eligible item", "weak/close scores"])
     arrow(d, 119, 122, 138, 122, TEAL)
     arrow(d, 243, 122, 262, 122, TEAL)
     arrow(d, 367, 128, 386, 128, BLUE)
     arrow(d, 367, 108, 386, 63, AMBER)
     d.add(String(370, 138, "PASS", fontName="SansBold", fontSize=6.2, fillColor=BLUE))
-    d.add(String(369, 73, "FAIL", fontName="SansBold", fontSize=6.2, fillColor=AMBER))
+    # Keep the label left of the descending arrow so the stroke does not
+    # obscure the final letters in rendered PDFs.
+    d.add(String(346, 73, "FAIL", fontName="SansBold", fontSize=6.2, fillColor=AMBER))
     d.add(
         String(
             14,
@@ -392,8 +407,10 @@ class ReportDocTemplate(BaseDocTemplate):
         canvas.saveState()
         canvas.setTitle(self.manuscript_title)
         canvas.setAuthor("Mehmet Solak")
-        canvas.setSubject("AiWingman design and specification-based continuity-policy evaluation")
-        canvas.setKeywords("coding agents, work continuity, local software, deterministic ranking suppression, software artifact")
+        canvas.setSubject(
+            "AiWingman local continuity overlay and retrospective policy-layer conformance study"
+        )
+        canvas.setKeywords("coding agents, work continuity, local-first software, deterministic ranking suppression, specification-based testing, human oversight")
         page_width, page_height = A4
         if doc.page > 1:
             canvas.setStrokeColor(RULE)
@@ -401,14 +418,14 @@ class ReportDocTemplate(BaseDocTemplate):
             canvas.line(self.leftMargin, page_height - 25 * mm, page_width - self.rightMargin, page_height - 25 * mm)
             canvas.setFont("Sans", 6.8)
             canvas.setFillColor(MUTED)
-            canvas.drawString(self.leftMargin, page_height - 21.2 * mm, "AIWINGMAN TECHNICAL REPORT")
-            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, "DRAFT 0.3 - AUTHOR CONFIRMATION REQUIRED")
+            canvas.drawString(self.leftMargin, page_height - 21.2 * mm, "AIWINGMAN TECHNICAL NOTE")
+            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, "SUBMISSION VERSION 1.0")
         canvas.setStrokeColor(RULE)
         canvas.setLineWidth(0.5)
         canvas.line(self.leftMargin, 17 * mm, page_width - self.rightMargin, 17 * mm)
         canvas.setFont("Sans", 6.7)
         canvas.setFillColor(MUTED)
-        canvas.drawString(self.leftMargin, 12.2 * mm, "AiWingman v1.2.0-beta.2 | 23 August 2026")
+        canvas.drawString(self.leftMargin, 12.2 * mm, "AiWingman Technical Note | Submission version 1.0 | 24 August 2026")
         canvas.drawRightString(page_width - self.rightMargin, 12.2 * mm, str(doc.page))
         canvas.restoreState()
 
@@ -432,10 +449,18 @@ def parse_table(lines, style_map, width):
             weights = [0.26, 0.17, 0.20, 0.37]
         elif normalized[0][0].startswith("Axis"):
             weights = [0.15, 0.29, 0.27, 0.29]
+        elif normalized[0][0].startswith("Order"):
+            # The score table has compact ordinal/weight columns and two
+            # text-heavy columns. Give reason identifiers enough room to avoid
+            # splitting a final character onto its own line.
+            weights = [0.08, 0.39, 0.38, 0.15]
         else:
             weights = [0.22, 0.26, 0.24, 0.28]
     elif col_count == 3:
-        weights = [0.26, 0.24, 0.50]
+        if normalized[0][0].startswith("Pipeline"):
+            weights = [0.22, 0.32, 0.46]
+        else:
+            weights = [0.26, 0.24, 0.50]
     else:
         weights = [1 / col_count] * col_count
     col_widths = [width * weight for weight in weights]
@@ -457,6 +482,72 @@ def parse_table(lines, style_map, width):
     return table
 
 
+FENCE_OPEN_RE = re.compile(r"^(?P<marker>`{3,}|~{3,})(?:[ \t]*(?P<info>.*))?$")
+
+
+def fenced_code_start(line: str):
+    """Return the fence marker and optional info string for a Markdown code block."""
+    match = FENCE_OPEN_RE.fullmatch(line.strip())
+    if match is None:
+        return None
+    return match.group("marker"), (match.group("info") or "").strip()
+
+
+def fenced_code_end(line: str, marker: str) -> bool:
+    """Recognize a closing fence of the same character and at least the same length."""
+    candidate = line.strip()
+    return (
+        len(candidate) >= len(marker)
+        and candidate[0] == marker[0]
+        and candidate == candidate[0] * len(candidate)
+    )
+
+
+def read_fenced_code(lines, start):
+    opening = fenced_code_start(lines[start])
+    if opening is None:
+        raise ValueError(f"Expected fenced code block at line {start + 1}")
+    marker, info = opening
+    code_lines = []
+    i = start + 1
+    while i < len(lines):
+        if fenced_code_end(lines[i], marker):
+            return code_lines, info, i + 1
+        code_lines.append(lines[i].expandtabs(4))
+        i += 1
+    raise ValueError(f"Unclosed fenced code block at line {start + 1}")
+
+
+def code_block_flowable(code_lines, style_map, width):
+    """Create a bounded preformatted block without exposing Markdown fence markers."""
+    inner_width = width - 20
+    character_width = pdfmetrics.stringWidth("M", "Courier", style_map["code"].fontSize)
+    max_line_length = max(20, int(inner_width / character_width))
+    code_text = "\n".join(code_lines) if code_lines else " "
+    preformatted = Preformatted(
+        code_text,
+        style_map["code"],
+        maxLineLength=max_line_length,
+        splitChars="[{( ,.;:/\\-=",
+        newLineChars="  ",
+    )
+    block = Table([[preformatted]], colWidths=[width], hAlign="LEFT")
+    block.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), HexColor("#F4F6F9")),
+                ("BOX", (0, 0), (-1, -1), 0.65, RULE),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ]
+        )
+    )
+    return block
+
+
 def build_story(markdown: str, style_map, width):
     lines = markdown.splitlines()
     nonempty = [idx for idx, line in enumerate(lines) if line.strip()]
@@ -464,7 +555,7 @@ def build_story(markdown: str, style_map, width):
         raise ValueError("Unexpected manuscript front matter")
 
     title_idx = nonempty[0]
-    author_idx, affiliation_idx, orcid_idx, draft_idx = nonempty[1:5]
+    author_idx, affiliation_idx, orcid_idx, version_idx = nonempty[1:5]
     title = lines[title_idx][2:].strip()
     story = [
         AccentRule(width),
@@ -473,15 +564,36 @@ def build_story(markdown: str, style_map, width):
         Paragraph(inline_markup(lines[author_idx]), style_map["author"]),
         Paragraph(inline_markup(lines[affiliation_idx]), style_map["affiliation"]),
         Paragraph(inline_markup(lines[orcid_idx]), style_map["affiliation"]),
-        Paragraph(inline_markup(lines[draft_idx]), style_map["draft"]),
+        Paragraph(inline_markup(lines[version_idx]), style_map["version"]),
     ]
 
-    i = draft_idx + 1
+    i = version_idx + 1
     in_abstract = False
     while i < len(lines):
         line = lines[i].strip()
         if not line:
             i += 1
+            continue
+        if fenced_code_start(lines[i]) is not None:
+            code_lines, _language, i = read_fenced_code(lines, i)
+            code_block = code_block_flowable(code_lines, style_map, width)
+            code_group = [Spacer(1, 3), code_block, Spacer(1, 6)]
+            if (
+                story
+                and isinstance(story[-1], Paragraph)
+                and story[-1].getPlainText().rstrip().endswith(":")
+            ):
+                introduction = story.pop()
+                code_group = [introduction, *code_group]
+                if (
+                    story
+                    and isinstance(story[-1], Paragraph)
+                    and story[-1].style.name in {"H1", "H2"}
+                ):
+                    code_group.insert(0, story.pop())
+                story.append(KeepTogether(code_group))
+            else:
+                story.extend(code_group)
             continue
         if line.startswith("<!-- FIGURE:"):
             key = line[len("<!-- FIGURE:") :].split("-->")[0].strip()
@@ -513,9 +625,12 @@ def build_story(markdown: str, style_map, width):
             table_flowable = parse_table(table_lines, style_map, width)
             if story and isinstance(story[-1], Paragraph) and story[-1].style.name == "TableCaption":
                 caption = story.pop()
-                story.append(KeepTogether([caption, table_flowable, Spacer(1, 3)]))
+                # Require enough space for the caption, header, and at least
+                # one data row. Keeping the caption with the entire Table would
+                # disable useful row splitting and leave a large blank area.
+                story.extend([CondPageBreak(52), caption, table_flowable, Spacer(1, 3)])
             else:
-                story.extend([Spacer(1, 3), table_flowable, Spacer(1, 3)])
+                story.extend([CondPageBreak(40), Spacer(1, 3), table_flowable, Spacer(1, 3)])
             continue
         if line.startswith("- "):
             bullets = []
@@ -541,12 +656,43 @@ def build_story(markdown: str, style_map, width):
                 )
             )
             continue
+        if re.match(r"^\d+\. ", line):
+            numbered_items = []
+            start_number = int(line.split(".", 1)[0])
+            while i < len(lines) and re.match(r"^\d+\. ", lines[i].strip()):
+                item_text = re.sub(r"^\d+\.\s+", "", lines[i].strip())
+                numbered_items.append(
+                    ListItem(
+                        Paragraph(inline_markup(item_text), style_map["bullet"]),
+                        leftIndent=15,
+                    )
+                )
+                i += 1
+            story.append(
+                ListFlowable(
+                    numbered_items,
+                    bulletType="1",
+                    start=start_number,
+                    leftIndent=22,
+                    bulletFontName="Sans",
+                    bulletFontSize=8.2,
+                    bulletColor=BLUE,
+                    spaceBefore=1,
+                    spaceAfter=5,
+                )
+            )
+            continue
 
         paragraph_lines = [line]
         i += 1
         while i < len(lines):
             nxt = lines[i].strip()
-            if not nxt or nxt.startswith(("## ", "### ", "- ", "| ", "<!-- FIGURE:")):
+            if (
+                not nxt
+                or nxt.startswith(("## ", "### ", "- ", "| ", "<!-- FIGURE:"))
+                or re.match(r"^\d+\. ", nxt)
+                or fenced_code_start(lines[i]) is not None
+            ):
                 break
             paragraph_lines.append(nxt)
             i += 1
@@ -554,36 +700,49 @@ def build_story(markdown: str, style_map, width):
 
         if text.startswith(("Figure ", "Table ")):
             caption_style = style_map["table_caption"] if text.startswith("Table ") else style_map["caption"]
-            story.append(Paragraph(inline_markup(text), caption_style))
+            caption = Paragraph(inline_markup(text), caption_style)
+            if (
+                text.startswith("Figure ")
+                and len(story) >= 2
+                and isinstance(story[-1], Drawing)
+                and isinstance(story[-2], Spacer)
+            ):
+                figure = story.pop()
+                spacer = story.pop()
+                story.append(KeepTogether([spacer, figure, caption, Spacer(1, 3)]))
+            else:
+                story.append(caption)
         elif text.startswith("Keywords:"):
             story.append(Paragraph(inline_markup(text), style_map["keywords"]))
+            in_abstract = False
         elif re.match(r"^\[\d+\] ", text):
-            story.append(Paragraph(inline_markup(text), style_map["reference"]))
+            story.append(KeepTogether([Paragraph(inline_markup(text), style_map["reference"])]))
         elif re.fullmatch(r"https?://\S+", text):
             link = html.escape(text)
-            story.append(Paragraph(f'<a href="{link}" color="#2563EB">{link}</a>', style_map["url"]))
+            link_paragraph = Paragraph(
+                f'<a href="{link}" color="#2563EB">{link}</a>',
+                style_map["url"],
+            )
+            if (
+                story
+                and isinstance(story[-1], Paragraph)
+                and story[-1].getPlainText().rstrip().endswith(":")
+            ):
+                introduction = story.pop()
+                story.append(KeepTogether([introduction, link_paragraph]))
+            else:
+                story.append(link_paragraph)
         elif in_abstract:
-            abstract_table = Table(
-                [[Paragraph(inline_markup(text), style_map["abstract"]) ]],
-                colWidths=[width],
-                hAlign="LEFT",
-            )
-            abstract_table.setStyle(
-                TableStyle(
-                    [
-                        ("BACKGROUND", (0, 0), (-1, -1), PALE_BLUE),
-                        ("BOX", (0, 0), (-1, -1), 0.8, HexColor("#B8CDF6")),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 12),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
-                        ("TOPPADDING", (0, 0), (-1, -1), 10),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                    ]
-                )
-            )
-            story.append(abstract_table)
-            in_abstract = False
+            # Keep every paragraph between Abstract and Keywords in one
+            # consistent typographic treatment. Boxing only the first
+            # paragraph made the remainder look like accidental overflow.
+            story.append(Paragraph(inline_markup(text), style_map["abstract"]))
         else:
-            story.append(Paragraph(inline_markup(text), style_map["body"]))
+            paragraph = Paragraph(inline_markup(text), style_map["body"])
+            if text.startswith("The `git rev-parse` HEAD command must report"):
+                story.append(KeepTogether([paragraph]))
+            else:
+                story.append(paragraph)
 
     return title, story
 
@@ -594,7 +753,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "output/pdf/aiwingman-technical-report-draft.pdf",
+        default=Path(__file__).resolve().parents[1] / "output/pdf/aiwingman-technical-note-v1.pdf",
     )
     args = parser.parse_args()
 

@@ -51,7 +51,7 @@ public enum ActivityRadarSelfTests {
         passed.append("consent-bounded Wingman invocation contract")
 
         try checkSupportInformationPrivacy()
-        passed.append("content-free support information")
+        passed.append("fixed-schema task-text-free support information")
 
         return passed
     }

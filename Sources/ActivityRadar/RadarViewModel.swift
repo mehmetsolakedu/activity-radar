@@ -128,6 +128,8 @@ final class RadarViewModel: ObservableObject {
     }
 
     private let defaults: UserDefaults
+    private let openURL: (URL) -> Bool
+    private let refreshAfterAcceptedOpenRequest: (() -> Void)?
     private let reader = CodexActivityReader()
     private let continuityStore = RadarContinuityStore()
     private let loadQueue = DispatchQueue(
@@ -152,8 +154,14 @@ final class RadarViewModel: ObservableObject {
     private var triagePresentationPending = false
     private var pendingResearchExportData: Data?
 
-    init(defaults: UserDefaults = .standard) {
+    init(
+        defaults: UserDefaults = .standard,
+        openURL: @escaping (URL) -> Bool = { NSWorkspace.shared.open($0) },
+        refreshAfterAcceptedOpenRequest: (() -> Void)? = nil
+    ) {
         self.defaults = defaults
+        self.openURL = openURL
+        self.refreshAfterAcceptedOpenRequest = refreshAfterAcceptedOpenRequest
         language = RadarLanguage.load(from: defaults)
         if let storedRange = defaults.string(forKey: dateRangeKey),
            let range = RadarDateRange(rawValue: storedRange) {
@@ -621,8 +629,8 @@ final class RadarViewModel: ObservableObject {
                 await refreshResearchPreview()
                 actionMessage = enabled
                     ? l10n.text(
-                        "İçeriksiz yerel araştırma kaydı açıldı. Hiçbir veri ağ üzerinden gönderilmez.",
-                        "Content-free local research logging is on. No data is sent over the network."
+                        "Sabit şemalı, görev metni içermeyen yerel araştırma kaydı açıldı. Hiçbir veri ağ üzerinden gönderilmez.",
+                        "Fixed-schema, task-text-free local research logging is on. No data is sent over the network."
                     )
                     : l10n.text(
                         "Yerel araştırma kaydı kapatıldı. Mevcut kayıt cihazda kaldı.",
@@ -717,8 +725,8 @@ final class RadarViewModel: ObservableObject {
 
         let panel = NSSavePanel()
         panel.title = l10n.text(
-            "İçeriksiz araştırma kaydını dışa aktar",
-            "Export content-free research log"
+            "Görev metni içermeyen araştırma kaydını dışa aktar",
+            "Export task-text-free research log"
         )
         panel.nameFieldStringValue = "activity-radar-research-\(Self.exportDateFormatter.string(from: Date())).json"
         panel.allowedContentTypes = [.json]
@@ -726,8 +734,8 @@ final class RadarViewModel: ObservableObject {
         do {
             try data.write(to: url, options: .atomic)
             actionMessage = l10n.text(
-                "\(preview.eventCount) içeriksiz olay dışa aktarıldı.",
-                "\(preview.eventCount) content-free events were exported."
+                "\(preview.eventCount) sabit şemalı, görev metni içermeyen olay dışa aktarıldı.",
+                "\(preview.eventCount) fixed-schema, task-text-free events were exported."
             )
         } catch {
             actionMessage = localizedFailure(
@@ -859,20 +867,29 @@ final class RadarViewModel: ObservableObject {
             return
         }
 
-        if NSWorkspace.shared.open(url) {
-            let openedAt = Date()
-            markViewed(item.id, at: openedAt)
-            acknowledgeDueSnooze(for: item, at: openedAt)
-            actionMessage = l10n.text("Codex’te açıldı", "Opened in Codex") + ": \(item.title)"
+        if openURL(url) {
+            let requestedAt = Date()
+            markViewed(item.id, at: requestedAt)
+            acknowledgeDueSnooze(for: item, at: requestedAt)
+            actionMessage = l10n.text(
+                "Codex’te açma isteği gönderildi",
+                "Open requested in Codex"
+            ) + ": \(item.title)"
             Task { [weak self] in
-                await self?.appendResearchEvent(.taskOpened, for: item.id, at: openedAt)
+                // The legacy schema label records an accepted NSWorkspace request; it does
+                // not establish that Codex displayed the requested task.
+                await self?.appendResearchEvent(.taskOpened, for: item.id, at: requestedAt)
             }
             didOpenThread?()
-            refresh()
+            if let refreshAfterAcceptedOpenRequest {
+                refreshAfterAcceptedOpenRequest()
+            } else {
+                refresh()
+            }
         } else {
             actionMessage = l10n.text(
-                "Codex açılamadı. /Applications/ChatGPT.app kurulumunu kontrol et.",
-                "Codex could not be opened. Check the /Applications/ChatGPT.app installation."
+                "Codex açma isteğini kabul etmedi. /Applications/ChatGPT.app kurulumunu kontrol et.",
+                "The Codex open request was not accepted. Check the /Applications/ChatGPT.app installation."
             )
         }
     }
@@ -1263,7 +1280,8 @@ final class RadarViewModel: ObservableObject {
         case .nextActionRecorded: return l10n.text("Sonraki adım hazır", "Next action is ready")
         case .agingWithoutPlan: return l10n.text("Plan olmadan yaşlanıyor", "Aging without a plan")
         case .recentlyActive: return l10n.text("Şu an açık", "Active now")
-        case .recentlyOpened: return l10n.text("Az önce açıldı", "Opened recently")
+        case .recentlyOpened:
+            return l10n.text("Açma isteği yakın zamanda gönderildi", "Open requested recently")
         case .waitingOnRecorded: return l10n.text("Dışarıdan bekliyor", "Waiting externally")
         case .historyIncomplete: return l10n.text("Geçmiş eksik", "History incomplete")
         }
@@ -1428,8 +1446,8 @@ final class RadarViewModel: ObservableObject {
             } catch {
                 actionMessage = localizedFailure(
                     error,
-                    turkish: "Görev açıldı; geçmiş erteleme işareti temizlenemedi",
-                    english: "The task opened, but its expired snooze marker could not be cleared"
+                    turkish: "Codex açma isteği gönderildi; geçmiş erteleme işareti temizlenemedi",
+                    english: "The Codex open request was sent, but the expired snooze marker could not be cleared"
                 )
             }
         }
