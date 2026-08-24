@@ -1,6 +1,6 @@
 # AiWingman publication artifact manifest
 
-Status: `FINAL_ARTIFACT_QA_PASS_EXACT_PUBLIC_COMMIT_PENDING`
+Status: `FINAL_ARTIFACT_AND_PUBLIC_PACKAGE_PROVENANCE_PASS`
 
 Recorded: 24 August 2026
 
@@ -27,11 +27,10 @@ or acceptance.
 | `paper/build_preprint.py` | `7bf6898d5b5eed9b43327964a71dbe8d07376ea04192fba291f4af911234a330` |
 | `scripts/build-preprint-supplement.sh` | `26a4fb27884ec296ce8976fcfecaa3e9d8d1dff062f4262e3749b9860667d860` |
 
-The final artifacts were built from the current publication branch working
-revision whose pre-finalization base was
-`99faac3ef52d0da72d082706f64903a6aacd2c6d`. The exact public package commit is
-recorded only after the manifest-listed tree is committed, pushed, cloned back,
-and checked; that provenance gate remains open at the time of this manifest.
+The final artifacts were built from the publication branch whose
+pre-finalization base was `99faac3ef52d0da72d082706f64903a6aacd2c6d` and
+frozen in the exact public package commit
+`328db87d8a39f7d14f32d6993990daae57fa1092`.
 
 ## Build environment
 
@@ -110,17 +109,20 @@ and checked; that provenance gate remains open at the time of this manifest.
 - PASS: the public exporter accepts only
   `output/supplement/aiwingman-research-supplement-v1.zip`; a negative fixture
   confirms that any other ZIP path is rejected.
-- This was a manifest-only copy of the uncommitted working revision. It is not
-  the still-open clean exact-commit or hosted-CI provenance gate.
+- PASS: the final package commit
+  `328db87d8a39f7d14f32d6993990daae57fa1092` was pushed to
+  `codex/aiwingman-technical-preprint`, cloned back through HTTPS, checked out
+  detached and clean, and verified as exactly 117 tracked files matching
+  `PUBLIC_SOURCE_MANIFEST.txt`. The DOCX, PDF, and supplement hashes in that
+  clone matched this manifest.
+- PASS: the complete public-source preparation gate passed again in that clean
+  clone.
+- PASS: GitHub Actions run `32699022868` checked out that exact commit and
+  completed both `macOS verification` and native `Intel runtime` successfully.
 
-## Remaining release gates
+## Remaining portal gates
 
-1. Commit exactly the paths in `PUBLIC_SOURCE_MANIFEST.txt` on the publication
-   branch.
-2. Verify manifest/tree equality and all release checks in a clean detached
-   clone of that exact commit.
-3. Push the exact commit and obtain passing hosted macOS verification and Intel
-   runtime jobs for that commit.
-4. Stage the record in Preprints.org without using the final **Submit** action.
-5. Obtain a separate explicit author approval before the portal's final
+1. Stage the record in Preprints.org without using the final **Submit** action.
+2. Review the complete staged record and exact uploaded files.
+3. Obtain a separate explicit author approval before the portal's final
    **Submit** action.

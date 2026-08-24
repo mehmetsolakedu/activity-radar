@@ -1,14 +1,17 @@
 # AiWingman preprint submission readiness
 
-Status: `FINAL_ARTIFACTS_VERIFIED_PUBLIC_COMMIT_PENDING`, not submitted.
+Status: `PORTAL_STAGING_READY_SEPARATE_SUBMIT_APPROVAL_REQUIRED`, not submitted.
 
 The named author confirmed all 12 declarations on 24 August 2026. The canonical
 Markdown and declaration-complete DOCX, direct PDF, and research supplement are
 now submission version 1.0 and have passed their final local artifact gates.
-Exact-commit source CI has passed for hardened software checkpoint `99faac3...`,
-but it does not attest this declaration-complete manuscript package. A clean
-exact public-package checkpoint and hosted CI must still pass before portal
-staging.
+Exact-commit source CI passed for hardened software checkpoint `99faac3...`.
+The declaration-complete 117-file publication package was then frozen at
+`328db87d8a39f7d14f32d6993990daae57fa1092`, pushed to the publication branch,
+cloned back through HTTPS into a clean detached worktree, and verified there.
+Hosted CI run `32699022868` passed both the macOS verification and native Intel
+runtime jobs for that exact commit. The package is ready for portal staging; the
+portal's final **Submit** action remains separately gated.
 
 ## Selected route
 
@@ -134,12 +137,12 @@ All gates are fail-closed.
   signaling. The current revision
   implements and regression-tests the corrections recorded in
   `paper/THIRD_REVIEW_REPORT.md`. This remains internal AI-assisted review.
-- [ ] `PUBLIC_SOURCE_MANIFEST.txt` includes the final review artifacts and the
-  release check passes again from a final clean detached worktree with exact
-  manifest/tree equality. A final 117-file manifest-only export of the current
-  uncommitted revision passed the complete public-source preparation gate,
-  including 100 tests and local arm64/x86_64 cross-builds; this does not close
-  the clean-commit provenance gate or constitute x86_64 execution.
+- [x] `PUBLIC_SOURCE_MANIFEST.txt` includes the final review and publication
+  artifacts. The 117-file tree at exact package commit `328db87d8a39f7d14f32d6993990daae57fa1092`
+  was pushed, cloned back through HTTPS, checked out detached and clean, and
+  matched the manifest exactly. Its complete public-source preparation gate
+  passed in that clone. Hosted run `32699022868` then passed both `macOS
+  verification` and native `Intel runtime` jobs for the same commit.
 - [x] Declaration-complete rebuilt DOCX and PDF passed all-page visual
   inspection, structural checks, privacy scan, and metadata review at 30
   DOCX-rendered pages and 17 direct-PDF pages. The deterministic research

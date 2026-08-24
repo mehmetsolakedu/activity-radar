@@ -1,4 +1,4 @@
-status: final_artifacts_verified_public_commit_pending
+status: portal_staging_ready_separate_submit_approval_required
 platform: Preprints.org
 manuscript_type: Technical Note
 title: >-
@@ -67,8 +67,14 @@ software:
   result_package_commit: e46686588793173d1b299b1829a92dbab7e9528d
   evaluated_source_checkpoint: 99faac3ef52d0da72d082706f64903a6aacd2c6d
   evaluated_source_ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32659669054
+  publication_package_branch: codex/aiwingman-technical-preprint
+  publication_package_commit: 328db87d8a39f7d14f32d6993990daae57fa1092
+  publication_package_commit_url: >-
+    https://github.com/mehmetsolakedu/activity-radar/commit/328db87d8a39f7d14f32d6993990daae57fa1092
+  publication_package_ci_record: >-
+    https://github.com/mehmetsolakedu/activity-radar/actions/runs/32699022868
   manuscript_revision: Submission version 1.0
-  manuscript_artifact_checkpoint: paper/PUBLICATION_ARTIFACT_MANIFEST.md
+  manuscript_artifact_checkpoint: 328db87d8a39f7d14f32d6993990daae57fa1092
 declarations:
   funding: This research received no external funding.
   competing_interests: >-
@@ -107,6 +113,7 @@ submission_files:
   author_reference_pdf: output/pdf/aiwingman-technical-note-v1.pdf
   research_supplement: output/supplement/aiwingman-research-supplement-v1.zip
   canonical_source: paper/aiwingman_technical_report.md
+  artifact_manifest: paper/PUBLICATION_ARTIFACT_MANIFEST.md
 permanence_attestations:
   distribution_license_to_preprints_org: true
   right_to_grant_license: true
