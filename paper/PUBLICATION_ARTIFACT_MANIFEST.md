@@ -1,13 +1,15 @@
 # AiWingman publication artifact manifest
 
-Status: `LOCAL_EDITORIAL_ARTIFACT_PASS_PUBLIC_PACKAGE_REFREEZE_PENDING`
+Status: `FINAL_ARTIFACT_AND_PUBLIC_PACKAGE_PROVENANCE_PASS_PORTAL_STAGED`
 
 Recorded: 24 August 2026
 
-This manifest identifies the exact local AiWingman Original Research Article
+This manifest identifies the exact AiWingman Original Research Article
 submission-version artifacts and the bounded quality evidence for those bytes.
-It does not represent a portal upload, a submission, screening, public posting,
-DOI assignment, indexing, peer review, or acceptance.
+The corresponding Preprints.org record has been staged and reviewed, but the
+portal's final **Submit** action has not been selected. This manifest does not
+represent screening, public posting, DOI assignment, indexing, peer review, or
+acceptance.
 
 ## Exact artifacts
 
@@ -121,18 +123,36 @@ The earlier exact public-package commit
 attest the superseded Technical Note package. They do not attest the revised
 Original Research Article bytes listed above.
 
-`PUBLIC_SOURCE_MANIFEST.txt` now enumerates the revised local artifacts and
-editorial package in addition to retained historical outputs. Tracked-file
-equality, a clean-clone export, and hosted CI cannot be claimed for the revised
-set until a new commit exists. No such commit, push, or hosted run is claimed by
-this manifest.
+The revised 121-file public package is frozen at exact commit
+`b3305f69fac710c77b9595cd1d269ef505d65652`. That commit was pushed without a
+force update to `codex/aiwingman-technical-preprint`, cloned back through HTTPS,
+checked out detached, and verified clean. Its tracked tree matches
+`PUBLIC_SOURCE_MANIFEST.txt` exactly. The DOCX, PDF, and supplement bytes in the
+clean clone match the sizes and SHA-256 values recorded above.
+
+The complete fail-closed public-source preparation gate passed both before the
+freeze commit and in the clean detached clone. Each run included manifest and
+packaging checks, privacy adversarial fixtures, 16 deterministic self-tests,
+100 standard Swift tests, fixed-schema diagnostic checks, arm64 and x86_64
+macOS 13-targeted builds, and Universal 2 bundle and archive verification.
+
+GitHub Actions run `32768213278` checked out that exact freeze commit through a
+manual workflow dispatch. Its `macOS verification` and native `Intel runtime`
+jobs both completed successfully. The jobs passed the complete public-release
+gate, native standard tests, the 155-fixture continuity-policy benchmark,
+content-free diagnostic assertion, and native application builds as applicable.
+
+The Preprints.org record was then staged and reviewed as an `Article` under
+`Computer Science and Mathematics` / `Computer Science`. The staged files are
+the exact DOCX, PDF, and supplement listed above. The sole-author record,
+corresponding-author designation, ORCID, affiliation, ethics/participation
+answers, repository URL, and portal terms acceptance were also reviewed.
 
 ## Remaining gates
 
-1. Commit and re-freeze the revised public package.
-2. Verify the exact new commit through a clean detached clone and hosted CI
-   before claiming commit-level provenance.
-3. Resolve the target-journal style query before a later journal submission.
-4. Stage the preprint portal without selecting final **Submit**.
-5. Review the staged record and exact uploads, then obtain separate explicit
-   approval before final **Submit**.
+1. Resolve the target-journal style query before a later journal submission.
+   This does not block the preprint.
+2. Obtain separate explicit author approval for the portal's final **Submit**
+   action.
+3. Select final **Submit** only after that approval; then record the resulting
+   platform status without describing screening as acceptance.

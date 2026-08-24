@@ -1,18 +1,24 @@
 # AiWingman preprint submission readiness
 
-Status: `LOCAL_EDITORIAL_ARTIFACTS_READY_PUBLIC_PACKAGE_REFREEZE_PENDING_SEPARATE_SUBMIT_APPROVAL_REQUIRED`, not submitted.
+Status: `PORTAL_STAGED_PUBLIC_PACKAGE_PROVENANCE_PASS_SEPARATE_SUBMIT_APPROVAL_REQUIRED`, not submitted.
 
 The named author confirmed all 12 declarations on 24 August 2026. The complete
 Original Research Article manuscript, direct reference PDF, and research
-supplement are locally frozen by the SHA-256 values below and have passed the
-recorded content, structure, privacy, and all-page visual checks.
+supplement are frozen at public-package commit
+`b3305f69fac710c77b9595cd1d269ef505d65652`. Their SHA-256 values below passed
+the recorded content, structure, privacy, deterministic supplement, and all-page
+visual checks.
 
-The prior public-package commit
-`328db87d8a39f7d14f32d6993990daae57fa1092` and hosted CI run `32699022868`
-contain the superseded Technical Note artifacts. They remain historical evidence
-only and do not attest the revised files. A new public-package commit, clean-clone
-check, and hosted-CI refresh remain pending. The portal's final **Submit** action
-also remains separately gated.
+The freeze commit was pushed to `codex/aiwingman-technical-preprint`, cloned back
+through HTTPS, checked out detached, and verified clean. Its 121 tracked files
+match `PUBLIC_SOURCE_MANIFEST.txt` exactly. The complete local public-release
+gate passed before the commit and again in the clean clone. Hosted GitHub Actions
+run `32768213278` checked out the same commit and passed both `macOS verification`
+and native `Intel runtime` jobs.
+
+The Preprints.org record has been staged and all five steps were reviewed. The
+exact DOCX, reference PDF, and supplement below are uploaded. The portal's final
+**Submit** action remains separately gated and has not been selected.
 
 ## Selected preprint route
 
@@ -84,12 +90,13 @@ superseded historical artifacts. They are not upload targets.
 - [ ] Resolve `AQ-01` before a later journal submission by supplying the concrete
   journal and current instructions or confirming continued use of the recorded
   defaults. This does not block preprint staging.
-- [ ] Commit the revised manuscript, builders, metadata, exact artifacts,
-  editorial package, and refreshed public-source manifest.
-- [ ] Re-run clean-clone and hosted CI against that new exact commit before
-  claiming commit-level publication-package provenance.
-- [ ] Stage the portal record without selecting final **Submit**, verify every
-  uploaded field and file, and show the exact staged record to the author.
+- [x] Commit and freeze the revised manuscript, builders, metadata, exact
+  artifacts, editorial package, and public-source manifest at
+  `b3305f69fac710c77b9595cd1d269ef505d65652`.
+- [x] Verify that exact commit through an HTTPS clean detached clone and hosted
+  CI run `32768213278`; both hosted jobs passed.
+- [x] Stage the portal record without selecting final **Submit** and verify all
+  five steps and the exact uploaded files.
 - [ ] Obtain a separate explicit author approval for the portal's final
   **Submit** action.
 

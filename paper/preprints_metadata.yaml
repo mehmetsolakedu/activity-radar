@@ -1,4 +1,4 @@
-status: local_editorial_artifacts_ready_public_package_refreeze_pending_separate_submit_approval_required
+status: portal_staged_public_package_provenance_pass_separate_submit_approval_required
 platform: Preprints.org
 manuscript_type: Original Research Article
 title: >-
@@ -68,10 +68,12 @@ software:
   evaluated_source_checkpoint: 99faac3ef52d0da72d082706f64903a6aacd2c6d
   evaluated_source_ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32659669054
   publication_package_branch: codex/aiwingman-technical-preprint
-  publication_package_status: PENDING_REFREEZE_FOR_ORIGINAL_RESEARCH_ARTICLE
-  publication_package_commit: null
-  publication_package_commit_url: null
-  publication_package_ci_record: null
+  publication_package_status: FROZEN_CLEAN_CLONE_AND_HOSTED_CI_PASS
+  publication_package_commit: b3305f69fac710c77b9595cd1d269ef505d65652
+  publication_package_commit_url: >-
+    https://github.com/mehmetsolakedu/activity-radar/commit/b3305f69fac710c77b9595cd1d269ef505d65652
+  publication_package_ci_record: >-
+    https://github.com/mehmetsolakedu/activity-radar/actions/runs/32768213278
   historical_publication_package_commit: 328db87d8a39f7d14f32d6993990daae57fa1092
   historical_publication_package_commit_url: >-
     https://github.com/mehmetsolakedu/activity-radar/commit/328db87d8a39f7d14f32d6993990daae57fa1092
@@ -79,7 +81,7 @@ software:
     https://github.com/mehmetsolakedu/activity-radar/actions/runs/32699022868
   historical_publication_package_scope: Superseded Technical Note artifacts
   manuscript_revision: Submission version 1.0
-  manuscript_artifact_checkpoint: paper/PUBLICATION_ARTIFACT_MANIFEST.md
+  manuscript_artifact_checkpoint: b3305f69fac710c77b9595cd1d269ef505d65652
 declarations:
   funding: This research received no external funding.
   competing_interests: >-
@@ -119,6 +121,14 @@ submission_files:
   research_supplement: output/supplement/aiwingman-research-supplement-v1.zip
   canonical_source: paper/aiwingman_technical_report.md
   artifact_manifest: paper/PUBLICATION_ARTIFACT_MANIFEST.md
+portal_staging:
+  status: STAGED_REVIEWED_NOT_SUBMITTED
+  date: 2026-08-24
+  article_type: Article
+  primary_subject: Computer Science and Mathematics
+  secondary_subject: Computer Science
+  related_repository: https://github.com/mehmetsolakedu/activity-radar
+  final_submit_authorization: PENDING_SEPARATE_EXPLICIT_APPROVAL
 permanence_attestations:
   distribution_license_to_preprints_org: true
   right_to_grant_license: true
