@@ -1,4 +1,4 @@
-status: portal_staged_public_package_provenance_pass_separate_submit_approval_required
+status: submitted_pending_check_public_package_provenance_pass
 platform: Preprints.org
 manuscript_type: Original Research Article
 title: >-
@@ -122,13 +122,18 @@ submission_files:
   canonical_source: paper/aiwingman_technical_report.md
   artifact_manifest: paper/PUBLICATION_ARTIFACT_MANIFEST.md
 portal_staging:
-  status: STAGED_REVIEWED_NOT_SUBMITTED
+  status: SUBMITTED_PENDING_CHECK
   date: 2026-08-24
+  preprints_id: 229981
+  portal_displayed_submission_time: "24 August 2026 09:07:44"
   article_type: Article
   primary_subject: Computer Science and Mathematics
   secondary_subject: Computer Science
   related_repository: https://github.com/mehmetsolakedu/activity-radar
-  final_submit_authorization: PENDING_SEPARATE_EXPLICIT_APPROVAL
+  final_submit_authorization: CONFIRMED_AND_EXECUTED
+  final_submit_authorization_phrase: >-
+    PREPRINTS.ORG NİHAİ SUBMIT İŞLEMİNİ ONAYLIYORUM
+  friendly_journal_selected: false
 permanence_attestations:
   distribution_license_to_preprints_org: true
   right_to_grant_license: true

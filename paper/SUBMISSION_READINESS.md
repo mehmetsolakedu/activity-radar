@@ -1,6 +1,6 @@
 # AiWingman preprint submission readiness
 
-Status: `PORTAL_STAGED_PUBLIC_PACKAGE_PROVENANCE_PASS_SEPARATE_SUBMIT_APPROVAL_REQUIRED`, not submitted.
+Status: `SUBMITTED_TO_PREPRINTS_ORG_PENDING_CHECK_PUBLIC_PACKAGE_PROVENANCE_PASS`.
 
 The named author confirmed all 12 declarations on 24 August 2026. The complete
 Original Research Article manuscript, direct reference PDF, and research
@@ -16,9 +16,11 @@ gate passed before the commit and again in the clean clone. Hosted GitHub Action
 run `32768213278` checked out the same commit and passed both `macOS verification`
 and native `Intel runtime` jobs.
 
-The Preprints.org record has been staged and all five steps were reviewed. The
-exact DOCX, reference PDF, and supplement below are uploaded. The portal's final
-**Submit** action remains separately gated and has not been selected.
+The Preprints.org record was staged and all five steps were reviewed. The exact
+DOCX, reference PDF, and supplement below were uploaded. After separate explicit
+author approval, the final **Submit** and confirmation **Proceed** actions were
+selected. Preprints.org assigned ID `229981` and displayed `Pending Check` on
+24 August 2026.
 
 ## Selected preprint route
 
@@ -97,8 +99,10 @@ superseded historical artifacts. They are not upload targets.
   CI run `32768213278`; both hosted jobs passed.
 - [x] Stage the portal record without selecting final **Submit** and verify all
   five steps and the exact uploaded files.
-- [ ] Obtain a separate explicit author approval for the portal's final
+- [x] Obtain separate explicit author approval for the portal's final
   **Submit** action.
+- [x] Submit the record and verify Preprints ID `229981` with portal status
+  `Pending Check`.
 
 ## Evidence boundary
 
@@ -141,8 +145,9 @@ On 24 August 2026, the named author supplied the exact phrase
     questions or comments and for providing the reported materials when
     reasonably requested and legally permitted.
 
-This confirmation authorizes the recorded declaration and license text. It does
-not authorize the portal's final **Submit** action.
+The author separately authorized the portal's final **Submit** action with the
+exact phrase `PREPRINTS.ORG NİHAİ SUBMIT İŞLEMİNİ ONAYLIYORUM`. That action and
+the portal's confirmation **Proceed** action were completed on 24 August 2026.
 
 ## Post-publication verification
 

@@ -1,15 +1,16 @@
 # AiWingman publication artifact manifest
 
-Status: `FINAL_ARTIFACT_AND_PUBLIC_PACKAGE_PROVENANCE_PASS_PORTAL_STAGED`
+Status: `SUBMITTED_PENDING_CHECK_PUBLIC_PACKAGE_PROVENANCE_PASS`
 
 Recorded: 24 August 2026
 
 This manifest identifies the exact AiWingman Original Research Article
 submission-version artifacts and the bounded quality evidence for those bytes.
-The corresponding Preprints.org record has been staged and reviewed, but the
-portal's final **Submit** action has not been selected. This manifest does not
-represent screening, public posting, DOI assignment, indexing, peer review, or
-acceptance.
+The corresponding Preprints.org record was submitted on 24 August 2026 after
+separate explicit author approval. The portal assigned Preprints ID `229981`
+and displayed the status `Pending Check`. This manifest does not represent a
+successful screening decision, public posting, DOI assignment, indexing, peer
+review, or acceptance.
 
 ## Exact artifacts
 
@@ -142,17 +143,18 @@ jobs both completed successfully. The jobs passed the complete public-release
 gate, native standard tests, the 155-fixture continuity-policy benchmark,
 content-free diagnostic assertion, and native application builds as applicable.
 
-The Preprints.org record was then staged and reviewed as an `Article` under
-`Computer Science and Mathematics` / `Computer Science`. The staged files are
+The Preprints.org record was staged and reviewed as an `Article` under
+`Computer Science and Mathematics` / `Computer Science`. The uploaded files are
 the exact DOCX, PDF, and supplement listed above. The sole-author record,
 corresponding-author designation, ORCID, affiliation, ethics/participation
-answers, repository URL, and portal terms acceptance were also reviewed.
+answers, repository URL, and portal terms acceptance were also reviewed. After
+the author supplied the separate final-submit authorization, the record was
+submitted and assigned Preprints ID `229981`; its observed portal status was
+`Pending Check`.
 
 ## Remaining gates
 
 1. Resolve the target-journal style query before a later journal submission.
    This does not block the preprint.
-2. Obtain separate explicit author approval for the portal's final **Submit**
-   action.
-3. Select final **Submit** only after that approval; then record the resulting
-   platform status without describing screening as acceptance.
+2. After screening and public posting, record the public URL, DOI, date, and
+   version without describing `Pending Check` as acceptance or publication.
