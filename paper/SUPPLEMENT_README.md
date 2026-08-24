@@ -6,7 +6,7 @@ Repository: https://github.com/mehmetsolakedu/activity-radar
 
 This supplement contains the non-executable protocol, synthetic fixture corpus,
 archived result data, manifests, summaries, and errata supporting the AiWingman
-Technical Note. It contains no private Codex state, task history, credential,
+Original Research Article. It contains no private Codex state, task history, credential,
 local path, participant record, or real-work screenshot.
 
 ## Included files
@@ -27,7 +27,7 @@ Copyright 2026 Mehmet Solak.
 
 These non-executable scholarly and research materials are licensed under
 [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)
-(CC BY 4.0). Recommended attribution: “AiWingman technical report and research
+(CC BY 4.0). Recommended attribution: “AiWingman original research article and research
 package, Mehmet Solak, 2026, https://github.com/mehmetsolakedu/activity-radar,
 CC BY 4.0.” Add the preprint DOI when one is assigned.
 

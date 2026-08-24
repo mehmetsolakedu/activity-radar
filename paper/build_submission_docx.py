@@ -493,7 +493,7 @@ def build_figure(kind, output):
     if kind == "architecture":
         draw.text((55, 48), "ORDINARY DASHBOARD PIPELINE", font=label, fill=f"#{TEAL}")
         add_box(draw, (55, 135, 380, 185), PALE_BLUE, "Codex local state", ["candidate task rows", "each row's own rollout"], bold, small)
-        add_box(draw, (535, 135, 380, 185), PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"], bold, small)
+        add_box(draw, (535, 135, 380, 185), PALE_TEAL, "Ordinary reader", ["query-only access", "bounded rollout"], bold, small)
         add_box(draw, (1015, 135, 380, 185), PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"], bold, small)
         add_box(draw, (1495, 135, 390, 185), PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"], bold, small)
         draw_arrow(draw, (435, 228), (535, 228), TEAL)
@@ -503,14 +503,14 @@ def build_figure(kind, output):
         add_box(draw, (55, 430, 380, 175), PALE_BLUE, "Codex local state", ["root + child rows", "rollout tails"], bold, small)
         add_box(draw, (535, 430, 380, 175), PALE_AMBER, "Wingman reader", ["task-tree graph", "bounded evidence"], bold, small)
         add_box(draw, (1015, 430, 380, 175), PALE_AMBER, "Preview + consent", ["bounded packet", "one-shot approval"], bold, small)
-        add_box(draw, (1495, 430, 390, 175), PALE_RED, "External CLI", ["--ephemeral request", "service boundary"], bold, small, "F2B8B5")
+        add_box(draw, (1495, 430, 390, 175), PALE_RED, "External command-line tool", ["--ephemeral request", "service boundary"], bold, small, "F2B8B5")
         draw_arrow(draw, (435, 517), (535, 517), AMBER, dashed=True)
         draw_arrow(draw, (915, 517), (1015, 517), AMBER, dashed=True)
         draw_arrow(draw, (1395, 517), (1495, 517), RED, dashed=True)
-        draw.text((55, 684), "The pipelines are separate. Requested read-only CLI mode is not OS isolation or a sole-context proof.", font=italic, fill=f"#{RED}")
+        draw.text((55, 684), "The pipelines are separate. Requested read-only mode is not operating-system isolation or a sole-context proof.", font=italic, fill=f"#{RED}")
     else:
         add_box(draw, (55, 120, 390, 190), PALE_BLUE, "Eligibility", ["not deferred", "complete history"], bold, small)
-        add_box(draw, (535, 120, 390, 190), PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"], bold, small)
+        add_box(draw, (535, 120, 390, 190), PALE_TEAL, "Fixed score", ["integer weights", "identifier tie-break"], bold, small)
         add_box(draw, (1015, 120, 390, 190), PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10 if runner-up"], bold, small)
         add_box(draw, (1495, 75, 390, 155), PALE_TEAL, "Recommend", ["bounded by input limit", "show reasons"], bold, small)
         add_box(draw, (1495, 290, 390, 155), PALE_AMBER, "Suppress ranking", ["no eligible item", "weak or close scores"], bold, small)
@@ -524,8 +524,30 @@ def build_figure(kind, output):
     im.save(output, dpi=(300, 300))
 
 
-def setup_document():
+def populate_running_footer(footer, footer_label):
+    table = footer.add_table(rows=1, cols=2, width=Inches(6.5))
+    set_table_geometry(table, [7300, 2060])
+    table.rows[0].cells[0].paragraphs[0].paragraph_format.space_after = Pt(0)
+    left_run = table.rows[0].cells[0].paragraphs[0].add_run(footer_label)
+    set_run_font(left_run, size=8, color=MUTED)
+    add_page_number(table.rows[0].cells[1].paragraphs[0])
+    for cell in table.rows[0].cells:
+        set_cell_margins(cell, top=0, start=0, bottom=0, end=0)
+        tc_pr = cell._tc.get_or_add_tcPr()
+        borders = OxmlElement("w:tcBorders")
+        for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
+            el = OxmlElement(f"w:{edge}")
+            el.set(qn("w:val"), "nil")
+            borders.append(el)
+        tc_pr.append(borders)
+
+
+def setup_document(footer_label):
     doc = Document()
+    # Use one default footer and no running header. LibreOffice assigns unstable
+    # left/right body frames when a DOCX combines even-page header parts with
+    # identical margins. The footer-only layout preserves the one-inch body
+    # frame in LibreOffice conversion and retains standard Word section margins.
     doc.settings.odd_and_even_pages_header_footer = False
     section = doc.sections[0]
     section.different_first_page_header_footer = False
@@ -542,31 +564,7 @@ def setup_document():
     bullet_num_id = create_bullet_numbering(doc)
     decimal_num_id = create_decimal_numbering(doc)
 
-    header = section.header
-    p = header.paragraphs[0]
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    p.paragraph_format.space_after = Pt(3)
-    run = p.add_run("AIWINGMAN TECHNICAL NOTE")
-    set_run_font(run, size=8, color=MUTED, bold=True)
-    add_bottom_border(p, color=RULE, size="4", space="3")
-
-    footer = section.footer
-    table = footer.add_table(rows=1, cols=2, width=Inches(6.5))
-    set_repeat_table_header(table.rows[0])
-    set_table_geometry(table, [7300, 2060])
-    table.rows[0].cells[0].paragraphs[0].paragraph_format.space_after = Pt(0)
-    left_run = table.rows[0].cells[0].paragraphs[0].add_run("AiWingman Technical Note | Submission version 1.0 | 24 August 2026")
-    set_run_font(left_run, size=8, color=MUTED)
-    add_page_number(table.rows[0].cells[1].paragraphs[0])
-    for cell in table.rows[0].cells:
-        set_cell_margins(cell, top=0, start=0, bottom=0, end=0)
-        tc_pr = cell._tc.get_or_add_tcPr()
-        borders = OxmlElement("w:tcBorders")
-        for edge in ("top", "left", "bottom", "right", "insideH", "insideV"):
-            el = OxmlElement(f"w:{edge}")
-            el.set(qn("w:val"), "nil")
-            borders.append(el)
-        tc_pr.append(borders)
+    populate_running_footer(section.footer, footer_label)
     return doc, bullet_num_id, decimal_num_id
 
 
@@ -804,13 +802,13 @@ def parse_manuscript(doc, markdown, bullet_num_id, decimal_num_id, figure_dir):
                 # Keep two semantically inseparable blocks intact in the final
                 # submission rendering: the research-question lead-in with the
                 # first numbered item, and the frozen-hash paragraph as a unit.
-                if text.startswith("The study asks four questions."):
+                if text.startswith("The study asks four research questions (RQs)."):
                     p.paragraph_format.keep_with_next = True
                 if text.startswith("The specification SHA-256 is"):
                     p.paragraph_format.keep_together = True
 
 
-def set_core_properties(doc):
+def set_core_properties(doc, comments_label):
     props = doc.core_properties
     props.title = (
         "AiWingman: A Local Continuity Overlay for Codex Task Portfolios with "
@@ -819,7 +817,7 @@ def set_core_properties(doc):
     props.subject = "AiWingman local continuity overlay and retrospective policy-layer conformance study"
     props.author = "Mehmet Solak"
     props.keywords = "coding agents; work continuity; local-first software; deterministic ranking suppression; specification-based testing; human oversight"
-    props.comments = "AiWingman Technical Note - submission version 1.0"
+    props.comments = comments_label
     artifact_date = datetime(2026, 8, 24, tzinfo=timezone.utc)
     props.created = artifact_date
     props.modified = artifact_date
@@ -838,13 +836,22 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "output/docx/aiwingman-technical-note-v1.docx",
+        default=Path(__file__).resolve().parents[1] / "output/docx/aiwingman-original-research-article-v1.docx",
     )
+    parser.add_argument("--article-type", default="Original Research Article")
+    parser.add_argument("--footer-label")
+    parser.add_argument("--comments-label")
     args = parser.parse_args()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     figure_dir = Path(__file__).resolve().parents[1] / "tmp/docx-figures"
-    doc, bullet_num_id, decimal_num_id = setup_document()
-    set_core_properties(doc)
+    footer_label = args.footer_label or (
+        f"AiWingman {args.article_type} | Submission version 1.0 | 24 August 2026"
+    )
+    comments_label = args.comments_label or (
+        f"AiWingman {args.article_type} - submission version 1.0"
+    )
+    doc, bullet_num_id, decimal_num_id = setup_document(footer_label)
+    set_core_properties(doc, comments_label)
     parse_manuscript(
         doc,
         args.source.read_text(encoding="utf-8"),

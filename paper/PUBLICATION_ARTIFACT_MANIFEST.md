@@ -1,36 +1,38 @@
 # AiWingman publication artifact manifest
 
-Status: `FINAL_ARTIFACT_AND_PUBLIC_PACKAGE_PROVENANCE_PASS`
+Status: `LOCAL_EDITORIAL_ARTIFACT_PASS_PUBLIC_PACKAGE_REFREEZE_PENDING`
 
 Recorded: 24 August 2026
 
-This manifest identifies the declaration-complete AiWingman Technical Note
-submission-version artifacts. It records the exact local bytes and bounded QA
-evidence. It does not represent a portal upload, a Preprints.org submission,
-screening, public posting, DOI assignment, Google Scholar indexing, peer review,
-or acceptance.
+This manifest identifies the exact local AiWingman Original Research Article
+submission-version artifacts and the bounded quality evidence for those bytes.
+It does not represent a portal upload, a submission, screening, public posting,
+DOI assignment, indexing, peer review, or acceptance.
 
 ## Exact artifacts
 
 | Artifact | Intended role | Size | Extent | SHA-256 |
 | --- | --- | ---: | ---: | --- |
-| `output/docx/aiwingman-technical-note-v1.docx` | Editable main manuscript | 206,417 bytes | 30 rendered pages | `49800b75b2d33ab85507defec85c814c9844b8c2a53496f2f0c4515852829dfb` |
-| `output/pdf/aiwingman-technical-note-v1.pdf` | Author-rendered QA/reference copy; not a second main manuscript | 210,658 bytes | 17 A4 pages | `575aef866b6dda6a5165218bec79479424ab192a90291ec9c690729d2778481c` |
-| `output/supplement/aiwingman-research-supplement-v1.zip` | CC BY 4.0 non-executable research supplement | 32,595 bytes | 10 files plus 5 directory entries | `142dca3e1924ff91997126ba6c9ce2b02e323e93d2fc02d5c8b588510fe987d0` |
+| `output/docx/aiwingman-original-research-article-v1.docx` | Editable main manuscript | 205,492 bytes | 31 rendered pages | `edb7b5f111f1d122108516dbaf08c0aba433265588b84b1c8a39d18392026cac` |
+| `output/pdf/aiwingman-original-research-article-v1.pdf` | Author-rendered QA/reference copy; not a second main manuscript | 213,105 bytes | 18 A4 pages | `bc4a1b5822552f5a90082227c5ac9619b54f34dd3558d5bb76dd0c95e6629e1b` |
+| `output/supplement/aiwingman-research-supplement-v1.zip` | CC BY 4.0 non-executable research supplement | 32,600 bytes | 10 files plus 5 directory entries | `07a473573e4246b215f9dc49596a16e5951b1a521d26625806acb04f2853523a` |
+
+The older Technical Note DOCX and PDF remain in the output tree only as
+superseded historical artifacts. They are excluded from the submission set.
+
+The required five-part editorial output is
+`paper/EDITORIAL_REVISION_PACKAGE.md`: 90,928 bytes, SHA-256
+`7fc9f121f6a9d6c92ba8a708750d87f71bd3f0577e89231ab4f13f33406b735b`.
 
 ## Canonical inputs
 
 | Input | SHA-256 |
 | --- | --- |
-| `paper/aiwingman_technical_report.md` | `152e8d7849488f7fbf08b502a3a6350e1bebbc09b32cbb21acd0735781524f43` |
-| `paper/build_submission_docx.py` | `7ed8edd8d5ac30d27600111802746c7160347a1905c6e0f5e431e2b1f50a9d2b` |
-| `paper/build_preprint.py` | `7bf6898d5b5eed9b43327964a71dbe8d07376ea04192fba291f4af911234a330` |
+| `paper/aiwingman_technical_report.md` | `a4b8a0be0183b7cb4e303244a0725e9eb2e7a2f23598554a5dc1f4921964fa0e` |
+| `paper/build_submission_docx.py` | `259b2f9dfb1007a5c8c8c7155f4bed824bd08d25afd1068ba0c3bacd14e2e89f` |
+| `paper/build_preprint.py` | `932b182a424da99e2a352124a60c75ffd67e305fced51ac7cf79ac7404191219` |
 | `scripts/build-preprint-supplement.sh` | `26a4fb27884ec296ce8976fcfecaa3e9d8d1dff062f4262e3749b9860667d860` |
-
-The final artifacts were built from the publication branch whose
-pre-finalization base was `99faac3ef52d0da72d082706f64903a6aacd2c6d` and
-frozen in the exact public package commit
-`328db87d8a39f7d14f32d6993990daae57fa1092`.
+| `paper/build_editorial_revision_package.py` | `4951ff0085bc87ed50cbc0770efa95e9bcc3de9348bdda8cadad7dece8c43387` |
 
 ## Build environment
 
@@ -39,90 +41,98 @@ frozen in the exact public package commit
 - python-docx 1.2.0
 - ReportLab 4.4.9
 - Pillow 12.3.0
-- DOCX rasterization for visual QA: LibreOffice through the bundled document
+- DOCX conversion for visual QA: LibreOffice through the bundled document
   renderer
-- PDF rasterization for visual QA: Poppler 26.05.0 at 144 dpi
+- PDF rasterization for visual QA: Poppler at 144 dpi
 
 ## QA record
 
+### Manuscript integrity
+
+- PASS: the pre-edit and revised sources have the same numeric multiset: 598
+  matched quantitative tokens under the locked comparison expression.
+- PASS: all 55 numbered citation occurrences, 37 URLs, and 10 numbered
+  Table/Figure/Section cross-references were preserved.
+- PASS: the 32-entry, 7,262-byte reference section is byte-identical to the
+  pre-edit source.
+- PASS: no prose, heading, caption, list item, or individual table-cell sentence
+  exceeds 30 words. Bibliographic records were retained verbatim.
+- PASS: no causal, efficacy, superiority, privacy, security, compatibility, or
+  determinism claim was strengthened.
+- The language is STE-informed, not formally ASD-STE100 verified. Issue 9 rules
+  and the controlled dictionary were not supplied.
+
 ### DOCX
 
-- PASS: 30 of 30 rendered pages were inspected after the final pagination
-  correction. The RQ lead-in remains with the first item, the three-hash
-  paragraph remains intact, references are not split, and no clipping,
-  overlap, missing glyph, malformed table, broken code block, orphaned heading,
-  or excess terminal page was found.
-- PASS: the package contains 18 ZIP members, 469 XML paragraphs, 7 tables and
-  64 rows; every table row carries `cantSplit`. It contains 2 drawings, 37
+- PASS: the final 31-page render was covered page by page at original
+  resolution. Thirty pages were raster-byte identical to the fully inspected
+  final candidate; the only text-changed page, page 26, was inspected again.
+  No clipping, overlap, malformed glyph, broken table/code flow, orphan heading,
+  or margin/footer defect was found.
+- PASS: the package contains 17 ZIP members and 478 document-body XML
+  paragraphs. It contains 7 tables, 64 rows with `cantSplit`, 2 drawings, 37
   hyperlinks, and 2 image relationships.
-- PASS: no comments, people part, custom XML, tracked insertion/deletion/move,
-  private local path, draft warning, or author-confirmation placeholder is
-  present.
-- PASS: core metadata records Mehmet Solak, the final title, submission-version
-  subject/keywords, an empty `lastModifiedBy`, and fixed 24 August 2026
-  created/modified dates.
-- Accessibility audit: 0 high, 0 medium, and 37 low findings. Every low finding
-  is a deliberately displayed raw repository, DOI, documentation, or reference
-  URL; no higher-severity finding remains.
+- PASS: it has no running-header part, comment, people part, custom XML, or
+  tracked insertion/deletion/move. It contains one consistent footer with the
+  article type, submission version, date, and page number.
+- PASS: core metadata records Mehmet Solak, the final title, subject, keywords,
+  an empty `lastModifiedBy`, and the Original Research Article label.
+- Accessibility audit: 0 high, 1 medium, and 37 low findings. The medium finding
+  is the intentional one-row, non-data footer layout table, which has no data
+  header. The low findings are deliberately displayed raw repository, DOI,
+  documentation, or reference URLs.
 
 ### Direct PDF
 
-- PASS: 17 of 17 A4 pages were inspected. Pages 1-15 are byte-render equivalent
-  to the previously accepted final-layout candidate; pages 16-17 were inspected
-  again after the declaration and Data Availability edits. No clipping,
-  overlap, missing glyph, malformed table/figure/code block, or incomplete
-  declaration was found. References `[1]` through `[32]` are complete and
-  readable.
-- PASS: title, author, subject, keywords, submission version, declarations, Data
-  Availability, conflicts statement, and all 32 references are extractable.
+- PASS: the final 18-page A4 PDF was covered page by page at original
+  resolution. Seventeen pages were raster-byte identical to the fully inspected
+  final candidate; the only text-changed page, page 15, was inspected again.
+  No clipping, overlap, missing glyph, malformed figure/table/code block, or
+  incomplete declaration/reference was found.
+- PASS: the title, author, subject, keywords, submission version, declarations,
+  Data Availability statement, conflicts statement, and references `[1]` through
+  `[32]` are extractable.
 - PASS: the PDF is unencrypted and contains no form, JavaScript, OpenAction, or
   additional-action entry.
-- The direct PDF is untagged. It is retained as the author's fixed-layout QA and
-  reference copy; the editable DOCX is the planned portal main manuscript.
+- The direct PDF is untagged. It is retained as a fixed-layout QA/reference copy;
+  the editable DOCX is the planned portal main manuscript.
 
 ### Privacy and supplement
 
-- PASS: the fail-closed compressed-artifact scanner accepted the final DOCX and
-  direct PDF, including decoded package and stream surfaces. It found no private
-  home path, non-synthetic task URI or UUID, or credential pattern.
+- PASS: the fail-closed compressed-artifact scanner accepted the exact final
+  DOCX and direct PDF. It found no private home path, non-synthetic task URI or
+  UUID, or credential pattern.
 - PASS: the supplement contains exactly `paper/SUPPLEMENT_README.md` plus the
   nine listed non-executable protocol, synthetic-fixture, result, manifest,
   summary, and erratum files. Every file is byte-equal to its repository source,
-  mode 0644, and free of symlinks, unsafe paths, hidden macOS entries,
-  encryption, archive comments, and extra fields.
+  mode 0644, and free of symlinks, unsafe paths, encryption, archive comments,
+  extra fields, and hidden macOS entries.
 - PASS: CRC verification and `ZipFile.testzip()` succeeded. Two delayed rebuilds
-  were byte-for-byte identical to the recorded ZIP; all archive timestamps are
-  fixed at 24 August 2026 00:00.
+  were byte-for-byte identical to each other and to the recorded ZIP. All archive
+  timestamps are fixed at 24 August 2026 00:00.
 - PASS: the supplement README grants CC BY 4.0 only to the listed non-executable
   research package and keeps executable software, tests, scripts, builders, and
   research drivers under MIT.
 
-### Public-source preparation
+## Public-package provenance boundary
 
-- PASS: a final 117-file manifest-only export passed the complete local
-  `REQUIRE_STANDARD_TESTS=1` public-source preparation gate. The run included
-  adversarial privacy and archive-path fixtures, 16/16 deterministic self-tests,
-  100/100 Swift tests through the fail-closed Command Line Tools fallback,
-  fixed-schema diagnostics, arm64 and x86_64 macOS 13-targeted cross-builds,
-  Universal 2 bundle/signature/topology checks, and the canonical metadata-free
-  ZIP contract.
-- PASS: the public exporter accepts only
-  `output/supplement/aiwingman-research-supplement-v1.zip`; a negative fixture
-  confirms that any other ZIP path is rejected.
-- PASS: the final package commit
-  `328db87d8a39f7d14f32d6993990daae57fa1092` was pushed to
-  `codex/aiwingman-technical-preprint`, cloned back through HTTPS, checked out
-  detached and clean, and verified as exactly 117 tracked files matching
-  `PUBLIC_SOURCE_MANIFEST.txt`. The DOCX, PDF, and supplement hashes in that
-  clone matched this manifest.
-- PASS: the complete public-source preparation gate passed again in that clean
-  clone.
-- PASS: GitHub Actions run `32699022868` checked out that exact commit and
-  completed both `macOS verification` and native `Intel runtime` successfully.
+The earlier exact public-package commit
+`328db87d8a39f7d14f32d6993990daae57fa1092` and hosted CI run `32699022868`
+attest the superseded Technical Note package. They do not attest the revised
+Original Research Article bytes listed above.
 
-## Remaining portal gates
+`PUBLIC_SOURCE_MANIFEST.txt` now enumerates the revised local artifacts and
+editorial package in addition to retained historical outputs. Tracked-file
+equality, a clean-clone export, and hosted CI cannot be claimed for the revised
+set until a new commit exists. No such commit, push, or hosted run is claimed by
+this manifest.
 
-1. Stage the record in Preprints.org without using the final **Submit** action.
-2. Review the complete staged record and exact uploaded files.
-3. Obtain a separate explicit author approval before the portal's final
-   **Submit** action.
+## Remaining gates
+
+1. Commit and re-freeze the revised public package.
+2. Verify the exact new commit through a clean detached clone and hosted CI
+   before claiming commit-level provenance.
+3. Resolve the target-journal style query before a later journal submission.
+4. Stage the preprint portal without selecting final **Submit**.
+5. Review the staged record and exact uploads, then obtain separate explicit
+   approval before final **Submit**.

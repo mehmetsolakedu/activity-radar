@@ -1,4 +1,17 @@
-# AiWingman: A Local Continuity Overlay for Codex Task Portfolios with Retrospective Specification-Conformance Testing of Its Policy Layer
+## 1. EDITORIAL STATUS
+
+- Manuscript completeness: complete. Every heading, paragraph, caption, relevant table cell, declaration, and reference record was reviewed.
+- Editing mode: full scientific and technical-language revision, not a summary or a grammar-only correction.
+- STE mode: ADAPTED. The revision applies STE-compatible clarity principles when they do not conflict with scientific accuracy or established terminology.
+- English variant: neutral international scientific English, with internally consistent US-style forms where the original manuscript used them.
+- Citation style: the existing numbered style was preserved because no concrete journal style was supplied.
+- Assumptions: Preprints.org is treated as the current preprint route, not as a target journal. No concrete target-journal instructions, house terminology, or controlled dictionary were available. The existing section hierarchy and numbered citation style were therefore retained.
+- Formal ASD-STE100 verification: not possible. ASD-STE100 Issue 9 rules and the controlled dictionary were not supplied. The result is STE-informed and not formally ASD-STE100 verified.
+- Author declarations: the named author confirmed the recorded declarations on 24 August 2026 with the exact phrase `YAZAR BEYANLARINI ONAYLIYORUM`. This confirmation does not authorize a portal's final Submit action.
+
+## 2. REVISED MANUSCRIPT
+
+### AiWingman: A Local Continuity Overlay for Codex Task Portfolios with Retrospective Specification-Conformance Testing of Its Policy Layer
 
 Mehmet Solak
 
@@ -6,9 +19,9 @@ Department of Biosystems Engineering, Faculty of Agriculture, Siirt University, 
 
 ORCID: 0000-0002-0800-0334 | Correspondence: mehmetsolak@siirt.edu.tr
 
-Submission version 1.0 - 24 August 2026 - Original Research Article manuscript
+Submission version 1.0 - 24 August 2026 - Original Research Article manuscript <<AQ-01>>
 
-## Abstract
+#### Abstract
 
 Persistent coding-agent work can leave concurrent input requests, completed results, blockers, and quiet unfinished tasks. AiWingman is an open-source macOS menu-bar companion that derives continuity cues from locally retained Codex task evidence. The dashboard and optional Wingman review are separate. Obsolete or abandoned labels require reversible user confirmation; silence and age are insufficient.
 
@@ -16,7 +29,7 @@ This article describes the system but evaluates only its pure continuity-policy 
 
 Keywords: coding agents; work continuity; local-first software; deterministic ranking suppression; specification-based testing; human oversight
 
-## 1. Introduction
+#### 1. Introduction
 
 Coding-agent work is often organized as a portfolio rather than a single conversation. A user may delegate several tasks, answer one agent's question, and leave another task waiting on an external event. The user may then receive a result in a third task and later resume work when the original plan is no longer clear. The newest timestamp is not necessarily the next useful task. Conversely, age and silence do not establish that work is obsolete or abandoned.
 
@@ -37,19 +50,19 @@ Contributions 1 and 2 are source-backed system and policy descriptions. The froz
 
 The reported evaluation recruited no participants and used no surveys, interviews, private task histories, or human-outcome measurements. The article does not claim faster resumption, improved recall, lower workload, better decisions, fewer wasted tokens, or increased productivity.
 
-## 2. Related Work and Positioning
+#### 2. Related Work and Positioning
 
-### 2.1 Programmer task context and resumption
+##### 2.1 Programmer task context and resumption
 
 Kersten and Murphy's Mylar work captured task context, filtered development artifacts by degree of interest, and restored context across task switches [1]. Parnin and DeLine investigated cues for resuming interrupted programming tasks through a survey and controlled study [2]. Parnin and Rugaber characterized resumption behavior across a large set of programming sessions [3]. These studies make generic task-context restoration and programming-resumption novelty untenable. They motivate AiWingman's checkpoints, next actions, and continuity cues, but they do not validate those features for coding-agent portfolios.
 
 Research on user-authored source annotations also shows how developers use externalized cues for reminding and refinding [4]. AiWingman's next actions, waiting conditions, and lifecycle labels serve a related design function. Their usefulness in this product remains unmeasured.
 
-### 2.2 Awareness dashboards and triage
+##### 2.2 Awareness dashboards and triage
 
 Developer-awareness dashboards and feeds predate AiWingman [5]. Personalized issue-tracking views have likewise been studied as a way to reduce information overload [6]. These systems establish awareness and portfolio triage as prior concepts. AiWingman's policy is evaluated for agreement with its own frozen specification, not for relevance to a person's real work and not against these systems as a human-performance comparator.
 
-### 2.3 Multi-agent interfaces, oversight, and observability
+##### 2.3 Multi-agent interfaces, oversight, and observability
 
 AutoGen Studio provides interfaces for building, running, evaluating, and debugging multi-agent workflows [7]. AgentScope, AgentBoard, and AgentOps offer multi-agent development, evaluation, monitoring, or observability abstractions [8-10]. AgentTrace proposes runtime instrumentation and structured operational, cognitive, and contextual traces [11]. AiWingman does not define or instrument an agent runtime; it retrospectively reads evidence retained by a local client.
 
@@ -61,13 +74,13 @@ Within the targeted primary-source comparison set reviewed on 23 August 2026, Gi
 
 Official OpenAI documentation is an even closer product-family precedent. It describes a ChatGPT desktop Activity view for unread, running, or waiting chats. The documented labels include Running, Needs input, Ready, and Blocked [23]. Goal workflows support pause, resume, parallel chats, and status recaps across ChatGPT desktop and Codex clients [24]. The Codex App Server supports stored-thread listing, status and history reads, archive and unarchive operations, and thread token-usage events [25]. OpenAI documentation also describes code review across ChatGPT and Codex, including a dedicated Codex reviewer and review pane [26]. These product surfaces rule out feature-firstness for task portfolios, continuity, status display, review, or token visibility in this product family. AiWingman is therefore framed as a third-party retrospective policy case. It combines locally retained Codex evidence, reversible user-owned lifecycle metadata, and frozen deterministic ranking-suppression rules. Its direct database and deep-link integration is a compatibility risk rather than a novelty contribution.
 
-### 2.4 Local-first design and deterministic ranking suppression
+##### 2.4 Local-first design and deterministic ranking suppression
 
 Local-first software emphasizes user control and continued operation without a service dependency [27]. Privacy engineering guidance treats data minimization, user participation, and transparency about collection and use as relevant design considerations [28]. AiWingman's ordinary dashboard adopts these as design principles; they are not inventions or privacy proofs. The optional remote path is excluded from the offline-default claim.
 
 Classical reject-option and selective-classification research formalizes risk-error or risk-coverage relationships for predictors [29,30]. AiWingman is not a learned predictor, has no confidence calibration, and provides no statistical guarantee. It instead uses **deterministic ranking suppression**: fixed rules return no recommendation when eligible evidence is absent, the top score is below a threshold, or top candidates are too close. The term does not imply statistical selective prediction.
 
-## 3. System Scope and Two Separate Pipelines
+#### 3. System Scope and Two Separate Pipelines
 
 AiWingman is a native Swift application whose package declares a macOS 13 deployment target. The reported builds and tests ran on later macOS versions. No real macOS 13 launch or runtime result is reported. SwiftUI and AppKit provide the menu-bar interface. The source package separates reusable policy and reader components from the application interface, diagnostics, and self-tests. Selected executable, bundle, preference, and application-support identifiers retain the earlier Activity Radar name so upgrades preserve existing user-owned state.
 
@@ -82,7 +95,7 @@ The implementation has two distinct evidence pipelines. They share selected type
 
 Figure 1. AiWingman's two pipelines and trust boundaries. The upper ordinary-dashboard path is local and per-candidate-row. The lower optional Wingman path constructs task trees and may cross a remote boundary only after packet preview and one-shot consent. The policy benchmark reported in this article evaluates neither reader nor the remote path.
 
-### 3.1 Ordinary dashboard
+##### 3.1 Ordinary dashboard
 
 The ordinary path opens the local Codex SQLite database with `SQLITE_OPEN_READONLY` and `PRAGMA query_only=ON`. It queries candidate rows that are non-archived, have a nonempty preview, and are not listed as children in retained spawn relationships. Eligible rows have a `thread_source` value of `user`, empty, or null. The requested base page and total returned set are each capped at 200 rows. Priority and active, blocked, or limited goal-linked inclusions are deduplicated and capped at 64. The inclusion scan takes at most 200 rows from a reverse-`rowid` goal window. It orders eligible records from that window by `updated_at_ms`. The scan reports a conservative `hasMore` condition when the goal window or selected inclusions are truncated. It then fetches goal metadata only for the bounded returned identifiers. This is a finite compatibility window, not a guarantee that every retained goal is represented. Ordinary SQLite text is subject to per-field and aggregate byte ceilings before Swift string copying. These observed-schema filters do not prove user ownership or complete root classification. Each selected row's rollout is sampled within fixed bounds. The evidence is reduced to a local observation, such as explicit input requested, unseen final result, blocked, recently active, quiet open work, or incomplete history. The dashboard combines these observations with AiWingman-owned continuity metadata and applies the pure policy layer described in Section 4.
 
@@ -92,7 +105,7 @@ The ordinary dashboard may request that macOS open a user-selected task through 
 
 The current revision requires a standardized lexical descendant of the configured Codex root and opens each path component relative to that root with no-follow semantics. It rejects symbolic-link components and non-regular or untrusted files and bounds the session-index tail read. The SQLite adapter canonicalizes the parent path and requests a no-follow final open. These are property-specific implementation controls. They do not establish that every local input is safe or that the whole application is sandboxed. Reader robustness is outside the policy benchmark reported in Sections 5 and 6.
 
-### 3.2 Optional Wingman analysis and review
+##### 3.2 Optional Wingman analysis and review
 
 The optional reader constructs a parent-child forest from retained spawn relationships, identifies roots and descendants, and samples bounded rollout tails across the tree. Duplicate edges are not intended to multiply evidence, and cycles or structurally inconsistent graphs are treated as compatibility failures. The tree reader is not used to make the ordinary dashboard's per-candidate-row continuity observation.
 
@@ -100,15 +113,15 @@ Spawned rollouts may share a cumulative token-counter lineage. Summing all count
 
 Text similarity, weighted degree, PageRank, and connected components are descriptive summaries of retained tree evidence. They are not measures of success, scientific interest, personality, cognitive load, or causal importance. They have no result in the frozen policy evaluation and are not part of the article's core empirical claim.
 
-### 3.3 User-owned state
+##### 3.3 User-owned state
 
 Interface language, date range, and lifecycle choices are stored separately from Codex state. Continuity records pseudonymize task identifiers and are bounded by record and per-task history counts; the optional research ledger is additionally bounded by age and event count. The application therefore reads Codex state through adapters while writing its own state. It does not repair or migrate the Codex database.
 
-## 4. Continuity Policy and Confirmation Contract
+#### 4. Continuity Policy and Confirmation Contract
 
 The frozen policy layer receives normalized observations and optional user-authored continuity metadata. It does not open databases, parse rollout files, construct graphs, invoke a model, or navigate the interface.
 
-### 4.1 Precedence and deterministic scoring
+##### 4.1 Precedence and deterministic scoring
 
 Policy evaluation follows four stages:
 
@@ -152,13 +165,13 @@ The weights and the 30-point score and 10-point lead thresholds are author-desig
 
 Figure 2. Frozen continuity-policy flow. Future snooze, waiting, and terminal rules defer an item. Incomplete eligible history excludes that item. The policy scores the remaining complete items. It suppresses the ranking when the top score is below 30 or, when a runner-up exists, the lead is below 10. An incomplete item does not suppress a recommendation from another complete item.
 
-### 4.2 Lifecycle states
+##### 4.2 Lifecycle states
 
 Observed evidence and lifecycle decisions are separate. A user confirmation is authoritative and maps directly to its reversible lifecycle state. Only explicit `abandoned` or `obsolete` confirmations can produce `abandonedConfirmed` or `obsoleteConfirmed`.
 
 Without confirmation, the policy maps direct attention to `waitingHuman`, `blocked`, or `current`. It maps an external waiting condition to `waitingExternal`. Future snoozes, paused work, and sufficiently old quiet work map to `dormant`; completed work maps to `completed`; and missing or unknown evidence maps to `uncertain`. Age can add inactive-evidence codes, but silence, age, and an aborted turn cannot infer a confirmed obsolete or abandoned state.
 
-### 4.3 Optional remote-review boundary
+##### 4.3 Optional remote-review boundary
 
 The dashboard starts no background agent request. Opening the Wingman view also does not invoke the Codex CLI. A separate, explicit compatibility check validates the signed executable. It runs version, command-compatibility, and login-status checks. The check starts no agent turn and sends no AiWingman task packet. However, it creates a private temporary Codex home with an opaque copy of the validated saved authentication file. The packet-carrying Wingman request is triggered separately. Before one-shot consent, the interface makes the intended user-derived packet available in a collapsed disclosure control. The implementation verifies byte equality between that packet and the current preview. It does not require the user to expand the control. The packet builder intentionally omits raw task identifiers, raw paths, configuration files, tool outputs, and authentication-file contents. The detailed portion can include sanitized titles for up to 12 task-tree rows. Counts and aggregates represent selected trees outside those detailed rows. Sanitized prompt excerpts may be included only after an explicit opt-in. Human-authored continuity text is excluded. With prompt content disabled, task-derived free text is limited to sanitized titles. The packet omits prompt excerpts, prompt-derived themes, local review signals, and next-move text. It still carries timestamps and the activity cutoff, status and enumeration fields, booleans, counts, numeric measurements, schema and response-language metadata, and a fixed method-boundary string.
 
@@ -168,9 +181,9 @@ The CLI is invoked with `--ephemeral`, which requests a turn intended not to sav
 
 The ordinary dashboard contains no intended network path in the evaluated source architecture. Source-level checks for network APIs are bounded static evidence, not runtime non-interference. The optional CLI path intentionally reaches an external service after consent.
 
-## 5. Evaluation Method
+#### 5. Evaluation Method
 
-### 5.1 Scope and research questions
+##### 5.1 Scope and research questions
 
 The evaluation covers only `WorkContinuityRanker` and `WorkContinuityLifecycle`. It excludes both readers, Codex database and rollout compatibility, graph analysis, token proxies, interface behavior, deep links, diagnostics, and local storage. It also excludes optional CLI execution, remote output, and user outcomes.
 
@@ -181,7 +194,7 @@ The study asks four research questions (RQs). RQ3 was formulated after the proto
 - **RQ3, post-freeze exploratory technical comparisons:** How often do two deliberately simplified rules produce the same selected identifier as the frozen policy? How often do they select an item when the frozen policy requires no recommendation?
 - **RQ4, descriptive performance:** What latency distribution is observed for synthetic portfolios of 10, 50, 200, and 1,000 inputs? What single process-lifetime peak resident-memory value is observed after the full runner workload?
 
-### 5.2 Freeze and chronology
+##### 5.2 Freeze and chronology
 
 The evaluation artifacts have a staged repository chronology in which the written specification and expected outputs were committed before the archived benchmark execution. The policy implementation already existed before this freeze, which was not a preregistration. Repository chronology and the author's account do not attest that no earlier exploratory or unarchived execution occurred.
 
@@ -200,7 +213,7 @@ The author reports building and running the Swift checkpoint from a clean detach
 
 The Python standard-library generator does not import, invoke, parse, or copy Swift source. It implements the written specification as a separate oracle at the language boundary. However, the same project produced the specification, oracle, fixtures, and Swift implementation, and the specification and fixtures were authored after the implementation already existed. Knowledge of the implementation could therefore have shaped both the contract and its examples. This is a **same-project, retrospectively specified, separately implemented oracle**, not an implementation-independent reference standard or external validation.
 
-### 5.3 Exact-output checks
+##### 5.3 Exact-output checks
 
 The Swift runner strictly decodes the corpus and checks its schema version and fixture counts. It verifies the corpus bytes against the embedded corpus hash. It also compares the corpus's embedded specification-hash value with the value compiled into the runner. The runner does not read or hash the specification file itself; the separate shell reproduction checks in Section 9 perform that check. For triage fixtures, it compares the recommendation or no-recommendation result, candidate identifiers and order, scores, ordered reason codes, weights, evidence times, and deferrals. For lifecycle fixtures, it compares state, ordered evidence codes, evidence times, and ages. A fixture passes only if every specified field matches.
 
@@ -214,7 +227,7 @@ The five-sentinel non-propagation check uses five exact strings seeded in 10 fie
 
 A retrospective observability audit found a narrower V1 coverage defect. When the policy returns no recommendation because of a low score or close competition, it returns no ranked candidates. Consequently, no frozen expected output exposes the triage reason/weight pairs for `deadlineWithinWeek`, `lowImportance`, either `agingWithoutPlan` weight, or triage `recentlyActive`; the V1 triage corpus also has no zero-input portfolio. Changing one of those rules while preserving the same no-recommendation outcome could therefore leave 155/155 exact-output conformance unchanged. The V1 result remains exact agreement with its frozen outputs, not evidence that every written rule output was observed.
 
-### 5.4 Post-freeze exploratory technical baselines
+##### 5.4 Post-freeze exploratory technical baselines
 
 The frozen written protocol did not specify either baseline. Both contrasts first appeared in the later Swift runner commit, after the protocol and corpus freeze. They are therefore reported as post-freeze exploratory technical contrasts, not frozen or confirmatory evaluation components, competing products, or human-quality measures.
 
@@ -223,17 +236,17 @@ The frozen written protocol did not specify either baseline. Both contrasts firs
 
 For each of the 75 triage fixtures, exact decision agreement means equality of the recommended activity identifier; `nil` means no recommendation. A no-recommendation violation occurs when a contrast selects an identifier for a fixture whose frozen expected result exposes no recommendation. This label does not imply that every such result arises from the score threshold or lead rule: the recency-only contrast also removes deferrals and history-completeness eligibility.
 
-### 5.5 Post-freeze rule-observability supplement
+##### 5.5 Post-freeze rule-observability supplement
 
 The frozen V1 specification, corpus, and result artifacts were not modified. Six later engineering tests use combined inputs and exact assertions. They expose the four previously hidden triage reason codes, both `agingWithoutPlan` weights, and the zero-input no-recommendation result. A standard-library mutation harness copies the current Swift package to a temporary directory and confirms the six focused tests. It then changes each asserted weight or empty-portfolio result individually. A mutation counts as killed only when the corresponding named test fails. This supplement is a retrospective regression check. It is not part of V1, a complete mutation analysis, exhaustive state coverage, an external oracle, or human-utility evidence.
 
-### 5.6 Performance procedure and environment
+##### 5.6 Performance procedure and environment
 
 The runner performs five warm-up calls followed by 30 measured repetitions for each input size. It reports the median, a linearly interpolated ninety-fifth percentile, the interquartile range, and the maximum using `DispatchTime.uptimeNanoseconds`. For each series, `N` denotes the input count. Triage measures one ranking call over `N` synthetic inputs. Lifecycle measures `N` assessment calls over the same synthetic inputs. The 200-input series corresponds to the current ordinary-dashboard return cap. The 1,000-input series deliberately exceeds that product limit and serves only as a synthetic policy-layer stress size. None of the series measures end-to-end dashboard latency.
 
 The benchmark report machine-recorded arm64 architecture, macOS 26.6.2 build 25G83, 14 active processors, and release configuration. The separately authored result manifest records a MacBook Pro model `Mac16,7`, Apple M4 Pro, 48 GB memory, Apple Swift 6.3.3, and target `arm64-apple-macosx26.0`. These additional fields are author-reported rather than runner-attested. Process peak resident memory was sampled after all series using macOS `getrusage(RUSAGE_SELF)`. It is a process-lifetime peak, not an allocation total or a per-operation measurement.
 
-### 5.7 Generative artificial intelligence (AI) assistance in the research workflow
+##### 5.7 Generative artificial intelligence (AI) assistance in the research workflow
 
 OpenAI Codex assisted with source discovery, code inspection, literature
 organization, and document formatting. It also assisted with drafting and
@@ -249,9 +262,9 @@ as needed and approving the final manuscript for submission. AI is not listed
 as an author and was not treated as an
 independent reviewer or validation source.
 
-## 6. Results
+#### 6. Results
 
-### 6.1 Conformance, repeatability, and bounded contract checks
+##### 6.1 Conformance, repeatability, and bounded contract checks
 
 Table 2 summarizes the V1 machine-readable result report. Passing per-fixture actual outputs were not archived as rows; the artifact retains counts, failure records, and a corpus-output digest. It is therefore a summary report rather than a complete per-fixture result ledger. The primary report SHA-256 is `fa7e271a436be62bf9c7f9979122ccc6a01d36fe03abaea7b4a0277472a9957e`. The post-freeze fresh-process summary SHA-256 is `9d1dcd88b2dca1672ccfabee076ee2c9274ebb63458275b30e6a4269b37b4af1`.
 
@@ -265,11 +278,11 @@ Table 2 summarizes the V1 machine-readable result report. Passing per-fixture ac
 
 The canonical corpus-output digest was `fd72e52b8098d2f62f6c6f7ccc6de7e744de7ed03722d08c7f983527601db8e6` in the primary run and all 100 supplementary fresh processes. The frozen conformance, within-process, sentinel, and lifecycle results answer RQ1 and RQ2 within the recorded arm64 environment. The fresh-process result is a later supplementary check. Neither result establishes external correctness, reader privacy, or remote-model repeatability.
 
-### 6.2 Post-freeze rule-observability supplement
+##### 6.2 Post-freeze rule-observability supplement
 
 The machine-readable result records that all six focused tests passed in the unmodified temporary package copy. Five simple compiling weight mutations covered the four previously hidden reason codes. Separate mutations addressed the two `agingWithoutPlan` weights. A sixth mutation changed the empty-portfolio no-recommendation result. Each corresponding focused test failed, so 6/6 enumerated mutations were killed. The result is `Research/results/post-freeze-rule-observability-v1.json`; the runner is `Research/run_rule_observability_mutations.py`. The harness reported that it did not mutate the repository working tree. This evidence is post-freeze, same-project, narrow, and supplementary. It neither repairs the historical V1 corpus retroactively nor establishes exhaustive coverage.
 
-### 6.3 Post-freeze exploratory technical baseline comparisons
+##### 6.3 Post-freeze exploratory technical baseline comparisons
 
 Table 3 reports the post-freeze exploratory exact-decision agreement and no-recommendation violations over all 75 triage fixtures. These contrasts were not specified in the frozen written protocol.
 
@@ -280,7 +293,7 @@ Table 3 reports the post-freeze exploratory exact-decision agreement and no-reco
 
 The recency-only rule selected an item in all 35 frozen no-recommendation cases: 18 `insufficientEvidence`, 12 `noEligibleWork`, two `incompleteHistory`, and three `competingSignals` results. Because that contrast removes deferrals, history-completeness eligibility, scoring, and both suppression rules, its 35 cases locate the combined effect of those mechanisms rather than ranking suppression alone. The same-score/no-suppression contrast selected an item in 16 cases: 13 `insufficientEvidence` and three `competingSignals` results. Those 16 isolate the mechanical effect of removing the 30-point score threshold and 10-point lead requirement while retaining deferrals, eligibility, weights, sorting, and identifier tie-breaking. Fixture categories were deliberately constructed and were not sampled or prevalence-weighted. The agreement percentages are proportions within this synthetic contract corpus, not estimates of real-world error or recommendation frequency. Neither comparison shows that the frozen policy is more useful, accurate, efficient, or preferable for people.
 
-### 6.4 Descriptive performance
+##### 6.4 Descriptive performance
 
 Table 4 reports rounded summary statistics in milliseconds; the archived JSON retains the full recorded precision. Every cell is based on 30 measured repetitions after five warm-ups. The 1,000-input rows are synthetic policy-layer stress sizes above the ordinary dashboard's current 200-row return cap.
 
@@ -297,7 +310,7 @@ Table 4 reports rounded summary statistics in milliseconds; the archived JSON re
 
 The process-lifetime peak resident memory after all performance series was 12,992,512 bytes, approximately 12.4 mebibytes (MiB). Because that value covers the entire runner process and all series, it cannot be attributed to a particular operation or input size. The latency and memory results are descriptive for synthetic policy inputs on one machine and cannot be converted into human time saved.
 
-### 6.5 Release and exact-commit engineering evidence
+##### 6.5 Release and exact-commit engineering evidence
 
 GitHub Actions run `32648392604` evaluated the older public release commit `5e212181ae177cd555ab6bb92f5f71ac8be9173a` on 23 August 2026. The arm64 macOS 15 and native x86_64 macOS 15 jobs each reported 52 passing Swift tests and 16 passing deterministic self-tests. The Intel job built the release application. The arm64 gate also ran enumerated source, diagnostics, storage, manifest, and local Universal 2 package checks.
 
@@ -312,7 +325,7 @@ A later exact-commit GitHub Actions run, `32659669054`, evaluated hardened sourc
 
 This exact-commit run is post-freeze engineering regression evidence on two hosted architectures. It is not part of the V1 result package, an independent reproduction, a broad cross-machine or operating-system claim, or a real macOS 13 runtime result.
 
-## 7. Limitations and Threats to Validity
+#### 7. Limitations and Threats to Validity
 
 **Retrospective same-project oracle.** The written specification, Python oracle, fixtures, Swift implementation, and benchmark runner were produced within the same project, and the implementation predated the specification and fixture corpus. Language-boundary separation prevents direct source import but does not prevent knowledge of existing behavior from shaping the contract. Confirmation bias and shared misunderstandings can therefore survive 155/155 conformance.
 
@@ -338,7 +351,7 @@ This exact-commit run is post-freeze engineering regression evidence on two host
 
 **Archival and independence boundary.** Hardened source checkpoint `99faac3...` is publicly reachable, and exact-commit run `32659669054` supplies bounded hosted CI evidence for that checkpoint. The V1 artifacts are versioned in the same project, but no independent scholarly reproduction or independent archival verification is reported. A later preprint DOI would document manuscript deposit, not validate the source, methods, or results.
 
-## 8. Discussion
+#### 8. Discussion
 
 The evaluation supports a narrow conclusion. The pre-existing Swift continuity policy matched every expected output from a same-project synthetic specification committed before the archived benchmark execution. Across the frozen within-process repetitions, each fixture matched its first canonical output. Five exact seeded strings were absent from the scanned serialized output surface. The tested lifecycle fixtures also respected the explicit-confirmation boundary. Repository chronology does not exclude earlier exploratory or unarchived runs. A post-freeze fresh-process check and later dual-architecture CI returned the same digest within their stated environments. None of these checks establishes whether the policy chooses the right task for a person.
 
@@ -350,7 +363,7 @@ The product-level design contribution is likewise integrative. Task context, rem
 
 Further evidence should remain finite and claim-driven. The native x86_64 CI result closes only the bounded equality check for the named hosted jobs. Independent cross-machine reproduction would address same-project and hosted-environment bias. Frozen adversarial ledgers for both readers and the temporary remote boundary would address only enumerated path, graph, disclosure, event, and cleanup properties. A later human study would require a new protocol and would be necessary before any efficacy claim.
 
-## 9. Reproducibility and Availability
+#### 9. Reproducibility and Availability
 
 The public source repository is available at:
 
@@ -456,7 +469,7 @@ The reproduction target is 155/155 exact conformance and canonical corpus digest
 
 The repository includes versioned citation metadata in keeping with software-citation principles [32]. Software source, tests, scripts, and executable tooling are MIT-licensed. Effective 24 August 2026, the manuscript and identified non-executable research artifacts are licensed under the Creative Commons Attribution (CC BY) 4.0 International license. The specific artifacts are listed in `paper/LICENSE_STATUS.md` and include generated scholarly outputs, the written research protocol, synthetic fixture corpus, result data, manifests, summaries, and errata. Private Codex databases, rollout files, task text, local paths, credentials, real-work screenshots, and third-party works are outside the publication package and license grant.
 
-### 9.1 Manuscript artifact build
+##### 9.1 Manuscript artifact build
 
 The submission-manuscript build environment used Python 3.12.13 with the package versions pinned in `paper/requirements.txt`. A clean environment can build the editable Word manuscript and author-rendered reference document in Portable Document Format (PDF) as follows:
 
@@ -476,7 +489,7 @@ python paper/build_preprint.py \
 
 The PDF builder selects macOS Times New Roman and Arial when available. Otherwise, it uses the bundled ReportLab Vera faces. The Microsoft Word Open XML document (DOCX) declares Calibri for document text. It rasterizes its two generated diagrams with Arial or the same Vera fallback. Word or LibreOffice version, installed fonts, PDF metadata, and ZIP timestamps can change bytes or pagination. Therefore, byte-identical manuscript regeneration is not claimed across environments. Before upload, the final deposit bytes must be rendered page by page, scanned structurally and for compressed private content, and identified by SHA-256 values.
 
-## 10. Claim Ledger
+#### 10. Claim Ledger
 
 | Claim | Status in this revision | Exact boundary |
 | --- | --- | --- |
@@ -499,7 +512,7 @@ The PDF builder selects macOS Times New Roman and Arial when available. Otherwis
 | Comparative superiority or first-of-kind status | Not claimed | Prior research and current products provide overlapping capabilities |
 | Hardened-source hosted arm64/x86_64 policy equality and public-source preparation check | Passed at `99faac3...`, run `32659669054` | Post-freeze engineering evidence for the named jobs; not external reproduction, broad determinism, independent archiving, a signed public release, or macOS 13 runtime evidence |
 
-## 11. Declarations
+#### 11. Declarations
 
 **Ethics and data statement.** This article describes software architecture and a synthetic engineering evaluation. The reported evaluation used only synthetic fixtures. It recruited no participants and did not export or analyze private task histories as research data. It involved no animal, plant, survey, or interview data. No human-outcome inference is made.
 
@@ -515,7 +528,7 @@ The PDF builder selects macOS Times New Roman and Arial when available. Otherwis
 
 **Corresponding-author responsibility.** Mehmet Solak accepts responsibility for answering questions or comments about the preprint and for providing the reported data or materials when reasonably requested and legally permitted.
 
-## Data Availability Statement
+#### Data Availability Statement
 
 The protocol, synthetic fixtures, benchmark runner, result artifacts, and source
 supporting this article are publicly available at the repository and exact
@@ -524,13 +537,13 @@ this submission also contains the non-executable protocol, synthetic fixtures,
 and archived results. The reported evaluation used no private Codex task
 histories, and none are included in the publication package.
 
-## Conflicts of Interest
+#### Conflicts of Interest
 
 The author created and maintains AiWingman, the open-source software evaluated
 in this manuscript; this relationship is disclosed. The author declares no
 other financial or non-financial competing interests.
 
-## References
+#### References
 
 [1] M. Kersten and G. C. Murphy, “Using Task Context to Improve Programmer Productivity,” Proceedings of the 14th ACM SIGSOFT International Symposium on Foundations of Software Engineering, pp. 1-11, 2006. https://doi.org/10.1145/1181775.1181777
 
@@ -595,3 +608,44 @@ other financial or non-financial competing interests.
 [31] SQLite, “Write-Ahead Logging,” SQLite Documentation. Accessed 23 August 2026. https://www.sqlite.org/wal.html
 
 [32] A. M. Smith, D. S. Katz, K. E. Niemeyer, and FORCE11 Software Citation Working Group, “Software Citation Principles,” PeerJ Computer Science, vol. 2, e86, 2016. https://doi.org/10.7717/peerj-cs.86
+
+## 3. AUTHOR QUERIES
+
+| Query ID | Location | Problem | Why it cannot be resolved safely | Required author decision |
+|----------|----------|---------|----------------------------------|--------------------------|
+| AQ-01 | Front matter and whole manuscript | No concrete target journal, journal instructions, required English variant, or house terminology was supplied. | Preprints.org is a preprint platform rather than a target journal. Journal-specific article structure, declarations, spelling, and style cannot be verified from placeholder instructions. | For a later journal submission, provide the journal and its current author instructions, or explicitly confirm continued use of neutral international scientific English and the existing numbered citation style. This query does not block preprint deposit. |
+
+## 4. SUBSTANTIVE CHANGE LOG
+
+| Location | Original issue | Revision action | Reason |
+|----------|----------------|-----------------|--------|
+| Front matter and metadata | The active objective specified an Original Research Article, but the prior package identified the manuscript as a Technical Note. | Harmonized the manuscript, builders, filenames, footer labels, and metadata as an Original Research Article. | Removes article-type conflict without changing the scientific content. |
+| Abstract | Scope exclusions, chronology, results, and limitations were densely combined. | Divided the abstract into direct propositions while preserving every value, hedge, and exclusion. | Separates method, result, and limitation claims. |
+| Introduction and contributions | Several sentences compressed evidence classes or used indirect phrasing. | Clarified the problem, contribution boundaries, and frozen versus post-freeze evidence classes. | Improves logical traceability and prevents evidence-category conflation. |
+| Related Work | Prior-art claims and non-novelty boundaries were compressed. | Kept citations adjacent to their claims and stated the contribution boundary directly. | Preserves citation relationships and avoids promotional novelty language. |
+| Sections 3 and 4 | Pipeline, integration, policy, and remote-review boundaries appeared in long multi-condition sentences. | Separated the ordinary dashboard, optional Wingman pipeline, deterministic ranking suppression, consent, sanitization, process, and cleanup propositions. | Makes actors, conditions, actions, results, and nonclaims explicit. |
+| Sections 5 and 6 | Frozen, supplementary, exploratory, and descriptive results required sharper separation. | Standardized these evidence labels and clarified denominators, errata, observability limits, baselines, and performance scope. | Prevents confirmatory or human-benefit interpretations that the evidence does not support. |
+| Sections 7 and 10 | Limitations and claim boundaries were difficult to scan. | Reorganized sentences within their existing sections and standardized the claim-ledger terminology. | Preserves all limitations while improving consistency. |
+| Section 9.1 | Build-artifact abbreviations and current output paths were incomplete or stale. | Defined PDF and DOCX at first use and updated commands to the Original Research Article outputs. | Supports independent readability and reproducible artifact selection. |
+| Licensing and Data Availability | The CC BY designation was not expanded at first use. | Defined Creative Commons Attribution 4.0 International (CC BY 4.0) at first use and retained the exact license boundary. | Improves abbreviation consistency without changing rights. |
+| Declarations | Author responsibility and AI assistance were present but required final consistency. | Clarified sole-author responsibility, same-project AI assistance, licensing, identity, and the absence of independent validation. | Preserves accountability and avoids implying AI authorship or external review. |
+| Terminology and abbreviations | Synonym drift and duplicate or delayed definitions reduced clarity. | Standardized `ordinary dashboard`, `optional Wingman analysis/review`, `deterministic ranking suppression`, `tree-level cumulative comparison proxy`, and `user-owned lifecycle state`; defined abbreviations at first use. | Applies STE-informed terminology control. |
+| DOCX layout | Even-page running-header parts produced unstable LibreOffice body geometry. | Used one footer-only section layout with standard margins and page numbering. | Produces a stable 31-page editable manuscript while retaining article identity in the footer. |
+
+## 5. QUALITY-CONTROL REPORT
+
+- Numerical integrity: PASS. The original and revised sources contain the same ordered quantitative content; signs, decimals, percentages, thresholds, dates, counts, and table values were preserved.
+- Unit integrity: PASS. Units and unit-bearing values were preserved; `ms`, `MiB`, `GB`, bytes, minutes, and days remain consistent.
+- Equation integrity: PASS. Neither source contains a manuscript equation; fenced shell commands and variable tokens were preserved.
+- Citation-marker integrity: PASS. The existing numbered citation markers and all 32 reference records were preserved; the reference section is byte-identical to the baseline.
+- Figure and table cross-reference integrity: PASS. Figures 1-2, Tables 1-4, Sections, and RQ1-RQ4 resolve without a dangling reference.
+- Terminology consistency: PASS.
+- Abbreviation consistency: PASS.
+- Undefined abbreviations: none detected in the scientific prose, tables, or figure text. Standard names and license designations are retained where expansion would be inappropriate.
+- Possible causal overstatements: none detected.
+- Sentences longer than 30 words: 0 in the editorial prose, headings, captions, and individual table cells. Bibliographic records were retained verbatim and were not rewritten for sentence length.
+- Unresolved STE issues: target-journal house style and terminology are unavailable; the official ASD-STE100 Issue 9 rules and controlled dictionary were not supplied; bibliography wording remains locked to preserve reference integrity.
+- ASD-STE100 status: STE-informed, not formally verified.
+- Artifact checks: the DOCX contains 31 rendered pages and the direct PDF contains 18 A4 pages. All pages were covered by original-resolution visual inspection. Structural, reference-extraction, compressed-content privacy, and deterministic research-supplement checks passed. The accessibility checker reported no high-severity finding; it reported one medium finding for the intentional non-data footer layout table and 37 low findings for deliberately displayed raw URLs.
+- Exact local artifact identities: manuscript source `a4b8a0be0183b7cb4e303244a0725e9eb2e7a2f23598554a5dc1f4921964fa0e`; DOCX `edb7b5f111f1d122108516dbaf08c0aba433265588b84b1c8a39d18392026cac`; direct PDF `bc4a1b5822552f5a90082227c5ac9619b54f34dd3558d5bb76dd0c95e6629e1b`; research supplement `07a473573e4246b215f9dc49596a16e5951b1a521d26625806acb04f2853523a`.
+- Provenance boundary: the earlier public-package commit contains the superseded Technical Note artifacts. These revised local bytes require a new public-package commit and clean-clone/hosted-CI refresh before commit-level provenance can be claimed. This does not convert author-declaration approval into portal Submit authorization.

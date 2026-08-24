@@ -84,9 +84,14 @@ docs/ARCHITECTURE.md
 docs/CODEX_INTEGRATION.md
 docs/PUBLICATION_BLUEPRINT.md
 docs/RESEARCH_BOUNDARY.md
+# Superseded historical manuscript outputs; not current submission targets.
 output/docx/aiwingman-technical-note-v1.docx
 output/pdf/aiwingman-technical-note-v1.pdf
+# Current Original Research Article submission outputs.
+output/docx/aiwingman-original-research-article-v1.docx
+output/pdf/aiwingman-original-research-article-v1.pdf
 output/supplement/aiwingman-research-supplement-v1.zip
+paper/EDITORIAL_REVISION_PACKAGE.md
 paper/FIFTH_REVIEW_REPORT.md
 paper/FOURTH_REVIEW_REPORT.md
 paper/LICENSE_STATUS.md
@@ -98,6 +103,7 @@ paper/SUBMISSION_READINESS.md
 paper/SUPPLEMENT_README.md
 paper/THIRD_REVIEW_REPORT.md
 paper/aiwingman_technical_report.md
+paper/build_editorial_revision_package.py
 paper/build_preprint.py
 paper/build_submission_docx.py
 paper/preprints_metadata.yaml

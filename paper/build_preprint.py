@@ -329,7 +329,7 @@ def architecture_figure(width: float) -> Drawing:
     d.add(String(14, 111, "OPTIONAL WINGMAN PIPELINE", fontName="SansBold", fontSize=7.3, fillColor=AMBER))
 
     box(d, 14, 139, 102, 60, PALE_BLUE, "Codex local state", ["candidate task rows", "each row's own rollout"])
-    box(d, 135, 139, 102, 60, PALE_TEAL, "Ordinary reader", ["query-only SQL", "bounded rollout"])
+    box(d, 135, 139, 102, 60, PALE_TEAL, "Ordinary reader", ["query-only access", "bounded rollout"])
     box(d, 256, 139, 102, 60, PALE_BLUE, "Continuity policy", ["per-item evidence", "ranking suppression"])
     box(d, 377, 139, 102, 60, PALE_TEAL, "Local interface", ["lifecycle controls", "codex:// deep link"])
     arrow(d, 116, 169, 135, 169, TEAL)
@@ -339,7 +339,7 @@ def architecture_figure(width: float) -> Drawing:
     box(d, 14, 31, 102, 60, PALE_BLUE, "Codex local state", ["root + child rows", "rollout tails"])
     box(d, 135, 31, 102, 60, PALE_AMBER, "Wingman reader", ["task-tree graph", "bounded evidence"])
     box(d, 256, 31, 102, 60, PALE_AMBER, "Preview + consent", ["bounded packet", "one-shot approval"])
-    box(d, 377, 31, 102, 60, PALE_RED, "External CLI", ["--ephemeral request", "service boundary"], border=HexColor("#F2B8B5"))
+    box(d, 377, 31, 102, 60, PALE_RED, "External command-line tool", ["--ephemeral request", "service boundary"], border=HexColor("#F2B8B5"))
     arrow(d, 116, 61, 135, 61, AMBER, dashed=True)
     arrow(d, 237, 61, 256, 61, AMBER, dashed=True)
     arrow(d, 358, 61, 377, 61, RED, dashed=True)
@@ -347,7 +347,7 @@ def architecture_figure(width: float) -> Drawing:
         String(
             14,
             13,
-            "The pipelines are separate. Requested read-only CLI mode is not OS isolation or a sole-context proof.",
+            "The pipelines are separate. Requested read-only mode is not operating-system isolation or a sole-context proof.",
             fontName="SansItalic",
             fontSize=6.6,
             fillColor=RED,
@@ -361,10 +361,10 @@ def triage_figure(width: float) -> Drawing:
     d = Drawing(width, height)
     d.add(Rect(0, 0, width, height, rx=10, ry=10, fillColor=PAPER, strokeColor=RULE))
     box(d, 14, 92, 105, 60, PALE_BLUE, "Eligibility", ["not deferred", "complete history"])
-    box(d, 138, 92, 105, 60, PALE_TEAL, "Fixed score", ["integer weights", "ID tie-break"])
+    box(d, 138, 92, 105, 60, PALE_TEAL, "Fixed score", ["integer weights", "identifier tie-break"])
     box(d, 262, 92, 105, 60, PALE_BLUE, "Decision gate", ["top score >= 30", "lead >= 10 if runner-up"])
     box(d, 386, 106, 93, 46, PALE_TEAL, "Recommend", ["bounded by input limit", "show reasons"])
-    box(d, 386, 40, 93, 46, PALE_AMBER, "Suppress ranking", ["no eligible item", "weak/close scores"])
+    box(d, 386, 40, 93, 46, PALE_AMBER, "Suppress ranking", ["no eligible item", "weak or close scores"])
     arrow(d, 119, 122, 138, 122, TEAL)
     arrow(d, 243, 122, 262, 122, TEAL)
     arrow(d, 367, 128, 386, 128, BLUE)
@@ -387,8 +387,19 @@ def triage_figure(width: float) -> Drawing:
 
 
 class ReportDocTemplate(BaseDocTemplate):
-    def __init__(self, filename: str, manuscript_title: str, **kwargs):
+    def __init__(
+        self,
+        filename: str,
+        manuscript_title: str,
+        document_label: str,
+        version_label: str,
+        footer_label: str,
+        **kwargs,
+    ):
         self.manuscript_title = manuscript_title
+        self.document_label = document_label
+        self.version_label = version_label
+        self.footer_label = footer_label
         super().__init__(filename, **kwargs)
         frame = Frame(
             self.leftMargin,
@@ -418,14 +429,14 @@ class ReportDocTemplate(BaseDocTemplate):
             canvas.line(self.leftMargin, page_height - 25 * mm, page_width - self.rightMargin, page_height - 25 * mm)
             canvas.setFont("Sans", 6.8)
             canvas.setFillColor(MUTED)
-            canvas.drawString(self.leftMargin, page_height - 21.2 * mm, "AIWINGMAN TECHNICAL NOTE")
-            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, "SUBMISSION VERSION 1.0")
+            canvas.drawString(self.leftMargin, page_height - 21.2 * mm, self.document_label)
+            canvas.drawRightString(page_width - self.rightMargin, page_height - 21.2 * mm, self.version_label)
         canvas.setStrokeColor(RULE)
         canvas.setLineWidth(0.5)
         canvas.line(self.leftMargin, 17 * mm, page_width - self.rightMargin, 17 * mm)
         canvas.setFont("Sans", 6.7)
         canvas.setFillColor(MUTED)
-        canvas.drawString(self.leftMargin, 12.2 * mm, "AiWingman Technical Note | Submission version 1.0 | 24 August 2026")
+        canvas.drawString(self.leftMargin, 12.2 * mm, self.footer_label)
         canvas.drawRightString(page_width - self.rightMargin, 12.2 * mm, str(doc.page))
         canvas.restoreState()
 
@@ -739,7 +750,7 @@ def build_story(markdown: str, style_map, width):
             story.append(Paragraph(inline_markup(text), style_map["abstract"]))
         else:
             paragraph = Paragraph(inline_markup(text), style_map["body"])
-            if text.startswith("The `git rev-parse` HEAD command must report"):
+            if text.startswith("The `git rev-parse HEAD` command must report"):
                 story.append(KeepTogether([paragraph]))
             else:
                 story.append(paragraph)
@@ -753,8 +764,12 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).resolve().parents[1] / "output/pdf/aiwingman-technical-note-v1.pdf",
+        default=Path(__file__).resolve().parents[1] / "output/pdf/aiwingman-original-research-article-v1.pdf",
     )
+    parser.add_argument("--article-type", default="Original Research Article")
+    parser.add_argument("--document-label")
+    parser.add_argument("--version-label", default="SUBMISSION VERSION 1.0")
+    parser.add_argument("--footer-label")
     args = parser.parse_args()
 
     register_fonts()
@@ -768,10 +783,17 @@ def main() -> None:
     text_width = page_width - left - right
     style_map = styles()
     title, story = build_story(manuscript, style_map, text_width)
+    document_label = args.document_label or f"AIWINGMAN {args.article_type.upper()}"
+    footer_label = args.footer_label or (
+        f"AiWingman {args.article_type} | Submission version 1.0 | 24 August 2026"
+    )
 
     doc = ReportDocTemplate(
         str(args.output),
         manuscript_title=title,
+        document_label=document_label,
+        version_label=args.version_label,
+        footer_label=footer_label,
         pagesize=A4,
         leftMargin=left,
         rightMargin=right,

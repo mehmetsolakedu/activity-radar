@@ -1,34 +1,34 @@
-status: portal_staging_ready_separate_submit_approval_required
+status: local_editorial_artifacts_ready_public_package_refreeze_pending_separate_submit_approval_required
 platform: Preprints.org
-manuscript_type: Technical Note
+manuscript_type: Original Research Article
 title: >-
   AiWingman: A Local Continuity Overlay for Codex Task Portfolios with
   Retrospective Specification-Conformance Testing of Its Policy Layer
 abstract: >-
-  Persistent coding-agent work can leave simultaneous input requests, completed
+  Persistent coding-agent work can leave concurrent input requests, completed
   results, blockers, and quiet unfinished tasks.
   AiWingman is an open-source macOS menu-bar companion that derives continuity
-  cues from locally retained Codex task evidence. Its dashboard and optional
-  Wingman review are separate; obsolete or abandoned labels require reversible
-  user confirmation, not silence or age. This Technical Note describes the
-  system but evaluates only its pure
-  continuity-policy layer, excluding both readers, the interface, graph signals,
-  token accounting, Codex compatibility, and remote-review quality. The
-  evaluation was retrospective and same-project: the Swift policy predated the
-  written specification and 155 expected-output fixtures. The post-implementation
-  specification and fixtures were frozen before the archived run, were not
-  preregistered, and may reflect implementation knowledge; repository chronology
-  does not exclude earlier exploratory or unarchived runs. A separately
-  implemented same-project Python oracle generated expected outputs from the
-  written rules. The Swift runner matched 155/155 fixtures. For each fixture,
-  evaluations 2-100 matched evaluation 1 (15,500 evaluations; 15,345 nontrivial
-  comparisons). A post-freeze supplementary driver launched 100 fresh processes
-  on one arm64 Mac; all returned the same corpus digest. Across 70 unconfirmed
-  lifecycle fixtures, none produced a confirmed-obsolete or confirmed-abandoned
-  state. Later exact-commit CI reproduced both the conformance result and digest
-  on hosted arm64 and native x86_64 macOS runners. The findings establish exact
-  agreement with the 155 frozen same-project specification-derived fixture
-  outputs, not general specification correctness. They do not establish external
+  cues from locally retained Codex task evidence. The dashboard and optional
+  Wingman review are separate. Obsolete or abandoned labels require reversible
+  user confirmation; silence and age are insufficient. This article describes
+  the system but evaluates only its pure continuity-policy layer. The evaluation
+  excludes both readers, the interface, graph signals, token accounting, Codex
+  compatibility, and remote-review quality. It was retrospective and same-project:
+  the Swift policy predated the written specification and 155 expected-output
+  fixtures. The post-implementation specification and fixtures were frozen before
+  the archived run and were not preregistered. They may reflect implementation
+  knowledge, and repository chronology does not exclude earlier exploratory or
+  unarchived runs. A separately implemented same-project Python oracle generated
+  the expected outputs from the written rules. The Swift runner matched 155/155
+  fixtures. For each fixture, evaluations 2-100 matched evaluation 1 (15,500
+  evaluations; 15,345 nontrivial comparisons). A post-freeze supplementary driver
+  launched 100 fresh processes on one arm64 Mac. All processes returned the same
+  corpus digest. Across 70 unconfirmed lifecycle fixtures, none produced a
+  confirmed-obsolete or confirmed-abandoned state. Later exact-commit
+  continuous-integration (CI) jobs reproduced both the conformance result and
+  digest on hosted arm64 and native x86_64 macOS runners. The findings establish
+  exact agreement with the 155 frozen, same-project, specification-derived fixture
+  outputs. They do not establish general specification correctness, external
   validation, human benefit, superiority, exact token cost or waste, security
   isolation, broad determinism, macOS 13 runtime compatibility, or stable Codex
   compatibility.
@@ -68,13 +68,18 @@ software:
   evaluated_source_checkpoint: 99faac3ef52d0da72d082706f64903a6aacd2c6d
   evaluated_source_ci_record: https://github.com/mehmetsolakedu/activity-radar/actions/runs/32659669054
   publication_package_branch: codex/aiwingman-technical-preprint
-  publication_package_commit: 328db87d8a39f7d14f32d6993990daae57fa1092
-  publication_package_commit_url: >-
+  publication_package_status: PENDING_REFREEZE_FOR_ORIGINAL_RESEARCH_ARTICLE
+  publication_package_commit: null
+  publication_package_commit_url: null
+  publication_package_ci_record: null
+  historical_publication_package_commit: 328db87d8a39f7d14f32d6993990daae57fa1092
+  historical_publication_package_commit_url: >-
     https://github.com/mehmetsolakedu/activity-radar/commit/328db87d8a39f7d14f32d6993990daae57fa1092
-  publication_package_ci_record: >-
+  historical_publication_package_ci_record: >-
     https://github.com/mehmetsolakedu/activity-radar/actions/runs/32699022868
+  historical_publication_package_scope: Superseded Technical Note artifacts
   manuscript_revision: Submission version 1.0
-  manuscript_artifact_checkpoint: 328db87d8a39f7d14f32d6993990daae57fa1092
+  manuscript_artifact_checkpoint: paper/PUBLICATION_ARTIFACT_MANIFEST.md
 declarations:
   funding: This research received no external funding.
   competing_interests: >-
@@ -103,14 +108,14 @@ declarations:
     responsibility. AI is not listed as an author.
   ai_assistance_status: CONFIRMED_BY_NAMED_AUTHOR_2026-08-24
   ethics_and_data: >-
-    This report describes software architecture and a synthetic engineering
+    This article describes software architecture and a synthetic engineering
     evaluation. The reported evaluation used only synthetic fixtures; it
     recruited no participants and did not export or analyze private task
     histories as research data. It involved no animal, plant, survey, or
     interview data. No inference about user efficacy is made.
 submission_files:
-  editable_main: output/docx/aiwingman-technical-note-v1.docx
-  author_reference_pdf: output/pdf/aiwingman-technical-note-v1.pdf
+  editable_main: output/docx/aiwingman-original-research-article-v1.docx
+  author_reference_pdf: output/pdf/aiwingman-original-research-article-v1.pdf
   research_supplement: output/supplement/aiwingman-research-supplement-v1.zip
   canonical_source: paper/aiwingman_technical_report.md
   artifact_manifest: paper/PUBLICATION_ARTIFACT_MANIFEST.md
